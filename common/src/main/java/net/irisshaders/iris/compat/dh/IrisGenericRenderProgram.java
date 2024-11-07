@@ -139,11 +139,11 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 		GL32.glVertexAttribPointer(0, 3, GL32.GL_FLOAT, false, 0, 0);
 		GL32.glEnableVertexAttribArray(0);
 
-		projectionUniform = tryGetUniformLocation2("iris_ProjectionMatrix");
-		projectionInverseUniform = tryGetUniformLocation2("iris_ProjectionMatrixInverse");
-		modelViewUniform = tryGetUniformLocation2("iris_ModelViewMatrix");
-		modelViewInverseUniform = tryGetUniformLocation2("iris_ModelViewMatrixInverse");
-		normalMatrix3fUniform = tryGetUniformLocation2("iris_NormalMatrix");
+		projectionUniform = tryGetUniformLocation2("irisInt_ProjectionMatrix");
+		projectionInverseUniform = tryGetUniformLocation2("irisInt_ProjectionMatrixInverse");
+		modelViewUniform = tryGetUniformLocation2("irisInt_ModelViewMatrix");
+		modelViewInverseUniform = tryGetUniformLocation2("irisInt_ModelViewMatrixInverse");
+		normalMatrix3fUniform = tryGetUniformLocation2("irisInt_NormalMatrix");
 
 		this.instancedShaderOffsetChunkUniform = this.tryGetUniformLocation2("uOffsetChunk");
 		this.instancedShaderOffsetSubChunkUniform = this.tryGetUniformLocation2("uOffsetSubChunk");

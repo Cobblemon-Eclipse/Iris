@@ -22,7 +22,7 @@ public class DHGenericTransformer {
 
 		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix0, "mat4(1.0)");
 		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix1, "mat4(1.0)");
-		root.rename("gl_ProjectionMatrix", "iris_ProjectionMatrix");
+		root.rename("gl_ProjectionMatrix", "irisInt_ProjectionMatrix");
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			// Alias of gl_MultiTexCoord1 on 1.15+ for OptiFine
@@ -52,23 +52,23 @@ public class DHGenericTransformer {
 		// TODO: Should probably add the normal matrix as a proper uniform that's
 		// computed on the CPU-side of things
 		root.replaceReferenceExpressions(t, "gl_NormalMatrix",
-			"iris_NormalMatrix");
+			"irisInt_NormalMatrix");
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat3 iris_NormalMatrix;");
+			"uniform mat3 irisInt_NormalMatrix;");
 
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat4 iris_ModelViewMatrixInverse;");
+			"uniform mat4 irisInt_ModelViewMatrixInverse;");
 
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat4 iris_ProjectionMatrixInverse;");
+			"uniform mat4 irisInt_ProjectionMatrixInverse;");
 
 		Iris.logger.warn("Type is " + parameters.type);
 
 		// TODO: All of the transformed variants of the input matrices, preferably
 		// computed on the CPU side...
-		root.rename("gl_ModelViewMatrix", "iris_ModelViewMatrix");
-		root.rename("gl_ModelViewMatrixInverse", "iris_ModelViewMatrixInverse");
-		root.rename("gl_ProjectionMatrixInverse", "iris_ProjectionMatrixInverse");
+		root.rename("gl_ModelViewMatrix", "irisInt_ModelViewMatrix");
+		root.rename("gl_ModelViewMatrixInverse", "irisInt_ModelViewMatrixInverse");
+		root.rename("gl_ProjectionMatrixInverse", "irisInt_ProjectionMatrixInverse");
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			// TODO: Vaporwave-Shaderpack expects that vertex positions will be aligned to
@@ -78,8 +78,8 @@ public class DHGenericTransformer {
 					"vec4 ftransform() { return gl_ModelViewProjectionMatrix * gl_Vertex; }");
 			}
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform mat4 iris_ProjectionMatrix;",
-				"uniform mat4 iris_ModelViewMatrix;",
+				"uniform mat4 irisInt_ProjectionMatrix;",
+				"uniform mat4 irisInt_ModelViewMatrix;",
 				// _draw_translation replaced with Chunks[_draw_id].offset.xyz
 				"vec4 getVertexPosition() { return vec4(_vert_position, 1.0); }");
 			root.replaceReferenceExpressions(t, "gl_Vertex", "getVertexPosition()");
@@ -90,12 +90,12 @@ public class DHGenericTransformer {
 			injectVertInit(t, tree, root, parameters);
 		} else {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform mat4 iris_ModelViewMatrix;",
-				"uniform mat4 iris_ProjectionMatrix;");
+				"uniform mat4 irisInt_ModelViewMatrix;",
+				"uniform mat4 irisInt_ProjectionMatrix;");
 		}
 
 		root.replaceReferenceExpressions(t, "gl_ModelViewProjectionMatrix",
-			"(iris_ProjectionMatrix * iris_ModelViewMatrix)");
+			"(irisInt_ProjectionMatrix * irisInt_ModelViewMatrix)");
 
 		CommonTransformer.applyIntelHd4000Workaround(root);
 	}
@@ -135,10 +135,10 @@ public class DHGenericTransformer {
 								float skyLight = (float(uSkyLight)+0.5) / 16.0;
 				     _vert_tex_light_coord = vec2(blockLight, skyLight);
 				     dhMaterialId = aMaterial;
-				     _vert_color = iris_color;
+				     _vert_color = irisInt_color;
 				     }
 				""");
-		addIfNotExists(root, t, tree, "iris_color", Type.F32VEC4, StorageQualifier.StorageType.IN, 1);
+		addIfNotExists(root, t, tree, "irisInt_color", Type.F32VEC4, StorageQualifier.StorageType.IN, 1);
 		addIfNotExists(root, t, tree, "aScale", Type.F32VEC3, StorageQualifier.StorageType.IN, 2);
 		addIfNotExists(root, t, tree, "aTranslateChunk", Type.I32VEC3, StorageQualifier.StorageType.IN, 3);
 		addIfNotExists(root, t, tree, "aTranslateSubChunk", Type.F32VEC3, StorageQualifier.StorageType.IN, 4);

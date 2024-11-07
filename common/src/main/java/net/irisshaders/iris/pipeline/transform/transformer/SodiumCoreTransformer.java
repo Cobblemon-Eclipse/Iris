@@ -12,12 +12,12 @@ public class SodiumCoreTransformer {
 		TranslationUnit tree,
 		Root root,
 		SodiumParameters parameters) {
-		root.rename("alphaTestRef", "iris_currentAlphaTest");
-		root.rename("modelViewMatrix", "iris_ModelViewMatrix");
-		root.rename("modelViewMatrixInverse", "iris_ModelViewMatrixInverse");
-		root.rename("projectionMatrix", "iris_ProjectionMatrix");
-		root.rename("projectionMatrixInverse", "iris_ProjectionMatrixInverse");
-		root.rename("normalMatrix", "iris_NormalMatrix");
+		root.rename("alphaTestRef", "irisInt_currentAlphaTest");
+		root.rename("modelViewMatrix", "irisInt_ModelViewMatrix");
+		root.rename("modelViewMatrixInverse", "irisInt_ModelViewMatrixInverse");
+		root.rename("projectionMatrix", "irisInt_ProjectionMatrix");
+		root.rename("projectionMatrixInverse", "irisInt_ProjectionMatrixInverse");
+		root.rename("normalMatrix", "irisInt_NormalMatrix");
 		root.rename("chunkOffset", "u_RegionOffset");
 		if (parameters.type == PatchShaderType.VERTEX) {
 			boolean needsNormal = root.identifierIndex.has("vaNormal") || root.identifierIndex.has("at_tangent");
@@ -33,7 +33,7 @@ public class SodiumCoreTransformer {
 
 			root.replaceReferenceExpressions(t, "textureMatrix", "mat4(1.0)");
 			SodiumTransformer.replaceMidTexCoord(t, tree, root, 1.0f / 32768.0f);
-			SodiumTransformer.replaceMCEntity(t, tree, root);
+			SodiumTransformer.replaceMCEntity(t, tree, root, parameters.injectAmbientOcclusion);
 
 			SodiumTransformer.injectVertInit(t, tree, root, parameters, needsNormal);
 		}

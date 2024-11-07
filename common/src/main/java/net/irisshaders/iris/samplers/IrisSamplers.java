@@ -193,9 +193,9 @@ public class IrisSamplers {
 		}
 
 		if (hasOverlay) {
-			samplers.addExternalSampler(OVERLAY_TEXTURE_UNIT, "iris_overlay");
+			samplers.addExternalSampler(OVERLAY_TEXTURE_UNIT, "irisInt_overlay");
 		} else {
-			samplers.addDynamicSampler(whitePixel::getId, "iris_overlay");
+			samplers.addDynamicSampler(whitePixel::getId, "irisInt_overlay");
 		}
 
 		samplers.addDynamicSampler(pipeline::getCurrentNormalTexture, StateUpdateNotifiers.normalTextureChangeNotifier, "normals");

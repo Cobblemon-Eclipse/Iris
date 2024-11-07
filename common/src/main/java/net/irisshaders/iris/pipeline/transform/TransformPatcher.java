@@ -83,7 +83,7 @@ public class TransformPatcher {
 	};
 	private static final boolean useCache = true;
 	private static final Map<CacheKey, Map<PatchShaderType, String>> cache = new LRUCache<>(400);
-	private static final List<String> internalPrefixes = List.of("iris_", "irisMain", "moj_import");
+	private static final List<String> internalPrefixes = List.of("irisInt_", "irisMain", "moj_import");
 	private static final Pattern versionPattern = Pattern.compile("#version\\s+(\\d+)", Pattern.DOTALL);
 	private static final EnumASTTransformer<Parameters, PatchShaderType> transformer;
 	static Logger LOGGER = LogManager.getLogger(TransformPatcher.class);
@@ -125,7 +125,7 @@ public class TransformPatcher {
 					.findAny()
 					.ifPresent(id -> {
 						throw new IllegalArgumentException(
-							"Detected a potential reference to unstable and internal Iris shader interfaces (iris_, irisMain and moj_import). This isn't currently supported. Violation: "
+							"Detected a potential reference to unstable and internal Iris shader interfaces (irisInt_, irisMain and moj_import). This isn't currently supported. Violation: "
 								+ id.getName() + ". See debugging.md for more information.");
 					});
 
@@ -294,11 +294,11 @@ public class TransformPatcher {
 	public static Map<PatchShaderType, String> patchVanilla(
 		String name, String vertex, String geometry, String tessControl, String tessEval, String fragment,
 		AlphaTest alpha, boolean isLines,
-		boolean hasChunkOffset,
+		boolean hasChunkOffset, boolean injectAmbientOcclusion,
 		ShaderAttributeInputs inputs,
 		Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap) {
 		return transform(name, vertex, geometry, tessControl, tessEval, fragment,
-			new VanillaParameters(Patch.VANILLA, textureMap, alpha, isLines, hasChunkOffset, inputs, geometry != null, tessControl != null || tessEval != null));
+			new VanillaParameters(Patch.VANILLA, textureMap, alpha, isLines, hasChunkOffset, inputs, geometry != null, tessControl != null || tessEval != null, injectAmbientOcclusion));
 	}
 
 
@@ -319,10 +319,10 @@ public class TransformPatcher {
 	}
 
 	public static Map<PatchShaderType, String> patchSodium(String name, String vertex, String geometry, String tessControl, String tessEval, String fragment,
-														   AlphaTest alpha,
+														   AlphaTest alpha, boolean injectAmbientOcclusion,
 														   Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap) {
 		return transform(name, vertex, geometry, tessControl, tessEval, fragment,
-			new SodiumParameters(Patch.SODIUM, textureMap, alpha));
+			new SodiumParameters(Patch.SODIUM, textureMap, alpha, geometry != null, tessControl != null || tessEval != null, injectAmbientOcclusion));
 	}
 
 	public static Map<PatchShaderType, String> patchComposite(

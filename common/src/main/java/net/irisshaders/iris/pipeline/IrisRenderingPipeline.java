@@ -418,6 +418,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		WorldRenderingSettings.INSTANCE.setUseSeparateAo(programSet.getPackDirectives().shouldUseSeparateAo());
 		WorldRenderingSettings.INSTANCE.setVoxelizeLightBlocks(programSet.getPackDirectives().shouldVoxelizeLightBlocks());
 		WorldRenderingSettings.INSTANCE.setSeparateEntityDraws(programSet.getPackDirectives().shouldUseSeparateEntityDraws());
+		WorldRenderingSettings.INSTANCE.setPutInAlpha(!pack.hasFeature(FeatureFlags.SEPARATE_AO));
 
 		if (shadowRenderTargets != null) {
 			ShaderInstance shader = shaderMap.getShader(ShaderKey.SHADOW_TERRAIN_CUTOUT);

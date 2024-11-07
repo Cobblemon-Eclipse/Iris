@@ -6,7 +6,7 @@ public record AlphaTest(AlphaTestFunction function, float reference) {
 	// WARNING: adding new fields requires updating hashCode and equals methods!
 
 	public String toExpression(String indentation) {
-		return toExpression("gl_FragData[0].a", "iris_currentAlphaTest", indentation);
+		return toExpression("gl_FragData[0].a", "irisInt_currentAlphaTest", indentation);
 	}
 
 	public String toExpression(String alphaAccessor, String alphaThreshold, String indentation) {
@@ -15,7 +15,7 @@ public record AlphaTest(AlphaTestFunction function, float reference) {
 		if (function == AlphaTestFunction.ALWAYS) {
 			return "// alpha test disabled\n";
 		} else if (this == AlphaTests.VERTEX_ALPHA) {
-			return indentation + "if (!(" + alphaAccessor + " > iris_vertexColorAlpha)) {\n" +
+			return indentation + "if (!(" + alphaAccessor + " > irisInt_vertexColorAlpha)) {\n" +
 				indentation + "    discard;\n" +
 				indentation + "}\n";
 		} else if (function == AlphaTestFunction.NEVER) {

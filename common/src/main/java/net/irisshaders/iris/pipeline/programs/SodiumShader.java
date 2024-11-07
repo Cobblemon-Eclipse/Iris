@@ -52,11 +52,11 @@ public class SodiumShader implements ChunkShaderInterface {
 						List<BufferBlendOverride> bufferBlendOverrides,
 						CustomUniforms customUniforms, Supplier<ImmutableSet<Integer>> flipState, float alphaTest,
 						boolean containsTessellation) {
-		this.uniformModelViewMatrix = context.bindUniformOptional("iris_ModelViewMatrix", GlUniformMatrix4f::new);
-		this.uniformModelViewMatrixInv = context.bindUniformOptional("iris_ModelViewMatrixInverse", GlUniformMatrix4f::new);
-		this.uniformNormalMatrix = context.bindUniformOptional("iris_NormalMatrix", GlUniformMatrix3f::new);
-		this.uniformProjectionMatrix = context.bindUniformOptional("iris_ProjectionMatrix", GlUniformMatrix4f::new);
-		this.uniformProjectionMatrixInv = context.bindUniformOptional("iris_ProjectionMatrixInv", GlUniformMatrix4f::new);
+		this.uniformModelViewMatrix = context.bindUniformOptional("irisInt_ModelViewMatrix", GlUniformMatrix4f::new);
+		this.uniformModelViewMatrixInv = context.bindUniformOptional("irisInt_ModelViewMatrixInverse", GlUniformMatrix4f::new);
+		this.uniformNormalMatrix = context.bindUniformOptional("irisInt_NormalMatrix", GlUniformMatrix3f::new);
+		this.uniformProjectionMatrix = context.bindUniformOptional("irisInt_ProjectionMatrix", GlUniformMatrix4f::new);
+		this.uniformProjectionMatrixInv = context.bindUniformOptional("irisInt_ProjectionMatrixInv", GlUniformMatrix4f::new);
 		this.uniformRegionOffset = context.bindUniformOptional("u_RegionOffset", GlUniformFloat3v::new);
 
 		this.alphaTest = alphaTest;

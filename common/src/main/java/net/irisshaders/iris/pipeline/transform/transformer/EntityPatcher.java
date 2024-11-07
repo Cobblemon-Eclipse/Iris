@@ -38,18 +38,18 @@ public class EntityPatcher {
 			// TODO: We're exposing entityColor to this stage even if it isn't declared in
 			// this stage. But this is needed for the pass-through behavior.
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform sampler2D iris_overlay;",
+				"uniform sampler2D irisInt_overlay;",
 				"out vec4 entityColor;",
-				"out vec4 iris_vertexColor;",
-				parameters.inputs.isIE() ? "uniform ivec2 iris_OverlayUV;" : "in ivec2 iris_UV1;");
+				"out vec4 irisInt_vertexColor;",
+				parameters.inputs.isIE() ? "uniform ivec2 irisInt_OverlayUV;" : "in ivec2 irisInt_UV1;");
 
 			// Create our own main function to wrap the existing main function, so that we
 			// can pass through the overlay color at the end to the geometry or fragment
 			// stage.
 			tree.prependMainFunctionBody(t,
-				"vec4 overlayColor = texelFetch(iris_overlay, " + (parameters.inputs.isIE() ? "iris_OverlayUV" : "iris_UV1") + ", 0);",
+				"vec4 overlayColor = texelFetch(irisInt_overlay, " + (parameters.inputs.isIE() ? "irisInt_OverlayUV" : "irisInt_UV1") + ", 0);",
 				"entityColor = vec4(overlayColor.rgb, 1.0 - overlayColor.a);",
-				"iris_vertexColor = iris_Color;",
+				"irisInt_vertexColor = irisInt_Color;",
 				// Workaround for a shader pack bug:
 				// https://github.com/IrisShaders/Iris/issues/1549
 				// Some shader packs incorrectly ignore the alpha value, and assume that rgb
@@ -63,11 +63,11 @@ public class EntityPatcher {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
 				"patch out vec4 entityColorTCS;",
 				"in vec4 entityColor[];",
-				"out vec4 iris_vertexColorTCS[];",
-				"in vec4 iris_vertexColor[];");
+				"out vec4 irisInt_vertexColorTCS[];",
+				"in vec4 irisInt_vertexColor[];");
 			tree.prependMainFunctionBody(t,
 				"entityColorTCS = entityColor[gl_InvocationID];",
-				"iris_vertexColorTCS[gl_InvocationID] = iris_vertexColor[gl_InvocationID];");
+				"irisInt_vertexColorTCS[gl_InvocationID] = irisInt_vertexColor[gl_InvocationID];");
 		} else if (parameters.type.glShaderType == ShaderType.TESSELATION_EVAL) {
 			// replace read references to grab the color from the first vertex.
 			root.replaceReferenceExpressions(t, "entityColor", "entityColorTCS");
@@ -76,11 +76,11 @@ public class EntityPatcher {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
 				"out vec4 entityColorTES;",
 				"patch in vec4 entityColorTCS;",
-				"out vec4 iris_vertexColorTES;",
-				"in vec4 iris_vertexColorTCS[];");
+				"out vec4 irisInt_vertexColorTES;",
+				"in vec4 irisInt_vertexColorTCS[];");
 			tree.prependMainFunctionBody(t,
 				"entityColorTES = entityColorTCS;",
-				"iris_vertexColorTES = iris_vertexColorTCS[0];");
+				"irisInt_vertexColorTES = irisInt_vertexColorTCS[0];");
 		} else if (parameters.type.glShaderType == ShaderType.GEOMETRY) {
 			// replace read references to grab the color from the first vertex.
 			root.replaceReferenceExpressions(t, "entityColor", "entityColor[0]");
@@ -89,29 +89,29 @@ public class EntityPatcher {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
 				"out vec4 entityColorGS;",
 				"in vec4 entityColor[];",
-				"out vec4 iris_vertexColorGS;",
-				"in vec4 iris_vertexColor[];");
+				"out vec4 irisInt_vertexColorGS;",
+				"in vec4 irisInt_vertexColor[];");
 			tree.prependMainFunctionBody(t,
 				"entityColorGS = entityColor[0];",
-				"iris_vertexColorGS = iris_vertexColor[0];");
+				"irisInt_vertexColorGS = irisInt_vertexColor[0];");
 
 			if (parameters.hasTesselation) {
-				root.rename("iris_vertexColor", "iris_vertexColorTES");
+				root.rename("irisInt_vertexColor", "irisInt_vertexColorTES");
 				root.rename("entityColor", "entityColorTES");
 			}
 		} else if (parameters.type.glShaderType == ShaderType.FRAGMENT) {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"in vec4 entityColor;", "in vec4 iris_vertexColor;");
+				"in vec4 entityColor;", "in vec4 irisInt_vertexColor;");
 
-			tree.prependMainFunctionBody(t, "float iris_vertexColorAlpha = iris_vertexColor.a;");
+			tree.prependMainFunctionBody(t, "float irisInt_vertexColorAlpha = irisInt_vertexColor.a;");
 
 			// Different output name to avoid a name collision in the geometry shader.
 			if (parameters.hasGeometry) {
 				root.rename("entityColor", "entityColorGS");
-				root.rename("iris_vertexColor", "iris_vertexColorGS");
+				root.rename("irisInt_vertexColor", "irisInt_vertexColorGS");
 			} else if (parameters.hasTesselation) {
 				root.rename("entityColor", "entityColorTES");
-				root.rename("iris_vertexColor", "iris_vertexColorTES");
+				root.rename("irisInt_vertexColor", "irisInt_vertexColorTES");
 			}
 		}
 	}
@@ -129,22 +129,22 @@ public class EntityPatcher {
 
 		if (parameters.type.glShaderType == ShaderType.GEOMETRY) {
 			root.replaceReferenceExpressions(t, "entityId",
-				"iris_entityInfo[0].x");
+				"irisInt_entityInfo[0].x");
 
 			root.replaceReferenceExpressions(t, "blockEntityId",
-				"iris_entityInfo[0].y");
+				"irisInt_entityInfo[0].y");
 
 			root.replaceReferenceExpressions(t, "currentRenderedItemId",
-				"iris_entityInfo[0].z");
+				"irisInt_entityInfo[0].z");
 		} else {
 			root.replaceReferenceExpressions(t, "entityId",
-				"iris_entityInfo.x");
+				"irisInt_entityInfo.x");
 
 			root.replaceReferenceExpressions(t, "blockEntityId",
-				"iris_entityInfo.y");
+				"irisInt_entityInfo.y");
 
 			root.replaceReferenceExpressions(t, "currentRenderedItemId",
-				"iris_entityInfo.z");
+				"irisInt_entityInfo.z");
 		}
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
@@ -152,49 +152,49 @@ public class EntityPatcher {
 			// TODO: We're exposing entityColor to this stage even if it isn't declared in
 			// this stage. But this is needed for the pass-through behavior.
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"flat out ivec3 iris_entityInfo;",
-				"in ivec3 iris_Entity;");
+				"flat out ivec3 irisInt_entityInfo;",
+				"in ivec3 irisInt_Entity;");
 
 			// Create our own main function to wrap the existing main function, so that we
 			// can pass through the overlay color at the end to the geometry or fragment
 			// stage.
 			tree.prependMainFunctionBody(t,
-				"iris_entityInfo = iris_Entity;");
+				"irisInt_entityInfo = irisInt_Entity;");
 		} else if (parameters.type.glShaderType == ShaderType.TESSELATION_CONTROL) {
 			// TODO: this is passthrough behavior
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"flat out ivec3 iris_entityInfoTCS[];",
-				"flat in ivec3 iris_entityInfo[];");
-			root.replaceReferenceExpressions(t, "iris_entityInfo", "iris_EntityInfo[gl_InvocationID]");
+				"flat out ivec3 irisInt_entityInfoTCS[];",
+				"flat in ivec3 irisInt_entityInfo[];");
+			root.replaceReferenceExpressions(t, "irisInt_entityInfo", "irisInt_EntityInfo[gl_InvocationID]");
 
 			tree.prependMainFunctionBody(t,
-				"iris_entityInfoTCS[gl_InvocationID] = iris_entityInfo[gl_InvocationID];");
+				"irisInt_entityInfoTCS[gl_InvocationID] = irisInt_entityInfo[gl_InvocationID];");
 		} else if (parameters.type.glShaderType == ShaderType.TESSELATION_EVAL) {
 			// TODO: this is passthrough behavior
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"flat out ivec3 iris_entityInfoTES;",
-				"flat in ivec3 iris_entityInfoTCS[];");
+				"flat out ivec3 irisInt_entityInfoTES;",
+				"flat in ivec3 irisInt_entityInfoTCS[];");
 			tree.prependMainFunctionBody(t,
-				"iris_entityInfoTES = iris_entityInfoTCS[0];");
+				"irisInt_entityInfoTES = irisInt_entityInfoTCS[0];");
 
-			root.replaceReferenceExpressions(t, "iris_entityInfo", "iris_EntityInfoTCS[0]");
+			root.replaceReferenceExpressions(t, "irisInt_entityInfo", "irisInt_EntityInfoTCS[0]");
 
 		} else if (parameters.type.glShaderType == ShaderType.GEOMETRY) {
 			// TODO: this is passthrough behavior
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"flat out ivec3 iris_entityInfoGS;",
-				"flat in ivec3 iris_entityInfo" + (parameters.hasTesselation ? "TES" : "") + "[];");
+				"flat out ivec3 irisInt_entityInfoGS;",
+				"flat in ivec3 irisInt_entityInfo" + (parameters.hasTesselation ? "TES" : "") + "[];");
 			tree.prependMainFunctionBody(t,
-				"iris_entityInfoGS = iris_entityInfo" + (parameters.hasTesselation ? "TES" : "") + "[0];");
+				"irisInt_entityInfoGS = irisInt_entityInfo" + (parameters.hasTesselation ? "TES" : "") + "[0];");
 		} else if (parameters.type.glShaderType == ShaderType.FRAGMENT) {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"flat in ivec3 iris_entityInfo;");
+				"flat in ivec3 irisInt_entityInfo;");
 
 			// Different output name to avoid a name collision in the geometry shader.
 			if (parameters.hasGeometry) {
-				root.rename("iris_entityInfo", "iris_EntityInfoGS");
+				root.rename("irisInt_entityInfo", "irisInt_EntityInfoGS");
 			} else if (parameters.hasTesselation) {
-				root.rename("iris_entityInfo", "iris_entityInfoTES");
+				root.rename("irisInt_entityInfo", "irisInt_entityInfoTES");
 			}
 		}
 	}

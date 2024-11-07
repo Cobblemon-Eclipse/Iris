@@ -386,7 +386,7 @@ public class CompositeRenderer {
 		}
 
 		// TODO: Don't duplicate this with FinalPassRenderer
-		centerDepthSampler.setUsage(builder.addDynamicSampler(centerDepthSampler::getCenterDepthTexture, "iris_centerDepthSmooth"));
+		centerDepthSampler.setUsage(builder.addDynamicSampler(centerDepthSampler::getCenterDepthTexture, "irisInt_centerDepthSmooth"));
 
 		Program build = builder.build();
 
@@ -442,7 +442,7 @@ public class CompositeRenderer {
 				}
 
 				// TODO: Don't duplicate this with FinalPassRenderer
-				centerDepthSampler.setUsage(builder.addDynamicSampler(centerDepthSampler::getCenterDepthTexture, "iris_centerDepthSmooth"));
+				centerDepthSampler.setUsage(builder.addDynamicSampler(centerDepthSampler::getCenterDepthTexture, "irisInt_centerDepthSmooth"));
 
 				programs[i] = builder.buildCompute();
 

@@ -17,21 +17,21 @@ public class IrisInternalUniforms {
 
 	public static void addFogUniforms(DynamicUniformHolder uniforms, FogMode fogMode) {
 		uniforms
-			.uniform4f(PER_FRAME, "iris_FogColor", () -> {
+			.uniform4f(PER_FRAME, "irisInt_FogColor", () -> {
 				float[] fogColor = RenderSystem.getShaderFogColor();
 				return new Vector4f(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
 			});
 
-		uniforms.uniform1f(PER_FRAME, "iris_FogStart", RenderSystem::getShaderFogStart)
-			.uniform1f(PER_FRAME, "iris_FogEnd", RenderSystem::getShaderFogEnd);
+		uniforms.uniform1f(PER_FRAME, "irisInt_FogStart", RenderSystem::getShaderFogStart)
+			.uniform1f(PER_FRAME, "irisInt_FogEnd", RenderSystem::getShaderFogEnd);
 
-		uniforms.uniform1f("iris_FogDensity", () -> {
+		uniforms.uniform1f("irisInt_FogDensity", () -> {
 			// ensure that the minimum value is 0.0
 			return Math.max(0.0F, CapturedRenderingState.INSTANCE.getFogDensity());
 		}, notifier -> {
 		});
 
-		uniforms.uniform1f("iris_currentAlphaTest", CapturedRenderingState.INSTANCE::getCurrentAlphaTest, notifier -> {
+		uniforms.uniform1f("irisInt_currentAlphaTest", CapturedRenderingState.INSTANCE::getCurrentAlphaTest, notifier -> {
 		});
 
 		// Optifine compatibility

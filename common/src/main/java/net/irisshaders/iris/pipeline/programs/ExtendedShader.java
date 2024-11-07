@@ -206,7 +206,7 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 	@Override
 	public Uniform getUniform(@NotNull String name) {
 		// Prefix all uniforms with Iris to help avoid conflicts with existing names within the shader.
-		Uniform uniform = super.getUniform("iris_" + name);
+		Uniform uniform = super.getUniform("irisInt_" + name);
 
 		if (uniform == null && (name.equalsIgnoreCase("OverlayUV") || name.equalsIgnoreCase("LightUV"))) {
 			return FAKE_UNIFORM;

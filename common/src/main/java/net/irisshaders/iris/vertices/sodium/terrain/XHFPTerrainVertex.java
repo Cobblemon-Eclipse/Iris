@@ -1,6 +1,7 @@
 package net.irisshaders.iris.vertices.sodium.terrain;
 
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
+import net.caffeinemc.mods.sodium.api.util.ColorU8;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
 import net.caffeinemc.mods.sodium.client.render.frapi.helper.ColorHelper;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
@@ -37,6 +38,7 @@ public class XHFPTerrainVertex implements ChunkVertexEncoder, VertexEncoderInter
 	private final Vector2f normEncoded = new Vector2f();
 	private final Vector2f tangEncoded = new Vector2f();
 	private BlockContextHolder contextHolder;
+	private boolean shade;
 
 	public XHFPTerrainVertex(int blockIdOffset, int normalOffset, int midUvOffset, int midBlockOffset, int stride) {
 		this.blockIdOffset = blockIdOffset;
@@ -105,6 +107,11 @@ public class XHFPTerrainVertex implements ChunkVertexEncoder, VertexEncoderInter
 	}
 
 	@Override
+	public void iris$setShade(boolean shade) {
+		this.shade = shade;
+	}
+
+	@Override
 	public long write(long ptr,
 					  int material, Vertex[] vertices, int section) {
 		// Calculate the center point of the texture region which is mapped to the quad
@@ -150,12 +157,14 @@ public class XHFPTerrainVertex implements ChunkVertexEncoder, VertexEncoderInter
 
 			MemoryUtil.memPutInt(ptr, packPositionHi(x, y, z));
 			MemoryUtil.memPutInt(ptr + 4L, packPositionLo(x, y, z));
-			MemoryUtil.memPutInt(ptr + 8L, WorldRenderingSettings.INSTANCE.shouldUseSeparateAo() ? ColorABGR.withAlpha(vertex.color, vertex.ao) : ColorHelper.multiplyRGB(vertex.color, vertex.ao));
+			MemoryUtil.memPutInt(ptr + 8L, WorldRenderingSettings.INSTANCE.shouldUseSeparateAo() ?
+				(WorldRenderingSettings.INSTANCE.shouldPutInAlpha() ? ColorABGR.withAlpha(vertex.color, vertex.ao) : vertex.color)
+		: ColorHelper.multiplyRGB(vertex.color, vertex.ao));
 			MemoryUtil.memPutInt(ptr + 12L, packTexture(u, v));
 			MemoryUtil.memPutInt(ptr + 16L, packLightAndData(light, material, section));
 
 			if (blockIdOffset != 0) {
-				MemoryUtil.memPutInt(ptr + blockIdOffset, packBlockId(contextHolder));
+				MemoryUtil.memPutInt(ptr + blockIdOffset, packBlockId(contextHolder, (byte) ColorU8.normalizedFloatToByte(vertex.ao)));
 			}
 
 			if (midBlockOffset != 0) {
@@ -194,7 +203,10 @@ public class XHFPTerrainVertex implements ChunkVertexEncoder, VertexEncoderInter
 		return tangent;
 	}
 
-	private int packBlockId(BlockContextHolder contextHolder) {
-		return ((contextHolder.getBlockId() + 1) << 1) | (contextHolder.getRenderType() & 1);
+	private int packBlockId(BlockContextHolder contextHolder, byte ambientOcclusion) {
+		return (((contextHolder.getBlockId() + 1) & 0x3FFFFF) << 10)   // 22 bits for Block ID
+			| ((contextHolder.getRenderType() & 1) << 9)      // fluid or block
+			| ((ambientOcclusion & 0xFF) << 1)                // 8 bits for AO
+			| ((shade ? 1 : 0) & 1);
 	}
 }

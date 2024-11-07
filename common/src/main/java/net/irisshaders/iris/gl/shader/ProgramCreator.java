@@ -16,7 +16,7 @@ public class ProgramCreator {
 	public static int create(String name, GlShader... shaders) {
 		int program = GlStateManager.glCreateProgram();
 
-		GlStateManager._glBindAttribLocation(program, 11, "iris_Entity");
+		GlStateManager._glBindAttribLocation(program, 11, "irisInt_Entity");
 		GlStateManager._glBindAttribLocation(program, 11, "mc_Entity");
 		GlStateManager._glBindAttribLocation(program, 12, "mc_midTexCoord");
 		GlStateManager._glBindAttribLocation(program, 13, "at_tangent");

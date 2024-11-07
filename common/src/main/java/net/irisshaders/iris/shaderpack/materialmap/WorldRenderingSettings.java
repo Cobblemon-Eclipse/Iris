@@ -25,6 +25,7 @@ public class WorldRenderingSettings {
 	private boolean separateEntityDraws;
 	private boolean voxelizeLightBlocks;
 	private ChunkVertexType chunkVertexFormat;
+	private boolean shouldPutInAlpha;
 
 	public WorldRenderingSettings() {
 		reloadRequired = false;
@@ -170,5 +171,19 @@ public class WorldRenderingSettings {
 
 	public boolean hasVillagerConversionId() {
 		return hasVillagerConversionId;
+	}
+
+	public boolean shouldPutInAlpha() {
+		return shouldPutInAlpha;
+	}
+
+	public void setPutInAlpha(boolean shouldPutInAlpha) {
+		if (useSeparateAo && this.shouldPutInAlpha == shouldPutInAlpha) {
+			return;
+		}
+
+		this.reloadRequired = true;
+
+		this.shouldPutInAlpha = shouldPutInAlpha;
 	}
 }

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Ints;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.irisshaders.iris.features.FeatureFlags;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -60,7 +61,7 @@ public class ShaderCreator {
 			source.getTessControlSource().orElse(null),
 			source.getTessEvalSource().orElse(null),
 			source.getFragmentSource().orElseThrow(RuntimeException::new),
-			alpha, isLines, true, inputs, pipeline.getTextureMap());
+			alpha, isLines, true, pipeline.hasFeature(FeatureFlags.SEPARATE_AO), inputs, pipeline.getTextureMap());
 		String vertex = transformed.get(PatchShaderType.VERTEX);
 		String geometry = transformed.get(PatchShaderType.GEOMETRY);
 		String tessControl = transformed.get(PatchShaderType.TESS_CONTROL);
@@ -85,20 +86,20 @@ public class ShaderCreator {
 			        "Normal"
 			    ],
 			    "uniforms": [
-			        { "name": "iris_TextureMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        { "name": "iris_ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        { "name": "iris_ModelViewMatInverse", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        { "name": "iris_ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        { "name": "iris_ProjMatInverse", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        { "name": "iris_NormalMat", "type": "matrix3x3", "count": 9, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 ] },
-			        { "name": "iris_ChunkOffset", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
-			        { "name": "iris_ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-			        { "name": "iris_GlintAlpha", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        { "name": "iris_FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
-			        { "name": "iris_FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        { "name": "iris_FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] },
+			        { "name": "irisInt_TextureMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+			        { "name": "irisInt_ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+			        { "name": "irisInt_ModelViewMatInverse", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+			        { "name": "irisInt_ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+			        { "name": "irisInt_ProjMatInverse", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+			        { "name": "irisInt_NormalMat", "type": "matrix3x3", "count": 9, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 ] },
+			        { "name": "irisInt_ChunkOffset", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+			        { "name": "irisInt_ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
+			        { "name": "irisInt_GlintAlpha", "type": "float", "count": 1, "values": [ 1.0 ] },
+			        { "name": "irisInt_FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
+			        { "name": "irisInt_FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
+			        { "name": "irisInt_FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] },
 			        {
-			                    "name": "iris_OverlayUV",
+			                    "name": "irisInt_OverlayUV",
 			                    "type": "int",
 			                    "count": 2,
 			                    "values": [
@@ -107,7 +108,7 @@ public class ShaderCreator {
 			                    ]
 			                },
 			                {
-			                    "name": "iris_LightUV",
+			                    "name": "irisInt_LightUV",
 			                    "type": "int",
 			                    "count": 2,
 			                    "values": [

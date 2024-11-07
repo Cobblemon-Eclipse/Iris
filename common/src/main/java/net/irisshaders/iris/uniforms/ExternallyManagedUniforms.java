@@ -9,9 +9,9 @@ public class ExternallyManagedUniforms {
 	}
 
 	public static void addExternallyManagedUniforms(UniformHolder uniformHolder) {
-		addMat4(uniformHolder, "iris_ModelViewMatrix");
+		addMat4(uniformHolder, "irisInt_ModelViewMatrix");
 		addMat4(uniformHolder, "u_ModelViewProjectionMatrix");
-		addMat3(uniformHolder, "iris_NormalMatrix");
+		addMat3(uniformHolder, "irisInt_NormalMatrix");
 		// Exclusive to pre-1.19
 		addFloat(uniformHolder, "darknessFactor");
 		addFloat(uniformHolder, "darknessLightFactor");
@@ -28,32 +28,32 @@ public class ExternallyManagedUniforms {
 		addExternallyManagedUniforms(uniformHolder);
 
 		// Sodium
-		addFloat(uniformHolder, "iris_FogStart");
-		addFloat(uniformHolder, "iris_FogEnd");
-		addVec4(uniformHolder, "iris_FogColor");
-		addMat4(uniformHolder, "iris_ProjectionMatrix");
-		addMat4(uniformHolder, "iris_ModelViewMatrix");
-		addMat3(uniformHolder, "iris_NormalMatrix");
-		addFloat(uniformHolder, "iris_TextureScale");
-		addFloat(uniformHolder, "iris_GlintAlpha");
-		addFloat(uniformHolder, "iris_ModelScale");
-		addFloat(uniformHolder, "iris_ModelOffset");
-		addVec3(uniformHolder, "iris_CameraTranslation");
+		addFloat(uniformHolder, "irisInt_FogStart");
+		addFloat(uniformHolder, "irisInt_FogEnd");
+		addVec4(uniformHolder, "irisInt_FogColor");
+		addMat4(uniformHolder, "irisInt_ProjectionMatrix");
+		addMat4(uniformHolder, "irisInt_ModelViewMatrix");
+		addMat3(uniformHolder, "irisInt_NormalMatrix");
+		addFloat(uniformHolder, "irisInt_TextureScale");
+		addFloat(uniformHolder, "irisInt_GlintAlpha");
+		addFloat(uniformHolder, "irisInt_ModelScale");
+		addFloat(uniformHolder, "irisInt_ModelOffset");
+		addVec3(uniformHolder, "irisInt_CameraTranslation");
 		addVec3(uniformHolder, "u_RegionOffset");
 
 		// Vanilla
-		uniformHolder.externallyManagedUniform("iris_TextureMat", UniformType.MAT4);
-		uniformHolder.externallyManagedUniform("iris_ModelViewMat", UniformType.MAT4);
-		uniformHolder.externallyManagedUniform("iris_ProjMat", UniformType.MAT4);
-		uniformHolder.externallyManagedUniform("iris_ChunkOffset", UniformType.VEC3);
-		uniformHolder.externallyManagedUniform("iris_ColorModulator", UniformType.VEC4);
-		uniformHolder.externallyManagedUniform("iris_NormalMat", UniformType.MAT3);
-		uniformHolder.externallyManagedUniform("iris_FogStart", UniformType.FLOAT);
-		uniformHolder.externallyManagedUniform("iris_FogEnd", UniformType.FLOAT);
-		uniformHolder.externallyManagedUniform("iris_FogDensity", UniformType.FLOAT);
-		uniformHolder.externallyManagedUniform("iris_LineWidth", UniformType.FLOAT);
-		uniformHolder.externallyManagedUniform("iris_ScreenSize", UniformType.VEC2);
-		uniformHolder.externallyManagedUniform("iris_FogColor", UniformType.VEC4);
+		uniformHolder.externallyManagedUniform("irisInt_TextureMat", UniformType.MAT4);
+		uniformHolder.externallyManagedUniform("irisInt_ModelViewMat", UniformType.MAT4);
+		uniformHolder.externallyManagedUniform("irisInt_ProjMat", UniformType.MAT4);
+		uniformHolder.externallyManagedUniform("irisInt_ChunkOffset", UniformType.VEC3);
+		uniformHolder.externallyManagedUniform("irisInt_ColorModulator", UniformType.VEC4);
+		uniformHolder.externallyManagedUniform("irisInt_NormalMat", UniformType.MAT3);
+		uniformHolder.externallyManagedUniform("irisInt_FogStart", UniformType.FLOAT);
+		uniformHolder.externallyManagedUniform("irisInt_FogEnd", UniformType.FLOAT);
+		uniformHolder.externallyManagedUniform("irisInt_FogDensity", UniformType.FLOAT);
+		uniformHolder.externallyManagedUniform("irisInt_LineWidth", UniformType.FLOAT);
+		uniformHolder.externallyManagedUniform("irisInt_ScreenSize", UniformType.VEC2);
+		uniformHolder.externallyManagedUniform("irisInt_FogColor", UniformType.VEC4);
 	}
 
 	private static void addMat3(UniformHolder uniformHolder, String name) {

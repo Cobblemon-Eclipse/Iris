@@ -10,6 +10,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderBindingP
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.DefaultTerrainRenderPasses;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
+import net.irisshaders.iris.features.FeatureFlags;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.blending.AlphaTests;
@@ -62,7 +63,7 @@ public class SodiumPrograms {
 			}
 
 			AlphaTest alphaTest = getAlphaTest(pass, source);
-			Map<PatchShaderType, String> transformed = transformShaders(source, alphaTest, programSet);
+			Map<PatchShaderType, String> transformed = transformShaders(source, alphaTest, programSet, pipeline.hasFeature(FeatureFlags.SEPARATE_AO));
 			GlProgram<ChunkShaderInterface> shader = createShader(pipeline, pass, source, alphaTest, customUniforms, flipState, createGlShaders(pass.name().toLowerCase(Locale.ROOT), transformed));
 			shaders.put(pass, shader);
 		}
@@ -75,7 +76,7 @@ public class SodiumPrograms {
 			pass == Pass.TERRAIN_CUTOUT || pass == Pass.SHADOW_CUTOUT ? AlphaTests.ONE_TENTH_ALPHA : AlphaTest.ALWAYS);
 	}
 
-	private Map<PatchShaderType, String> transformShaders(ProgramSource source, AlphaTest alphaTest, ProgramSet programSet) {
+	private Map<PatchShaderType, String> transformShaders(ProgramSource source, AlphaTest alphaTest, ProgramSet programSet, boolean injectAmbientOcclusion) {
 		Map<PatchShaderType, String> transformed = TransformPatcher.patchSodium(
 			source.getName(),
 			source.getVertexSource().orElse(null),
@@ -84,6 +85,7 @@ public class SodiumPrograms {
 			source.getTessEvalSource().orElse(null),
 			source.getFragmentSource().orElse(null),
 			alphaTest,
+			injectAmbientOcclusion,
 			programSet.getPackDirectives().getTextureMap());
 
 		ShaderPrinter.printProgram("sodium_" + source.getName()).addSources(transformed).print();
@@ -162,13 +164,13 @@ public class SodiumPrograms {
 			.bindAttribute("mc_Entity", 11)
 			.bindAttribute("mc_midTexCoord", 12)
 			.bindAttribute("at_tangent", 13)
-			.bindAttribute("iris_Normal", 10)
+			.bindAttribute("irisInt_Normal", 10)
 			.bindAttribute("at_midBlock", 14)
 			.link((shader) -> {
 				int handle = ((GlObject) shader).handle();
 				GLDebug.nameObject(GL43C.GL_PROGRAM, handle, "sodium-terrain-" + pass.toString().toLowerCase(Locale.ROOT));
 
-				if (!hasNormal) hasNormal = GL43C.glGetAttribLocation(handle, "iris_Normal") != -1;
+				if (!hasNormal) hasNormal = GL43C.glGetAttribLocation(handle, "irisInt_Normal") != -1;
 				if (!hasMidBlock) hasMidBlock = GL43C.glGetAttribLocation(handle, "at_midBlock") != -1;
 				if (!hasBlockId) hasBlockId = GL43C.glGetAttribLocation(handle, "mc_Entity") != -1;
 				if (!hasMidUv) hasMidUv = GL43C.glGetAttribLocation(handle, "mc_midTexCoord") != -1;

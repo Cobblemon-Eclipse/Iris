@@ -67,7 +67,7 @@ public class ShaderSynthesizer {
 		if (isLeash) {
 			shader.append("flat ");
 		}
-		shader.append("out vec4 iris_vertexColor;\n");
+		shader.append("out vec4 irisInt_vertexColor;\n");
 		shader.append("uniform vec4 ColorModulator;\n");
 
 		// Vertex Normal
@@ -93,19 +93,19 @@ public class ShaderSynthesizer {
 				shader.append("in vec3 Normal;\n");
 
 				// minecraft_mix_light just passes through the original alpha value, so it's safe here.
-				main.append("    iris_vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color * ColorModulator);\n");
+				main.append("    irisInt_vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color * ColorModulator);\n");
 			} else if (inputs.isNewLines()) {
 				shader.append("in vec3 Normal;\n");
-				main.append("    iris_vertexColor = Color * ColorModulator;\n");
+				main.append("    irisInt_vertexColor = Color * ColorModulator;\n");
 			} else {
-				main.append("    iris_vertexColor = Color * ColorModulator;\n");
+				main.append("    irisInt_vertexColor = Color * ColorModulator;\n");
 			}
 		} else if (inputs.hasColor()) {
 			shader.append("in vec4 Color;\n");
 
-			main.append("    iris_vertexColor = Color * ColorModulator;\n");
+			main.append("    irisInt_vertexColor = Color * ColorModulator;\n");
 		} else {
-			main.append("    iris_vertexColor = ColorModulator;\n");
+			main.append("    irisInt_vertexColor = ColorModulator;\n");
 		}
 
 		// Overlay Color
@@ -162,9 +162,9 @@ public class ShaderSynthesizer {
 		if (isLeash) {
 			shader.append("flat ");
 		}
-		shader.append("in vec4 iris_vertexColor;\n");
+		shader.append("in vec4 irisInt_vertexColor;\n");
 
-		main.append("float iris_vertexColorAlpha = iris_vertexColor.a;");
+		main.append("float irisInt_vertexColorAlpha = irisInt_vertexColor.a;");
 
 		if (inputs.hasTex()) {
 			shader.append("uniform sampler2D gtexture;\n");
@@ -177,15 +177,15 @@ public class ShaderSynthesizer {
 			}
 
 			if (alphaTest == AlphaTests.VERTEX_ALPHA) {
-				main.append(" * vec4(iris_vertexColor.rgb, 1);\n");
+				main.append(" * vec4(irisInt_vertexColor.rgb, 1);\n");
 			} else {
-				main.append(" * iris_vertexColor;\n");
+				main.append(" * irisInt_vertexColor;\n");
 			}
 		} else {
 			if (alphaTest == AlphaTests.VERTEX_ALPHA) {
-				main.append("vec4 color = vec4(iris_vertexColor.rgb, 1);\n");
+				main.append("vec4 color = vec4(irisInt_vertexColor.rgb, 1);\n");
 			} else {
-				main.append("vec4 color = iris_vertexColor;\n");
+				main.append("vec4 color = irisInt_vertexColor;\n");
 			}
 		}
 

@@ -7,7 +7,7 @@ import net.irisshaders.iris.helpers.Tri;
 import net.irisshaders.iris.pipeline.transform.Patch;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 
-public class SodiumParameters extends Parameters {
+public class SodiumParameters extends GeometryInfoParameters {
 	// WARNING: adding new fields requires updating hashCode and equals methods!
 
 	// DO NOT include this field in hashCode or equals, it's mutable!
@@ -16,8 +16,8 @@ public class SodiumParameters extends Parameters {
 
 	public SodiumParameters(Patch patch,
 							Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap,
-							AlphaTest alpha) {
-		super(patch, textureMap);
+							AlphaTest alpha, boolean hasGeometry, boolean hasTessellation, boolean injectAmbientOcclusion) {
+		super(patch, textureMap, hasGeometry, hasTessellation, injectAmbientOcclusion);
 
 		this.alpha = alpha;
 	}

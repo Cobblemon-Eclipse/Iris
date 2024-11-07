@@ -9,13 +9,15 @@ import net.irisshaders.iris.shaderpack.texture.TextureStage;
 public abstract class GeometryInfoParameters extends Parameters {
 	public final boolean hasGeometry;
 	public final boolean hasTesselation;
+	public final boolean injectAmbientOcclusion;
 	// WARNING: adding new fields requires updating hashCode and equals methods!
 
 	public GeometryInfoParameters(Patch patch,
-								  Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap, boolean hasGeometry, boolean hasTesselation) {
+								  Object2ObjectMap<Tri<String, TextureType, TextureStage>, String> textureMap, boolean hasGeometry, boolean hasTesselation, boolean injectAmbientOcclusion) {
 		super(patch, textureMap);
 		this.hasGeometry = hasGeometry;
 		this.hasTesselation = hasTesselation;
+		this.injectAmbientOcclusion = injectAmbientOcclusion;
 	}
 
 	@Override
@@ -23,6 +25,8 @@ public abstract class GeometryInfoParameters extends Parameters {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + (hasGeometry ? 1231 : 1237);
+		result = prime * result + (hasTesselation ? 1231 : 1237);
+		result = prime * result + (injectAmbientOcclusion ? 1231 : 1237);
 		return result;
 	}
 
@@ -35,6 +39,6 @@ public abstract class GeometryInfoParameters extends Parameters {
 		if (getClass() != obj.getClass())
 			return false;
 		GeometryInfoParameters other = (GeometryInfoParameters) obj;
-		return hasGeometry == other.hasGeometry;
+		return hasGeometry == other.hasGeometry && hasTesselation == other.hasTesselation && injectAmbientOcclusion == other.injectAmbientOcclusion;
 	}
 }

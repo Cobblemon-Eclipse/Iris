@@ -61,7 +61,7 @@ public class IrisLodRenderProgram {
 		id = GL43C.glCreateProgram();
 
 		GL32.glBindAttribLocation(this.id, 0, "vPosition");
-		GL32.glBindAttribLocation(this.id, 1, "iris_color");
+		GL32.glBindAttribLocation(this.id, 1, "irisInt_color");
 		GL32.glBindAttribLocation(this.id, 2, "irisExtra");
 
 		this.bufferBlendOverrides = bufferBlendOverrides;
@@ -124,11 +124,11 @@ public class IrisLodRenderProgram {
 		modelOffsetUniform = tryGetUniformLocation2("modelOffset");
 		worldYOffsetUniform = tryGetUniformLocation2("worldYOffset");
 		mircoOffsetUniform = tryGetUniformLocation2("mircoOffset");
-		projectionUniform = tryGetUniformLocation2("iris_ProjectionMatrix");
-		projectionInverseUniform = tryGetUniformLocation2("iris_ProjectionMatrixInverse");
-		modelViewUniform = tryGetUniformLocation2("iris_ModelViewMatrix");
-		modelViewInverseUniform = tryGetUniformLocation2("iris_ModelViewMatrixInverse");
-		normalMatrix3fUniform = tryGetUniformLocation2("iris_NormalMatrix");
+		projectionUniform = tryGetUniformLocation2("irisInt_ProjectionMatrix");
+		projectionInverseUniform = tryGetUniformLocation2("irisInt_ProjectionMatrixInverse");
+		modelViewUniform = tryGetUniformLocation2("irisInt_ModelViewMatrix");
+		modelViewInverseUniform = tryGetUniformLocation2("irisInt_ModelViewMatrixInverse");
+		normalMatrix3fUniform = tryGetUniformLocation2("irisInt_NormalMatrix");
 
 		// Fog/Clip Uniforms
 		clipDistanceUniform = tryGetUniformLocation2("clipDistance");

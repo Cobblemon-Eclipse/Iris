@@ -156,16 +156,16 @@ public class CommonTransformer {
 		boolean core) {
 		// TODO: What if the shader does gl_PerVertex.gl_FogFragCoord ?
 
-		root.rename("gl_FogFragCoord", "iris_FogFragCoord");
+		root.rename("gl_FogFragCoord", "irisInt_FogFragCoord");
 
 		// TODO: This doesn't handle geometry shaders... How do we do that?
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"out float iris_FogFragCoord;");
-			tree.prependMainFunctionBody(t, "iris_FogFragCoord = 0.0f;");
+				"out float irisInt_FogFragCoord;");
+			tree.prependMainFunctionBody(t, "irisInt_FogFragCoord = 0.0f;");
 		} else if (parameters.type.glShaderType == ShaderType.FRAGMENT) {
 			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"in float iris_FogFragCoord;");
+				"in float irisInt_FogFragCoord;");
 		}
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
@@ -174,8 +174,8 @@ public class CommonTransformer {
 			// even though they write to it.
 
 			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"vec4 iris_FrontColor;");
-			root.rename("gl_FrontColor", "iris_FrontColor");
+				"vec4 irisInt_FrontColor;");
+			root.rename("gl_FrontColor", "irisInt_FrontColor");
 		}
 
 		if (parameters.type.glShaderType == ShaderType.FRAGMENT) {
@@ -195,7 +195,7 @@ public class CommonTransformer {
 				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "in vec4 irs_Color;");
 			}
 
-			// change gl_FragData[i] to iris_FragDatai
+			// change gl_FragData[i] to irisInt_FragDatai
 			replaceExpressions.clear();
 			replaceIndexes.clear();
 			Set<Long> replaceIndexesSet = new HashSet<>();
@@ -211,22 +211,22 @@ public class CommonTransformer {
 			}
 			for (int i = 0; i < replaceExpressions.size(); i++) {
 				replaceExpressions.get(i).replaceByAndDelete(
-					new ReferenceExpression(new Identifier("iris_FragData" + replaceIndexes.get(i))));
+					new ReferenceExpression(new Identifier("irisInt_FragData" + replaceIndexes.get(i))));
 			}
 			for (long index : replaceIndexesSet) {
 				tree.injectNode(ASTInjectionPoint.BEFORE_DECLARATIONS,
 					fragDataDeclaration.getInstanceFor(root,
 						new LiteralExpression(Type.INT32, index),
-						new Identifier("iris_FragData" + index)));
+						new Identifier("irisInt_FragData" + index)));
 			}
 			replaceExpressions.clear();
 			replaceIndexes.clear();
 
-			// insert alpha test for iris_FragData0 in the fragment shader
+			// insert alpha test for irisInt_FragData0 in the fragment shader
 			if ((parameters.getAlphaTest() != AlphaTest.ALWAYS && !core) && replaceIndexesSet.contains(0L)) {
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "uniform float iris_currentAlphaTest;");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "uniform float irisInt_currentAlphaTest;");
 				tree.appendMainFunctionBody(t,
-					parameters.getAlphaTest().toExpression("iris_FragData0.a", "iris_currentAlphaTest", "	"));
+					parameters.getAlphaTest().toExpression("irisInt_FragData0.a", "irisInt_currentAlphaTest", "	"));
 			}
 		}
 
@@ -269,20 +269,20 @@ public class CommonTransformer {
 		// This must be defined and valid in all shader passes, including composite
 		// passes. A shader that relies on this behavior is SEUS v11 - it reads
 		// gl_Fog.color and breaks if it is not properly defined.
-		root.rename("gl_Fog", "iris_Fog");
+		root.rename("gl_Fog", "irisInt_Fog");
 		tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform float iris_FogDensity;",
-			"uniform float iris_FogStart;",
-			"uniform float iris_FogEnd;",
-			"uniform vec4 iris_FogColor;",
-			"struct iris_FogParameters {" +
+			"uniform float irisInt_FogDensity;",
+			"uniform float irisInt_FogStart;",
+			"uniform float irisInt_FogEnd;",
+			"uniform vec4 irisInt_FogColor;",
+			"struct irisInt_FogParameters {" +
 				"vec4 color;" +
 				"float density;" +
 				"float start;" +
 				"float end;" +
 				"float scale;" +
 				"};",
-			"iris_FogParameters iris_Fog = iris_FogParameters(iris_FogColor, iris_FogDensity, iris_FogStart, iris_FogEnd, 1.0 / (iris_FogEnd - iris_FogStart));");
+			"irisInt_FogParameters irisInt_Fog = irisInt_FogParameters(irisInt_FogColor, irisInt_FogDensity, irisInt_FogStart, irisInt_FogEnd, 1.0 / (irisInt_FogEnd - irisInt_FogStart));");
 
 		// TODO: Add similar functions for all legacy texture sampling functions
 		renameFunctionCall(root, "texture2D", "texture");
@@ -371,7 +371,7 @@ public class CommonTransformer {
 		//
 		// Note that this happens after we've added our ftransform function - so that
 		// both all the calls and our function are renamed in one go.
-		root.rename("ftransform", "iris_ftransform");
+		root.rename("ftransform", "irisInt_ftransform");
 	}
 
 	public static void replaceGlMultiTexCoordBounded(

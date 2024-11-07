@@ -11,6 +11,7 @@ import io.github.douira.glsl_transformer.ast.transform.ASTInjectionPoint;
 import io.github.douira.glsl_transformer.ast.transform.ASTParser;
 import io.github.douira.glsl_transformer.util.Type;
 import net.irisshaders.iris.gl.shader.ShaderType;
+import net.irisshaders.iris.pipeline.transform.PatchShaderType;
 import net.irisshaders.iris.pipeline.transform.parameter.SodiumParameters;
 
 import static net.irisshaders.iris.pipeline.transform.transformer.CommonTransformer.addIfNotExists;
@@ -23,15 +24,17 @@ public class SodiumTransformer {
 		SodiumParameters parameters) {
 		CommonTransformer.transform(t, tree, root, parameters, false);
 
-		replaceMidTexCoord(t, tree, root, 1.0f / 32768.0f);
-		replaceMCEntity(t, tree, root);
+		if (parameters.type == PatchShaderType.VERTEX) {
+			replaceMidTexCoord(t, tree, root, 1.0f / 32768.0f);
+			replaceMCEntity(t, tree, root, parameters.injectAmbientOcclusion);
+		}
 
 		boolean needsNormal = root.identifierIndex.has("gl_Normal") || root.identifierIndex.has("at_tangent");
 
 		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix0, "mat4(1.0)");
-		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix1, "iris_LightmapTextureMatrix");
-		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_FUNCTIONS, "uniform mat4 iris_LightmapTextureMatrix;");
-		root.rename("gl_ProjectionMatrix", "iris_ProjectionMatrix");
+		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix1, "irisInt_LightmapTextureMatrix");
+		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_FUNCTIONS, "uniform mat4 irisInt_LightmapTextureMatrix;");
+		root.rename("gl_ProjectionMatrix", "irisInt_ProjectionMatrix");
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			// Alias of gl_MultiTexCoord1 on 1.15+ for OptiFine
@@ -62,21 +65,21 @@ public class SodiumTransformer {
 		// TODO: Should probably add the normal matrix as a proper uniform that's
 		// computed on the CPU-side of things
 		root.replaceReferenceExpressions(t, "gl_NormalMatrix",
-			"iris_NormalMatrix");
+			"irisInt_NormalMatrix");
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat3 iris_NormalMatrix;");
+			"uniform mat3 irisInt_NormalMatrix;");
 
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat4 iris_ModelViewMatrixInverse;");
+			"uniform mat4 irisInt_ModelViewMatrixInverse;");
 
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-			"uniform mat4 iris_ProjectionMatrixInverse;");
+			"uniform mat4 irisInt_ProjectionMatrixInverse;");
 
 		// TODO: All of the transformed variants of the input matrices, preferably
 		// computed on the CPU side...
-		root.rename("gl_ModelViewMatrix", "iris_ModelViewMatrix");
-		root.rename("gl_ModelViewMatrixInverse", "iris_ModelViewMatrixInverse");
-		root.rename("gl_ProjectionMatrixInverse", "iris_ProjectionMatrixInverse");
+		root.rename("gl_ModelViewMatrix", "irisInt_ModelViewMatrix");
+		root.rename("gl_ModelViewMatrixInverse", "irisInt_ModelViewMatrixInverse");
+		root.rename("gl_ProjectionMatrixInverse", "irisInt_ProjectionMatrixInverse");
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			// TODO: Vaporwave-Shaderpack expects that vertex positions will be aligned to
@@ -86,8 +89,8 @@ public class SodiumTransformer {
 					"vec4 ftransform() { return gl_ModelViewProjectionMatrix * gl_Vertex; }");
 			}
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform mat4 iris_ProjectionMatrix;",
-				"uniform mat4 iris_ModelViewMatrix;",
+				"uniform mat4 irisInt_ProjectionMatrix;",
+				"uniform mat4 irisInt_ModelViewMatrix;",
 				"uniform vec3 u_RegionOffset;",
 				// _draw_translation replaced with Chunks[_draw_id].offset.xyz
 				"vec4 getVertexPosition() { return vec4(_vert_position + u_RegionOffset + _get_draw_translation(_draw_id), 1.0); }");
@@ -99,12 +102,12 @@ public class SodiumTransformer {
 			injectVertInit(t, tree, root, parameters, needsNormal);
 		} else {
 			tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform mat4 iris_ModelViewMatrix;",
-				"uniform mat4 iris_ProjectionMatrix;");
+				"uniform mat4 irisInt_ModelViewMatrix;",
+				"uniform mat4 irisInt_ProjectionMatrix;");
 		}
 
 		root.replaceReferenceExpressions(t, "gl_ModelViewProjectionMatrix",
-			"(iris_ProjectionMatrix * iris_ModelViewMatrix)");
+			"(irisInt_ProjectionMatrix * irisInt_ModelViewMatrix)");
 
 		CommonTransformer.applyIntelHd4000Workaround(root);
 	}
@@ -182,8 +185,8 @@ vec4 tangent_decode(vec2 e) {
 				"_vert_tex_diffuse_coord = _get_texcoord() + _get_texcoord_bias();" +
 				"_vert_tex_light_coord = vec2(a_LightAndData.xy);" +
 				"_vert_color = a_Color;" +
-				(needsNormal ? "irs_Normal = oct_to_vec3(iris_Normal.xy);" : "") +
-				(needsNormal ? "irs_Tangent = tangent_decode(iris_Normal.zw);" : "") +
+				(needsNormal ? "irs_Normal = oct_to_vec3(irisInt_Normal.xy);" : "") +
+				(needsNormal ? "irs_Tangent = tangent_decode(irisInt_Normal.zw);" : "") +
 				"_draw_id = a_LightAndData[3]; }",
 
 			"uvec3 _get_relative_chunk_coord(uint pos) {\n" +
@@ -197,13 +200,13 @@ vec4 tangent_decode(vec2 e) {
 		addIfNotExists(root, t, tree, "a_TexCoord", Type.U32VEC2, StorageQualifier.StorageType.IN);
 		addIfNotExists(root, t, tree, "a_Color", Type.F32VEC4, StorageQualifier.StorageType.IN);
 		addIfNotExists(root, t, tree, "a_LightAndData", Type.U32VEC4, StorageQualifier.StorageType.IN);
-		if (needsNormal) addIfNotExists(root, t, tree, "iris_Normal", Type.F32VEC4, StorageQualifier.StorageType.IN);
+		if (needsNormal) addIfNotExists(root, t, tree, "irisInt_Normal", Type.F32VEC4, StorageQualifier.StorageType.IN);
 		tree.prependMainFunctionBody(t, "_vert_init();");
 	}
 
 
 	public static void replaceMCEntity(ASTParser t,
-									   TranslationUnit tree, Root root) {
+									   TranslationUnit tree, Root root, boolean injectAO) {
 		Type dimension = Type.BOOL;
 		for (Identifier id : root.identifierIndex.get("mc_Entity")) {
 			TypeAndInitDeclaration initDeclaration = (TypeAndInitDeclaration) id.getAncestor(
@@ -227,37 +230,42 @@ vec4 tangent_decode(vec2 e) {
 		}
 
 
-		root.replaceReferenceExpressions(t, "mc_Entity", "iris_Entity");
+		root.replaceReferenceExpressions(t, "mc_Entity", "irisInt_Entity");
 
 		switch (dimension) {
 			case BOOL:
-				return;
+				break;
 			case FLOAT32:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "float iris_Entity = int(mc_Entity >> 1u) - 1;");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "float irisInt_Entity = int(mc_Entity >> 10u) - 1;");
 				break;
 			case F32VEC2:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec2 iris_Entity = vec2(int(mc_Entity >> 1u) - 1, mc_Entity & 1u);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec2 irisInt_Entity = vec2(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u);");
 				break;
 			case F32VEC3:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec3 iris_Entity = vec3(int(mc_Entity >> 1u) - 1, mc_Entity & 1u, 0.0);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec3 irisInt_Entity = vec3(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u, 0.0);");
 				break;
 			case F32VEC4:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec4 iris_Entity = vec4(int(mc_Entity >> 1u) - 1, mc_Entity & 1u, 0.0, 1.0);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec4 irisInt_Entity = vec4(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u, 0.0, 1.0);");
 				break;
 			case INT32:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "uint iris_Entity = int(mc_Entity >> 1u) - 1;");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "uint irisInt_Entity = int(mc_Entity >> 10u) - 1;");
 				break;
 			case I32VEC2:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec2 iris_Entity = ivec2(int(mc_Entity >> 1u) - 1, mc_Entity & 1u);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec2 irisInt_Entity = ivec2(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u);");
 				break;
 			case I32VEC3:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec3 iris_Entity = ivec3(int(mc_Entity >> 1u) - 1, mc_Entity & 1u, 0);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec3 irisInt_Entity = ivec3(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u, 0);");
 				break;
 			case I32VEC4:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec4 iris_Entity = ivec4(int(mc_Entity >> 1u) - 1, mc_Entity & 1u, 0, 1);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "ivec4 irisInt_Entity = ivec4(int(mc_Entity >> 10u) - 1, mc_Entity >> 9u & 1u, 0, 1);");
 				break;
 			default:
 				throw new IllegalStateException("Got an invalid format mc_Entity (" + dimension.getCompactName() + ").");
+		}
+
+		if (injectAO) {
+			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "float iris_ambientOcclusion = float((mc_Entity >> 1u) & 0xFFu) / 255.0;");
+			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "bool iris_Shade = bool(int(mc_Entity & 1u));");
 		}
 
 		tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "in uint mc_Entity;");
@@ -289,22 +297,22 @@ vec4 tangent_decode(vec2 e) {
 		}
 
 
-		root.replaceReferenceExpressions(t, "mc_midTexCoord", "iris_MidTex");
+		root.replaceReferenceExpressions(t, "mc_midTexCoord", "irisInt_MidTex");
 
 		switch (dimension) {
 			case BOOL:
 				return;
 			case FLOAT32:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "float iris_MidTex = (mc_midTexCoord.x * " + textureScale + ");");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "float irisInt_MidTex = (mc_midTexCoord.x * " + textureScale + ");");
 				break;
 			case F32VEC2:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec2 iris_MidTex = (mc_midTexCoord.xy * " + textureScale + ").xy;");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec2 irisInt_MidTex = (mc_midTexCoord.xy * " + textureScale + ").xy;");
 				break;
 			case F32VEC3:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec3 iris_MidTex = vec3(mc_midTexCoord.xy * " + textureScale + ", 0.0);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec3 irisInt_MidTex = vec3(mc_midTexCoord.xy * " + textureScale + ", 0.0);");
 				break;
 			case F32VEC4:
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec4 iris_MidTex = vec4(mc_midTexCoord.xy * " + textureScale + ", 0.0, 1.0);");
+				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "vec4 irisInt_MidTex = vec4(mc_midTexCoord.xy * " + textureScale + ", 0.0, 1.0);");
 				break;
 			default:
 				throw new IllegalStateException("Somehow got a midTexCoord that is *above* 4 dimensions???");

@@ -20,4 +20,11 @@ public class MixinChunkMeshBufferBuilder implements VertexEncoderInterface {
 			((VertexEncoderInterface) encoder).iris$setContextHolder(contextHolder);
 		}
 	}
+
+	@Override
+	public void iris$setShade(boolean shade) {
+		if (encoder instanceof VertexEncoderInterface) {
+			((VertexEncoderInterface) encoder).iris$setShade(shade);
+		}
+	}
 }

@@ -44,11 +44,11 @@ class CompositeDepthTransformer {
 			}
 		})) {
 			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
-				"uniform sampler2D iris_centerDepthSmooth;");
+				"uniform sampler2D irisInt_centerDepthSmooth;");
 
 			// if centerDepthSmooth is not declared as a uniform, we don't make it available
 			root.replaceReferenceExpressions(t, "centerDepthSmooth",
-				"texture(iris_centerDepthSmooth, vec2(0.5)).r");
+				"texture(irisInt_centerDepthSmooth, vec2(0.5)).r");
 		}
 	}
 }
