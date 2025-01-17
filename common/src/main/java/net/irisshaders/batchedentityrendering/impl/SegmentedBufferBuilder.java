@@ -33,7 +33,7 @@ public class SegmentedBufferBuilder implements MemoryTrackingBuffer {
 
 	public VertexConsumer getBuffer(RenderType renderType) {
 		try {
-			ByteBufferBuilderHolder buffer = buffers.computeIfAbsent(renderType, (r) -> new ByteBufferBuilderHolder(new ByteBufferBuilder(512 * 2024)));
+			ByteBufferBuilderHolder buffer = buffers.computeIfAbsent(renderType, (r) -> new ByteBufferBuilderHolder(new ByteBufferBuilder(renderType.bufferSize())));
 
 			buffer.wasUsed();
 			BufferBuilder builder = builders.computeIfAbsent(renderType, (t) -> new BufferBuilder(buffer.getBuffer(), renderType.mode(), renderType.format()));
