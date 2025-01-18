@@ -6,7 +6,7 @@ plugins {
 
 val MINECRAFT_VERSION by extra { "1.21.1" }
 val NEOFORGE_VERSION by extra { "21.1.58" }
-val FABRIC_LOADER_VERSION by extra { "0.16.4" }
+val FABRIC_LOADER_VERSION by extra { "0.16.10" }
 val FABRIC_API_VERSION by extra { "0.103.0+1.21.1" }
 
 // This value can be set to null to disable Parchment.
