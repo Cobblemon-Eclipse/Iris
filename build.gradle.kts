@@ -9,12 +9,15 @@ val NEOFORGE_VERSION by extra { "21.1.58" }
 val FABRIC_LOADER_VERSION by extra { "0.16.10" }
 val FABRIC_API_VERSION by extra { "0.103.0+1.21.1" }
 
+val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.6.7-snapshot+mc1.21.1-local.jar"))}
+val SODIUM_DEPENDENCY_NEO by extra { "maven.modrinth:sodium:mc1.21.1-0.6.1-neoforge" }
+
 // This value can be set to null to disable Parchment.
 // TODO: Re-add Parchment
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "1.8.1" }
+val MOD_VERSION by extra { "1.8.5" }
 
 allprojects {
     apply(plugin = "java")
