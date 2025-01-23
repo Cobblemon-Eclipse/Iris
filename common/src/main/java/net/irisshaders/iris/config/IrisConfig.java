@@ -218,4 +218,9 @@ public class IrisConfig {
 	public boolean shouldSkip(ResourceLocation value) {
 		return shadersToSkip.contains(value); // TODO
 	}
+
+	public void setUnknown(boolean b) throws IOException {
+		this.allowUnknownShaders = b;
+		save();
+	}
 }
