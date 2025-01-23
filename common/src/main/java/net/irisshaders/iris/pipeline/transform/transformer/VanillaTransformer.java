@@ -71,7 +71,7 @@ public class VanillaTransformer {
 
 		if (parameters.inputs.hasColor() && parameters.type == PatchShaderType.VERTEX) {
 			// TODO: Handle the fragment / geometry shader here
-			if (parameters.alpha == AlphaTests.VERTEX_ALPHA) {
+			if (parameters.alpha.reference() == Float.MAX_VALUE) {
 				root.replaceReferenceExpressions(t, "gl_Color",
 					"vec4((iris_Color * iris_ColorModulator).rgb, iris_ColorModulator.a)");
 			} else {
