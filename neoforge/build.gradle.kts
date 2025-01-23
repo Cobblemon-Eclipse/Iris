@@ -7,7 +7,7 @@ plugins {
 val MINECRAFT_VERSION: String by rootProject.extra
 val PARCHMENT_VERSION: String? by rootProject.extra
 val NEOFORGE_VERSION: String by rootProject.extra
-val SODIUM_DEPENDENCY_NEO: String by rootProject.extra
+val SODIUM_DEPENDENCY_NEO: Any by rootProject.extra
 val MOD_VERSION: String by rootProject.extra
 
 base {
@@ -79,6 +79,7 @@ neoForge {
     runs {
         create("client") {
             client()
+            environment("LD_PRELOAD", "/usr/lib/librenderdoc.so")
         }
     }
 
