@@ -87,6 +87,8 @@ public abstract class MixinShaderInstance implements ShaderInstanceInterface {
 
 	public boolean iris$shouldSkipThis() {
 		if (Iris.getIrisConfig().shouldAllowUnknownShaders()) {
+			if (ShadowRenderer.ACTIVE) return true;
+
 			if (!shouldOverrideShaders()) return false;
 
 			if (shouldSkip == NONE) return false;
@@ -158,7 +160,7 @@ public abstract class MixinShaderInstance implements ShaderInstanceInterface {
 
 				if (pipeline instanceof IrisRenderingPipeline) {
 					if (ShadowRenderer.ACTIVE) {
-						((IrisRenderingPipeline) pipeline).bindDefaultShadow();
+						// ((IrisRenderingPipeline) pipeline).bindDefaultShadow(); don't rn
 					} else {
 						((IrisRenderingPipeline) pipeline).bindDefault();
 					}
