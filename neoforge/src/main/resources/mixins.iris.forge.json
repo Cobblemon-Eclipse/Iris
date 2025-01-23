@@ -6,6 +6,7 @@
   "client": [
     "MixinHumanoidArmorLayer",
     "MixinGameClientEvents",
+    "MixinGooBlock",
     "MixinItemBlockRenderTypes",
     "MixinShaderInstance",
     "MixinRenderFlame",

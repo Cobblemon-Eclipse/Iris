@@ -14,7 +14,7 @@ public record AlphaTest(AlphaTestFunction function, float reference) {
 
 		if (function == AlphaTestFunction.ALWAYS) {
 			return "// alpha test disabled\n";
-		} else if (this == AlphaTests.VERTEX_ALPHA) {
+		} else if (this.reference == Float.MAX_VALUE) {
 			return indentation + "if (!(" + alphaAccessor + " > iris_vertexColorAlpha)) {\n" +
 				indentation + "    discard;\n" +
 				indentation + "}\n";

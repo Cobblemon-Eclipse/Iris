@@ -14,6 +14,7 @@ import net.irisshaders.iris.pipeline.programs.ShaderKey;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.uniforms.SystemTimeUniforms;
+import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.Util;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -456,7 +457,7 @@ public class MixinGameRenderer {
 	private static void override(ShaderKey key, CallbackInfoReturnable<ShaderInstance> cir) {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
-		if (pipeline instanceof ShaderRenderingPipeline) {
+		if (pipeline instanceof ShaderRenderingPipeline && !ImmediateState.bypass) {
 			ShaderInstance override = ((ShaderRenderingPipeline) pipeline).getShaderMap().getShader(key);
 
 			if (override != null) {
