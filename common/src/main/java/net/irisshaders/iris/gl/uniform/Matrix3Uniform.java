@@ -2,29 +2,32 @@ package net.irisshaders.iris.gl.uniform;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.gl.state.ValueUpdateNotifier;
+import org.joml.Matrix3f;
+import org.joml.Matrix3fc;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL46C;
 
 import java.nio.FloatBuffer;
 import java.util.function.Supplier;
 
-public class MatrixUniform extends Uniform {
-	private final FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-	private final Supplier<Matrix4fc> value;
-	private final Matrix4f cachedValue;
+public class Matrix3Uniform extends Uniform {
+	private final FloatBuffer buffer = BufferUtils.createFloatBuffer(9);
+	private final Supplier<Matrix3fc> value;
+	private final Matrix3f cachedValue;
 
-	MatrixUniform(int location, Supplier<Matrix4fc> value) {
+	Matrix3Uniform(int location, Supplier<Matrix3fc> value) {
 		super(location);
 
-		this.cachedValue = new Matrix4f();
+		this.cachedValue = new Matrix3f();
 		this.value = value;
 	}
 
-	MatrixUniform(int location, Supplier<Matrix4fc> value, ValueUpdateNotifier notifier) {
+	Matrix3Uniform(int location, Supplier<Matrix3fc> value, ValueUpdateNotifier notifier) {
 		super(location, notifier);
 
-		this.cachedValue = new Matrix4f();
+		this.cachedValue = new Matrix3f();
 		this.value = value;
 	}
 
@@ -38,7 +41,7 @@ public class MatrixUniform extends Uniform {
 	}
 
 	public void updateValue() {
-		Matrix4fc newValue = value.get();
+		Matrix3fc newValue = value.get();
 
 		if (!cachedValue.equals(newValue)) {
 			cachedValue.set(newValue);
@@ -46,7 +49,7 @@ public class MatrixUniform extends Uniform {
 			cachedValue.get(buffer);
 			buffer.rewind();
 
-			RenderSystem.glUniformMatrix4(location, buffer);
+			GL46C.glUniformMatrix3fv(location, false, buffer);
 		}
 	}
 }

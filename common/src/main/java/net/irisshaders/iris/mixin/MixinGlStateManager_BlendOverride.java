@@ -25,15 +25,7 @@ public class MixinGlStateManager_BlendOverride {
 		}
 	}
 
-	@Inject(method = "_blendFunc", at = @At("HEAD"), cancellable = true)
-	private static void iris$blendFuncLock(int srcFactor, int dstFactor, CallbackInfo ci) {
-		if (BlendModeStorage.isBlendLocked()) {
-			BlendModeStorage.deferBlendFunc(srcFactor, dstFactor, srcFactor, dstFactor);
-			ci.cancel();
-		}
-	}
-
-	@Inject(method = "_blendFuncSeparate", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "glBlendFuncSeparate", at = @At("HEAD"), cancellable = true)
 	private static void iris$blendFuncSeparateLock(int srcRgb, int dstRgb, int srcAlpha, int dstAlpha, CallbackInfo ci) {
 		if (BlendModeStorage.isBlendLocked()) {
 			BlendModeStorage.deferBlendFunc(srcRgb, dstRgb, srcAlpha, dstAlpha);

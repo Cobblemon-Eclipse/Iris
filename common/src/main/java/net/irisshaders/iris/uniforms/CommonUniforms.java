@@ -2,6 +2,7 @@ package net.irisshaders.iris.uniforms;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.gl.state.StateUpdateNotifiers;
@@ -13,8 +14,6 @@ import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.irisshaders.iris.mixin.statelisteners.BooleanStateAccessor;
 import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.mixinterface.LocalPlayerInterface;
-import net.irisshaders.iris.pbr.TextureInfoCache;
-import net.irisshaders.iris.pbr.TextureInfoCache.TextureInfo;
 import net.irisshaders.iris.pbr.TextureTracker;
 import net.irisshaders.iris.shaderpack.IdMap;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -76,9 +75,9 @@ public final class CommonUniforms {
 		// the shader will always be setup (and therefore uniforms will be re-uploaded)
 		// after the texture is changed and before rendering starts.
 		uniforms.uniform2i("atlasSize", () -> {
-			int glId = RenderSystem.getShaderTexture(0);
+			GpuTexture glId = RenderSystem.getShaderTexture(0);
 
-			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
+			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId == null ? -1 : glId.glId());
 			if (texture instanceof TextureAtlas atlas) {
 				TextureAtlasAccessor atlasAccessor = (TextureAtlasAccessor) atlas;
 				return new Vector2i(atlasAccessor.callGetWidth(), atlasAccessor.callGetHeight());
@@ -89,10 +88,11 @@ public final class CommonUniforms {
 		});
 
 		uniforms.uniform2i("gtextureSize", () -> {
-			int glId = GlStateManagerAccessor.getTEXTURES()[0].binding;
-
-			TextureInfo info = TextureInfoCache.INSTANCE.getInfo(glId);
-			return new Vector2i(info.getWidth(), info.getHeight());
+			GpuTexture tex = RenderSystem.getShaderTexture(0);
+			if (tex == null) {
+				return ZERO_VECTOR_2i;
+			}
+			return new Vector2i(tex.getWidth(0), tex.getHeight(0));
 
 		}, StateUpdateNotifiers.bindTextureNotifier);
 

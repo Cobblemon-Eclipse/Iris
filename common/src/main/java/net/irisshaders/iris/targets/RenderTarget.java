@@ -36,11 +36,8 @@ public class RenderTarget {
 		this.width = builder.width;
 		this.height = builder.height;
 
-		int[] textures = new int[2];
-		GlStateManager._genTextures(textures);
-
-		this.mainTexture = textures[0];
-		this.altTexture = textures[1];
+		this.mainTexture = GlStateManager._genTexture();
+		this.altTexture = GlStateManager._genTexture();
 
 		boolean isPixelFormatInteger = builder.internalFormat.getPixelFormat().isInteger();
 		setupTexture(mainTexture, builder.width, builder.height, !isPixelFormatInteger, false);
@@ -116,7 +113,8 @@ public class RenderTarget {
 		requireValid();
 		isValid = false;
 
-		GlStateManager._deleteTextures(new int[]{mainTexture, altTexture});
+		GlStateManager._deleteTexture(mainTexture);
+		GlStateManager._deleteTexture(altTexture);
 	}
 
 	private void requireValid() {

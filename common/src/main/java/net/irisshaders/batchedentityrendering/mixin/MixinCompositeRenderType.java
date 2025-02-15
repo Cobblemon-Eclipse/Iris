@@ -1,8 +1,11 @@
 package net.irisshaders.batchedentityrendering.mixin;
 
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.batchedentityrendering.impl.BlendingStateHolder;
 import net.irisshaders.batchedentityrendering.impl.TransparencyType;
+import net.minecraft.client.renderer.DepthTestFunction;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,32 +14,33 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Optional;
+
 @Mixin(RenderType.CompositeRenderType.class)
 public abstract class MixinCompositeRenderType extends RenderType implements BlendingStateHolder {
 	@Unique
 	private static final String INIT =
-		"<init>(Ljava/lang/String;Lcom/mojang/blaze3d/vertex/VertexFormat;Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;IZZLnet/minecraft/client/renderer/RenderType$CompositeState;)V";
+		"<init>(Ljava/lang/String;IZZLcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/RenderType$CompositeState;)V";
 
 	@Unique
 	private TransparencyType transparencyType;
 
-	private MixinCompositeRenderType(String name, VertexFormat vertexFormat, VertexFormat.Mode drawMode, int expectedBufferSize, boolean hasCrumbling, boolean translucent, Runnable startAction, Runnable endAction) {
-		super(name, vertexFormat, drawMode, expectedBufferSize, hasCrumbling, translucent, startAction, endAction);
+	public MixinCompositeRenderType(String string, int i, boolean bl, boolean bl2, Runnable runnable, Runnable runnable2) {
+		super(string, i, bl, bl2, runnable, runnable2);
 	}
 
 	@Inject(method = INIT, at = @At("RETURN"))
-	private void batchedentityrendering$onCompositeInit(String string, VertexFormat vertexFormat, VertexFormat.Mode mode, int i, boolean bl, boolean bl2, CompositeState compositeState, CallbackInfo ci) {
-		RenderStateShard.TransparencyStateShard transparency = ((CompositeStateAccessor) (Object) compositeState).getTransparency();
-		RenderStateShard.DepthTestStateShard depth = ((CompositeStateAccessor) (Object) compositeState).getDepth();
+	private void batchedentityrendering$onCompositeInit(String string, int i, boolean bl, boolean bl2, RenderPipeline renderPipeline, CompositeState compositeState, CallbackInfo ci) {
+		Optional<BlendFunction> transparency = ((RenderPipelineAccessor) (Object) renderPipeline).getTransparency();
+		DepthTestFunction depth = ((RenderPipelineAccessor) (Object) renderPipeline).getDepth();
 
-		if ("water_mask".equals(name) || depth == RenderStateShard.NO_DEPTH_TEST) {
+		if ("water_mask".equals(name) || depth == DepthTestFunction.NO_DEPTH_TEST) {
 			transparencyType = TransparencyType.WATER_MASK;
 		} else if ("lines".equals(name)) {
 			transparencyType = TransparencyType.LINES;
-		} else if (transparency == RenderStateShardAccessor.getNO_TRANSPARENCY() || "sunrise_sunset".equals(name)) {
+		} else if (transparency.isEmpty() || "sunrise_sunset".equals(name)) {
 			transparencyType = TransparencyType.OPAQUE;
-		} else if (transparency == RenderStateShardAccessor.getGLINT_TRANSPARENCY() ||
-			transparency == RenderStateShardAccessor.getCRUMBLING_TRANSPARENCY()) {
+		} else if (transparency.orElseThrow() == BlendFunction.GLINT) {
 			transparencyType = TransparencyType.DECAL;
 		} else {
 			transparencyType = TransparencyType.GENERAL_TRANSPARENT;

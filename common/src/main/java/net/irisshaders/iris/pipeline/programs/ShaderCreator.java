@@ -5,6 +5,7 @@ import com.google.common.primitives.Ints;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.shaders.CompiledShader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -38,8 +39,8 @@ import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.minecraft.client.renderer.CompiledShaderProgram;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderManager;
-import net.minecraft.client.renderer.ShaderProgramConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -153,7 +154,7 @@ public class ShaderCreator {
 
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
-				return new ExtendedShader(id, shaderResourceFactory, name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);
@@ -292,7 +293,7 @@ public class ShaderCreator {
 			.print();
 
 		JsonElement jsonElement = JsonParser.parseString(shaderJsonString);
-		ShaderProgramConfig shaderProgramConfig = ShaderProgramConfig.CODEC.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonSyntaxException::new);
+		RenderPipeline shaderProgramConfig = RenderPipelines.ENTITY_DECAL; // TODO
 
 		ResourceProvider shaderResourceFactory = new IrisProgramResourceFactory(shaderJsonString, vertex, null, null, null, fragment);
 
@@ -302,7 +303,7 @@ public class ShaderCreator {
 		// TODO 24w34a FALLBACK
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
-				return new FallbackShader(id, shaderProgramConfig, shaderResourceFactory, name, vertexFormat, writingToBeforeTranslucent,
+				return new FallbackShader(id, shaderProgramConfig, name, vertexFormat, writingToBeforeTranslucent,
 					writingToAfterTranslucent, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -364,7 +365,7 @@ public class ShaderCreator {
 			.print();
 
 		JsonElement jsonElement = JsonParser.parseString(shaderJsonString);
-		ShaderProgramConfig shaderProgramConfig = ShaderProgramConfig.CODEC.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonSyntaxException::new);
+		RenderPipeline shaderProgramConfig = RenderPipelines.ENTITY_DECAL; // TODO
 
 		ResourceProvider shaderResourceFactory = new IrisProgramResourceFactory(shaderJsonString, vertex, null, null, null, fragment);
 
@@ -374,7 +375,7 @@ public class ShaderCreator {
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
 				GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), new int[]{0});
-				return new FallbackShader(id, shaderProgramConfig, shaderResourceFactory, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
+				return new FallbackShader(id, shaderProgramConfig, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -404,7 +405,6 @@ public class ShaderCreator {
 
 		ShaderPrinter.printProgram(name).addSources(transformed).print();
 
-		ResourceProvider shaderResourceFactory = new IrisProgramResourceFactory("", vertex, geometry, tessControl, tessEval, fragment);
 
 		List<BufferBlendOverride> overrides = new ArrayList<>();
 		source.getDirectives().getBufferBlendOverrides().forEach(information -> {
@@ -420,7 +420,7 @@ public class ShaderCreator {
 		return new ShaderSupplier(shaderKey, id, () -> {
 			GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), source.getDirectives().hasUnknownDrawBuffers() ? new int[]{0, 1} : source.getDirectives().getDrawBuffers());
 			try {
-				return new ExtendedShader(id, shaderResourceFactory, name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);

@@ -1,5 +1,6 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
@@ -28,7 +29,6 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.ShaderProgramConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class ExtendedShader extends CompiledShaderProgram {
 	private final boolean hasOverrides;
 	private final Uniform modelViewInverse;
 	private final Uniform projectionInverse;
-	private final Uniform normalMatrix;
+	private final Matrix3f normalMatrix = new Matrix3f();
 	private final CustomUniforms customUniforms;
 	private final IrisRenderingPipeline parent;
 	private final ProgramUniforms uniforms;
@@ -78,35 +78,36 @@ public class ExtendedShader extends CompiledShaderProgram {
 	private final float[] tempFloats2 = new float[9];
 	private int textureToUnswizzle;
 
-	public ExtendedShader(int programId, ResourceProvider resourceFactory, String string, VertexFormat vertexFormat, boolean usesTessellation,
+	public ExtendedShader(int programId, String string, VertexFormat vertexFormat, boolean usesTessellation,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
 						  BlendModeOverride blendModeOverride, AlphaTest alphaTest,
 						  Consumer<DynamicLocationalUniformHolder> uniformCreator, BiConsumer<SamplerHolder, ImageHolder> samplerCreator, boolean isIntensity,
 						  IrisRenderingPipeline parent, @Nullable List<BufferBlendOverride> bufferBlendOverrides, CustomUniforms customUniforms) throws IOException {
-		super(programId);
+		super(programId, string);
 
-		List<ShaderProgramConfig.Uniform> uniformList = new ArrayList<>();
-		List<ShaderProgramConfig.Sampler> samplerList = new ArrayList<>();
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ModelViewMat", "matrix4x4", 16, List.of(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_NormalMat", "matrix3x3", 9, List.of(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ProjMat", "matrix4x4", 16, List.of(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_TextureMat", "matrix4x4", 16, List.of(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ColorModulator", "float", 4, List.of(1.0f, 1.0f, 1.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_FogColor", "float", 4, List.of(1.0f, 1.0f, 1.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ModelOffset", "float", 3, List.of(0.0f, 0.0f, 0.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_FogStart", "float", 1, List.of(0.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_FogEnd", "float", 1, List.of(1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_GlintAlpha", "float", 1, List.of(0.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ModelViewMatInverse", "matrix4x4", 16, List.of(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
-		uniformList.add(new ShaderProgramConfig.Uniform("iris_ProjMatInverse", "matrix4x4", 16, List.of(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f)));
+		List<RenderPipeline.UniformDescription> uniformList = new ArrayList<>();
+		List<String> samplerList = new ArrayList<>();
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMat", Uniform.Type.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMat", Uniform.Type.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_TextureMat", Uniform.Type.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ColorModulator", Uniform.Type.VEC4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogColor", Uniform.Type.VEC4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelOffset", Uniform.Type.VEC3));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogStart", Uniform.Type.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogEnd", Uniform.Type.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_GlintAlpha", Uniform.Type.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMatInverse", Uniform.Type.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMatInverse", Uniform.Type.MATRIX4X4));
 
-		samplerList.add(new ShaderProgramConfig.Sampler("Sampler0"));
+		samplerList.add("Sampler0");
 		setupUniforms(uniformList, samplerList);
 
 
 		GLDebug.nameObject(KHRDebug.GL_PROGRAM, programId, string);
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(string, programId);
+
+		uniformBuilder.uniformMatrix3("iris_NormalMat", () -> normalMatrix, (a) -> {});
 		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(programId, IrisSamplers.WORLD_RESERVED_TEXTURE_UNITS);
 		uniformCreator.accept(uniformBuilder);
 		ProgramImages.Builder builder = ProgramImages.builder(programId);
@@ -128,7 +129,6 @@ public class ExtendedShader extends CompiledShaderProgram {
 
 		this.modelViewInverse = this.getUniform("ModelViewMatInverse");
 		this.projectionInverse = this.getUniform("ProjMatInverse");
-		this.normalMatrix = this.getUniform("NormalMat");
 
 		this.intensitySwizzle = isIntensity;
 	}
@@ -178,20 +178,19 @@ public class ExtendedShader extends CompiledShaderProgram {
 		GlStateManager._activeTexture(i);
 
 		if (intensitySwizzle) {
-			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0));
-			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
+			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).glId());
+			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).glId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
 				new int[]{GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED});
 		}
 
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.ALBEDO_TEXTURE_UNIT, RenderSystem.getShaderTexture(0));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.OVERLAY_TEXTURE_UNIT, RenderSystem.getShaderTexture(1));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.LIGHTMAP_TEXTURE_UNIT, RenderSystem.getShaderTexture(2));
+		if (RenderSystem.getShaderTexture(0) != null) RenderSystem.getShaderTexture(0).bindToUnit(0);
+		if (RenderSystem.getShaderTexture(1) != null) RenderSystem.getShaderTexture(1).bindToUnit(1);
+		if (RenderSystem.getShaderTexture(2) != null) RenderSystem.getShaderTexture(2).bindToUnit(2);
 
 		ImmediateState.usingTessellation = usesTessellation;
 
 		uploadIfNotNull(projectionInverse);
 		uploadIfNotNull(modelViewInverse);
-		uploadIfNotNull(normalMatrix);
 
 		samplers.update();
 		uniforms.update();
@@ -236,30 +235,25 @@ public class ExtendedShader extends CompiledShaderProgram {
 	}
 
 	@Override
-	public void setupUniforms(List<ShaderProgramConfig.Uniform> list, List<ShaderProgramConfig.Sampler> list2) {
+	public void setupUniforms(List<RenderPipeline.UniformDescription> list, List<String> list2) {
 		RenderSystem.assertOnRenderThread();
-		Iterator<?> var3 = list.iterator();
 
-		while(var3.hasNext()) {
-			ShaderProgramConfig.Uniform uniform = (ShaderProgramConfig.Uniform)var3.next();
-			String string = uniform.name();
+		for (RenderPipeline.UniformDescription uniformDescription : list) {
+			String string = uniformDescription.name();
 			int i = Uniform.glGetUniformLocation(this.getProgramId(), string);
 			if (i != -1) {
-				Uniform uniform2 = this.parseUniformNode(uniform);
-				uniform2.setLocation(i);
-				super.uniforms.add(uniform2);
-				super.uniformsByName.put(string, uniform2);
+				Uniform uniform = this.createUniform(uniformDescription);
+				uniform.setLocation(i);
+				super.uniforms.add(uniform);
+				this.uniformsByName.put(string, uniform);
 			}
 		}
 
-		var3 = list2.iterator();
-
-		while(var3.hasNext()) {
-			ShaderProgramConfig.Sampler sampler = (ShaderProgramConfig.Sampler)var3.next();
-			int j = Uniform.glGetUniformLocation(this.getProgramId(), sampler.name());
+		for (String string2 : list2) {
+			int j = Uniform.glGetUniformLocation(this.getProgramId(), string2);
 			if (j != -1) {
-				super.samplers.add(sampler);
-				super.samplerLocations.add(j);
+				super.samplers.add(string2);
+				this.samplerLocations.add(j);
 			}
 		}
 

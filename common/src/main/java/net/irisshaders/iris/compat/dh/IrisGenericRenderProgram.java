@@ -39,6 +39,7 @@ import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL32C;
 import org.lwjgl.opengl.GL43C;
+import org.lwjgl.opengl.GL46C;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -208,7 +209,7 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 			matrix.get(buffer);
 			buffer.rewind();
 
-			RenderSystem.glUniformMatrix4(index, false, buffer);
+			RenderSystem.glUniformMatrix4(index, buffer);
 		}
 	}
 
@@ -220,7 +221,7 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 			matrix.get(buffer);
 			buffer.rewind();
 
-			RenderSystem.glUniformMatrix3(index, false, buffer);
+			GL46C.glUniformMatrix3fv(index, false, buffer);
 		}
 	}
 
@@ -240,7 +241,7 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 		setUniform(projectionInverseUniform, toJOML(renderParam.dhModelViewMatrix).invert());
 		setUniform(normalMatrix3fUniform, toJOML(renderParam.dhModelViewMatrix).invert().transpose3x3(new Matrix3f()));
 		Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.LIGHTMAP_TEXTURE_UNIT, RenderSystem.getShaderTexture(2));
+		RenderSystem.getShaderTexture(2).bindToUnit(2);
 		this.setUniform(this.instancedShaderProjectionModelViewMatrixUniform, toJOML(renderParam.dhProjectionMatrix).mul(toJOML(renderParam.dhModelViewMatrix)));
 
 		samplers.update();

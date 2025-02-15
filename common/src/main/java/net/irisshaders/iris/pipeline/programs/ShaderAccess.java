@@ -1,5 +1,6 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -9,10 +10,9 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderDefines;
-import net.minecraft.client.renderer.ShaderProgram;
 import net.minecraft.resources.ResourceLocation;
 
 public class ShaderAccess {
@@ -23,8 +23,6 @@ public class ShaderAccess {
 		.add("Normal", VertexFormatElement.NORMAL)
 		.padding(1)
 		.build();
-	public static final ShaderProgram TRANSLUCENT_PARTICLE_SHADER = new ShaderProgram(ResourceLocation.fromNamespaceAndPath("iris", "translucent_particle"), DefaultVertexFormat.PARTICLE, ShaderDefines.EMPTY);
-	public static final ShaderProgram WEATHER_SHADER = new ShaderProgram(ResourceLocation.fromNamespaceAndPath("iris", "weather"), DefaultVertexFormat.PARTICLE, ShaderDefines.EMPTY);
 
 	public static CompiledShaderProgram getParticleTranslucentShader() {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
@@ -37,7 +35,7 @@ public class ShaderAccess {
 			}
 		}
 
-		return Minecraft.getInstance().getShaderManager().getProgram(CoreShaders.PARTICLE);
+		return Minecraft.getInstance().getShaderManager().getProgram(RenderPipelines.TRANSLUCENT_PARTICLE);
 	}
 
 	public static CompiledShaderProgram getIEVBOShader() {
@@ -50,10 +48,6 @@ public class ShaderAccess {
 
 		return null;
 	}
-
-	public static ShaderProgram MEKANISM_FLAME = new ShaderProgram(ResourceLocation.fromNamespaceAndPath("iris", "mekanism_flame"), DefaultVertexFormat.POSITION_TEX_COLOR, ShaderDefines.EMPTY);
-	public static ShaderProgram MEKASUIT = new ShaderProgram(ResourceLocation.fromNamespaceAndPath("iris", "mekasuit"), DefaultVertexFormat.NEW_ENTITY, ShaderDefines.EMPTY);
-	public static ShaderProgram IE_COMPAT = new ShaderProgram(ResourceLocation.fromNamespaceAndPath("iris", "ie_vbo"), IE_FORMAT, ShaderDefines.EMPTY);
 
 	// TODO SPS 1.21.2
 }

@@ -1,5 +1,6 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.shaders.Uniform;
@@ -14,7 +15,6 @@ import net.irisshaders.iris.samplers.IrisSamplers;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.ShaderProgramConfig;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -37,12 +37,12 @@ public class FallbackShader extends CompiledShaderProgram {
 	private final int overlay;
 	private final int lightmap;
 
-	public FallbackShader(int programId, ShaderProgramConfig shaderProgramConfig, ResourceProvider resourceFactory, String string, VertexFormat vertexFormat,
+	public FallbackShader(int programId, RenderPipeline shaderProgramConfig, String string, VertexFormat vertexFormat,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
 						  BlendModeOverride blendModeOverride, float alphaValue, IrisRenderingPipeline parent) throws IOException {
-		super(programId);
+		super(programId, string);
 
-		setupUniforms(shaderProgramConfig.uniforms(), shaderProgramConfig.samplers());
+		setupUniforms(shaderProgramConfig.getUniforms(), shaderProgramConfig.getSamplers());
 
 		this.parent = parent;
 		this.blendModeOverride = blendModeOverride;
@@ -94,9 +94,9 @@ public class FallbackShader extends CompiledShaderProgram {
 			}
 		}
 
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.ALBEDO_TEXTURE_UNIT, RenderSystem.getShaderTexture(0));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.OVERLAY_TEXTURE_UNIT, RenderSystem.getShaderTexture(1));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.LIGHTMAP_TEXTURE_UNIT, RenderSystem.getShaderTexture(2));
+		if (RenderSystem.getShaderTexture(0) != null) RenderSystem.getShaderTexture(0).bindToUnit(0);
+		if (RenderSystem.getShaderTexture(1) != null) RenderSystem.getShaderTexture(1).bindToUnit(1);
+		if (RenderSystem.getShaderTexture(2) != null) RenderSystem.getShaderTexture(2).bindToUnit(2);
 
 		GlStateManager._glUseProgram(this.getProgramId());
 

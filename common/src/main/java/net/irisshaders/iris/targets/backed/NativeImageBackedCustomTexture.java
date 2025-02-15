@@ -16,7 +16,7 @@ import java.util.function.IntSupplier;
 
 public class NativeImageBackedCustomTexture extends DynamicTexture implements TextureAccess {
 	public NativeImageBackedCustomTexture(CustomTextureData.PngData textureData) throws IOException {
-		super(create(textureData.getContent()));
+		super(() -> "PNG", create(textureData.getContent()));
 
 		// By default, images are unblurred and not clamped.
 
@@ -44,7 +44,7 @@ public class NativeImageBackedCustomTexture extends DynamicTexture implements Te
 		NativeImage image = Objects.requireNonNull(getPixels());
 
 		bind();
-		image.upload(0, 0, 0, false);
+		this.texture.write(image);
 	}
 
 	@Override

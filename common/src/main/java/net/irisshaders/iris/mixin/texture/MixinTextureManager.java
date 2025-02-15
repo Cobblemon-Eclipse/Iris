@@ -32,7 +32,7 @@ public class MixinTextureManager {
 		PBRTextureManager.INSTANCE.clear();
 	}
 
-	@Inject(method = "_dumpAllSheets(Ljava/nio/file/Path;)V", at = @At("RETURN"))
+	@Inject(method = "dumpAllSheets(Ljava/nio/file/Path;)V", at = @At("RETURN"))
 	private void iris$onInnerDumpTextures(Path path, CallbackInfo ci) {
 		PBRTextureManager.INSTANCE.dumpTextures(path);
 	}

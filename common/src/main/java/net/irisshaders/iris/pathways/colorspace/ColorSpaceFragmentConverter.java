@@ -2,6 +2,7 @@ package net.irisshaders.iris.pathways.colorspace;
 
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.program.Program;
@@ -29,7 +30,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 	private GlFramebuffer framebuffer;
 	private int swapTexture;
 
-	private int target;
+	private GpuTexture target;
 
 	public ColorSpaceFragmentConverter(int width, int height, ColorSpace colorSpace) {
 		rebuildProgram(width, height, colorSpace);
@@ -69,7 +70,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		ProgramBuilder builder = ProgramBuilder.begin("colorSpaceFragment", vertexSource, null, source, ImmutableSet.of());
 
 		builder.uniformMatrix(UniformUpdateFrequency.ONCE, "projection", () -> new Matrix4f(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1));
-		builder.addDynamicSampler(() -> target, "readImage");
+		builder.addDynamicSampler(() -> target.glId(), "readImage");
 
 		swapTexture = GlStateManager._genTexture();
 		IrisRenderSystem.texImage2D(swapTexture, GL30C.GL_TEXTURE_2D, 0, GL30C.GL_RGBA8, width, height, 0, GL30C.GL_RGBA, GL30C.GL_UNSIGNED_BYTE, null);
@@ -79,7 +80,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		this.program = builder.build();
 	}
 
-	public void process(int targetImage) {
+	public void process(GpuTexture targetImage) {
 		if (colorSpace == ColorSpace.SRGB) return;
 
 		this.target = targetImage;
@@ -88,6 +89,6 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		FullScreenQuadRenderer.INSTANCE.render();
 		Program.unbind();
 		framebuffer.bindAsReadBuffer();
-		IrisRenderSystem.copyTexSubImage2D(targetImage, GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+		IrisRenderSystem.copyTexSubImage2D(targetImage.glId(), GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 	}
 }

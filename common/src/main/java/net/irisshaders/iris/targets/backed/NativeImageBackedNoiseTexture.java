@@ -11,7 +11,7 @@ import java.util.function.IntSupplier;
 
 public class NativeImageBackedNoiseTexture extends DynamicTexture implements TextureAccess {
 	public NativeImageBackedNoiseTexture(int size) {
-		super(create(size));
+		super(() -> "Noise x" + size, create(size));
 	}
 
 	private static NativeImage create(int size) {
@@ -34,7 +34,7 @@ public class NativeImageBackedNoiseTexture extends DynamicTexture implements Tex
 		NativeImage image = Objects.requireNonNull(getPixels());
 
 		bind();
-		image.upload(0, 0, 0, false);
+		this.texture.write(image);
 	}
 
 	@Override

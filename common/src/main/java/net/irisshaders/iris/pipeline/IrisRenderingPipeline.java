@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
@@ -40,7 +41,6 @@ import net.irisshaders.iris.pathways.HorizonRenderer;
 import net.irisshaders.iris.pathways.colorspace.ColorSpace;
 import net.irisshaders.iris.pathways.colorspace.ColorSpaceConverter;
 import net.irisshaders.iris.pathways.colorspace.ColorSpaceFragmentConverter;
-import net.irisshaders.iris.pbr.TextureInfoCache;
 import net.irisshaders.iris.pbr.format.TextureFormat;
 import net.irisshaders.iris.pbr.format.TextureFormatLoader;
 import net.irisshaders.iris.pbr.texture.PBRTextureHolder;
@@ -90,7 +90,6 @@ import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -220,9 +219,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		this.pack = programSet.getPack();
 
 		RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
-		int depthTextureId = main.getDepthTextureId();
-		int internalFormat = TextureInfoCache.INSTANCE.getInfo(depthTextureId).getInternalFormat();
-		DepthBufferFormat depthBufferFormat = DepthBufferFormat.fromGlEnumOrDefault(internalFormat);
+		GpuTexture depthTextureId = main.getDepthTexture();
+		DepthBufferFormat depthBufferFormat = DepthBufferFormat.fromMojang(depthTextureId.getFormat());
 
 		if (!pack.getBufferObjects().isEmpty()) {
 			if (IrisRenderSystem.supportsSSBO()) {
@@ -289,7 +287,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 		BufferFlipper flipper = new BufferFlipper();
 
-		this.centerDepthSampler = new CenterDepthSampler(() -> renderTargets.getDepthTexture(), programSet.getPackDirectives().getCenterDepthHalfLife());
+		this.centerDepthSampler = new CenterDepthSampler(() -> renderTargets.getDepthTexture().glId(), programSet.getPackDirectives().getCenterDepthHalfLife());
 
 		this.shadowMapResolution = programSet.getPackDirectives().getShadowDirectives().getResolution();
 
@@ -496,7 +494,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 				}
 
 				@Override
-				public void process(int target) {
+				public void process(GpuTexture target) {
 
 				}
 			};
@@ -897,9 +895,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 		RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
 
-		int depthTextureId = main.getDepthTextureId();
-		int internalFormat = TextureInfoCache.INSTANCE.getInfo(depthTextureId).getInternalFormat();
-		DepthBufferFormat depthBufferFormat = DepthBufferFormat.fromGlEnumOrDefault(internalFormat);
+		GpuTexture depthTextureId = main.getDepthTexture();
+		DepthBufferFormat depthBufferFormat = DepthBufferFormat.fromMojang(depthTextureId.getFormat());
 
 		boolean changed = renderTargets.resizeIfNeeded(((Blaze3dRenderTargetExt) main).iris$getDepthBufferVersion(), depthTextureId, main.width,
 			main.height, depthBufferFormat, packDirectives);
@@ -1040,9 +1037,6 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		// a pack not overriding those shader programs.
 		//
 		// Not good!
-
-		// Reset shader or whatever...
-		RenderSystem.setShader(CoreShaders.POSITION);
 	}
 
 	@Override
@@ -1055,7 +1049,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 	@Override
 	public void finalizeGameRendering() {
-		colorSpaceConverter.process(Minecraft.getInstance().getMainRenderTarget().getColorTextureId());
+		colorSpaceConverter.process(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 	}
 
 	@Override
@@ -1183,7 +1177,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 		for (int i = 0; i < 12; i++) {
 			// Clear all shader textures
-			RenderSystem.setShaderTexture(i, 0);
+			RenderSystem.setShaderTexture(i, (GpuTexture) null);
 		}
 
 		if (shadowCompositeRenderer != null) {
@@ -1279,7 +1273,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 			RenderSystem.setShaderColor(fogColor.x, fogColor.y, fogColor.z, fogColor.w);
 
-			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection(), CoreShaders.POSITION);
+			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection());
 
 			RenderSystem.depthMask(true);
 

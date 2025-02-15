@@ -2,6 +2,9 @@ package net.irisshaders.iris.pbr.texture;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
@@ -45,7 +48,6 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		this.atlasTexture = atlasTexture;
 		this.type = type;
 		id = ResourceLocation.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
-		setFilter(false, true);
 	}
 
 	public static void syncAnimation(SpriteContents.Ticker source, SpriteContents.Ticker target) {
@@ -118,8 +120,9 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	public void upload(int atlasWidth, int atlasHeight, int mipLevel) {
+		this.texture = new GpuTexture("PBR", TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
+		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
 		int glId = getId();
-		TextureUtil.prepareImage(glId, mipLevel, atlasWidth, atlasHeight);
 		TextureManipulationUtil.fillWithColor(glId, mipLevel, type.getDefaultValue());
 		width = atlasWidth;
 		height = atlasHeight;
@@ -154,6 +157,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 			upload(atlasWidth, atlasHeight, mipLevel);
 			return true;
 		} catch (Throwable t) {
+			Iris.logger.info("Failed to upload PBR texture atlas " + id, t);
 			return false;
 		}
 	}
@@ -171,18 +175,18 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 				SpriteContentsTickerAccessor tickerAccessor = (SpriteContentsTickerAccessor) targetTicker;
 				SpriteContentsAnimatedTextureAccessor infoAccessor = (SpriteContentsAnimatedTextureAccessor) tickerAccessor.getAnimationInfo();
 
-				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex());
+				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture);
 				return;
 			}
 		}
 
-		sprite.uploadFirstFrame();
+		sprite.uploadFirstFrame(texture);
 	}
 
 	public void cycleAnimationFrames() {
 		bind();
 		for (TextureAtlasSprite.Ticker ticker : animatedTextures) {
-			ticker.tickAndUpload();
+			ticker.tickAndUpload(texture);
 		}
 	}
 

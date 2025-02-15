@@ -1,9 +1,11 @@
 package net.irisshaders.iris.layer;
 
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.batchedentityrendering.impl.BlendingStateHolder;
 import net.irisshaders.batchedentityrendering.impl.TransparencyType;
 import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
 import net.irisshaders.iris.mixin.rendertype.RenderTypeAccessor;
+import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +18,7 @@ public class InnerWrappedRenderType extends RenderType implements WrappableRende
 	private final RenderType wrapped;
 
 	public InnerWrappedRenderType(String name, RenderType wrapped, RenderStateShard extra) {
-		super(name, wrapped.format(), wrapped.mode(), wrapped.bufferSize(),
+		super(name, wrapped.bufferSize(),
 			wrapped.affectsCrumbling(), shouldSortOnUpload(wrapped), wrapped::setupRenderState, wrapped::clearRenderState);
 
 		this.extra = extra;
@@ -77,6 +79,21 @@ public class InnerWrappedRenderType extends RenderType implements WrappableRende
 		InnerWrappedRenderType other = (InnerWrappedRenderType) object;
 
 		return Objects.equals(this.wrapped, other.wrapped) && Objects.equals(this.extra, other.extra);
+	}
+
+	@Override
+	public @Nullable CompiledShaderProgram getCompiledShaderProgram() {
+		return wrapped.getCompiledShaderProgram();
+	}
+
+	@Override
+	public VertexFormat format() {
+		return wrapped.format();
+	}
+
+	@Override
+	public VertexFormat.Mode mode() {
+		return wrapped.mode();
 	}
 
 	@Override

@@ -29,7 +29,7 @@ public class MatrixFromFloatArrayUniform extends Uniform {
 			buffer.put(cachedValue);
 			buffer.rewind();
 
-			RenderSystem.glUniformMatrix4(location, false, buffer);
+			RenderSystem.glUniformMatrix4(location, buffer);
 		}
 	}
 }

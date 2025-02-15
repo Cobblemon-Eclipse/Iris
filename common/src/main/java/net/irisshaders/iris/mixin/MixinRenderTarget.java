@@ -18,11 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(RenderTarget.class)
 public class MixinRenderTarget implements Blaze3dRenderTargetExt {
-	@Shadow
-	protected int depthBufferId;
 
-	@Shadow
-	protected int colorTextureId;
 	@Shadow
 	public int frameBufferId;
 	@Shadow
@@ -41,8 +37,7 @@ public class MixinRenderTarget implements Blaze3dRenderTargetExt {
 
 	@Inject(method = "createBuffers", at = @At(value = "RETURN"))
 	private void nameDepthBuffer(int i, int j, CallbackInfo ci) {
-		if (this.useDepth) GLDebug.nameObject(GL43C.GL_TEXTURE, this.depthBufferId, "Main depth texture");
-		GLDebug.nameObject(GL43C.GL_TEXTURE, this.colorTextureId, "Main color texture");
+
 		GLDebug.nameObject(GL43C.GL_FRAMEBUFFER, this.frameBufferId, "Main framebuffer");
 	}
 

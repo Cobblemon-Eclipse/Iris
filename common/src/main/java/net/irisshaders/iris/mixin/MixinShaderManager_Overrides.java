@@ -1,5 +1,6 @@
 package net.irisshaders.iris.mixin;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.caffeinemc.mods.sodium.client.render.immediate.CloudRenderer;
@@ -16,9 +17,8 @@ import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.CoreShaders;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderManager;
-import net.minecraft.client.renderer.ShaderProgram;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,123 +37,107 @@ import static net.irisshaders.iris.pipeline.programs.ShaderOverrides.isBlockEnti
 @Mixin(ShaderManager.class)
 public abstract class MixinShaderManager_Overrides {
 	@Shadow
-	public abstract @Nullable CompiledShaderProgram getProgram(ShaderProgram shaderProgram);
+	public abstract @Nullable CompiledShaderProgram getProgram(RenderPipeline shaderProgram);
 
 	private static final Function<IrisRenderingPipeline, ShaderKey> FAKE_FUNCTION = p -> null;
 
 	@Unique
-	private static final Map<ShaderProgram, Function<IrisRenderingPipeline, ShaderKey>> coreShaderMap = new Object2ObjectArrayMap<>();
-	private static final Map<ShaderProgram, Function<IrisRenderingPipeline, ShaderKey>> coreShaderMapShadow = new Object2ObjectArrayMap<>();
+	private static final Map<RenderPipeline, Function<IrisRenderingPipeline, ShaderKey>> coreShaderMap = new Object2ObjectArrayMap<>();
+	private static final Map<RenderPipeline, Function<IrisRenderingPipeline, ShaderKey>> coreShaderMapShadow = new Object2ObjectArrayMap<>();
 
 	static {
-			coreShaderMap.put(CoreShaders.POSITION, p -> ShaderOverrides.getSkyShader((IrisRenderingPipeline) p));
-			coreShaderMap.put(CoreShaders.POSITION_TEX, p -> ShaderOverrides.getSkyTexShader((IrisRenderingPipeline) p));
-			coreShaderMap.put(CoreShaders.POSITION_TEX_COLOR, p -> ShaderOverrides.getSkyTexColorShader((IrisRenderingPipeline) p));
-			coreShaderMap.put(CoreShaders.POSITION_COLOR, p -> ShaderOverrides.getSkyColorShader((IrisRenderingPipeline) p));
-			coreShaderMap.put(CoreShaders.PARTICLE, p -> ShaderKey.PARTICLES);
-			coreShaderMap.put(ShaderAccess.TRANSLUCENT_PARTICLE_SHADER, p -> ShaderKey.PARTICLES_TRANS);
-			coreShaderMap.put(ShaderAccess.WEATHER_SHADER, p -> ShaderKey.WEATHER);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_SOLID, p -> getSolid(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ARMOR_CUTOUT_NO_CULL, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ARMOR_TRANSLUCENT, p -> getTranslucent(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_GLINT, p -> ShaderKey.GLINT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_GLINT, p -> ShaderKey.GLINT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_GLINT_TRANSLUCENT, p -> ShaderKey.GLINT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ARMOR_ENTITY_GLINT, p -> ShaderKey.GLINT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT_NO_CULL, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT_NO_CULL_Z_OFFSET, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_SHADOW, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_SMOOTH_CUTOUT, p -> getCutout(p));
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_TRANSLUCENT, MixinShaderManager_Overrides::getTranslucent);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE, p -> ShaderKey.ENTITIES_EYES_TRANS);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_ALPHA, p -> ShaderKey.ENTITIES_ALPHA);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_DECAL, p -> ShaderKey.ENTITIES_CUTOUT_DIFFUSE);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ITEM_ENTITY_TRANSLUCENT_CULL, MixinShaderManager_Overrides::getTranslucent);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_SOLID, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.MOVING_BLOCK : 		ShaderKey.TERRAIN_SOLID);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_CUTOUT, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.MOVING_BLOCK : ShaderKey.TERRAIN_CUTOUT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_CUTOUT_MIPPED, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.MOVING_BLOCK : ShaderKey.TERRAIN_CUTOUT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TRANSLUCENT, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.MOVING_BLOCK : ShaderKey.TERRAIN_TRANSLUCENT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TRIPWIRE, p -> ShaderKey.TERRAIN_TRANSLUCENT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_LINES, p -> ShaderKey.LINES);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT_BACKGROUND, p -> ShaderKey.TEXT_BG);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT_BACKGROUND_SEE_THROUGH, p -> ShaderKey.TEXT_BG);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.TEXT_BE : ShaderKey.TEXT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT_SEE_THROUGH, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.TEXT_BE : ShaderKey.TEXT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT_INTENSITY, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.TEXT_INTENSITY_BE : ShaderKey.TEXT_INTENSITY);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TEXT_INTENSITY_SEE_THROUGH, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.TEXT_INTENSITY_BE : ShaderKey.TEXT_INTENSITY);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_EYES, p -> ShaderKey.ENTITIES_EYES);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENTITY_NO_OUTLINE, MixinShaderManager_Overrides::getTranslucent);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_BREEZE_WIND, MixinShaderManager_Overrides::getTranslucent);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_ENERGY_SWIRL, p -> ShaderKey.ENTITIES_CUTOUT);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_BEACON_BEAM, p -> ShaderKey.BEACON);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_LIGHTNING, p -> ShaderKey.LIGHTNING);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_END_PORTAL, MixinShaderManager_Overrides::getCutout);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_END_GATEWAY, MixinShaderManager_Overrides::getCutout);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_LEASH, p -> ShaderKey.LEASH);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_WATER_MASK, p -> ShaderKey.ENTITIES_SOLID);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_CLOUDS, p -> ShaderKey.CLOUDS);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_CRUMBLING, p -> ShaderKey.CRUMBLING);
-			coreShaderMap.put(CloudRendererAccessor.getCLOUDS_SHADER(), p -> ShaderKey.CLOUDS_SODIUM);
-			coreShaderMap.put(CoreShaders.RENDERTYPE_TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.MOVING_BLOCK);
+		coreShaderMap.put(RenderPipelines.ARMOR_CUTOUT_NO_CULL, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ARMOR_DECAL_CUTOUT_NO_CULL, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_CUTOUT, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_CUTOUT_NO_CULL, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_CUTOUT_NO_CULL_Z_OFFSET, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_SMOOTH_CUTOUT, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_DECAL, MixinShaderManager_Overrides::getCutout);
+		coreShaderMap.put(RenderPipelines.ENTITY_SOLID, MixinShaderManager_Overrides::getSolid);
+		coreShaderMap.put(RenderPipelines.ENTITY_SHADOW, MixinShaderManager_Overrides::getTranslucent);
+		coreShaderMap.put(RenderPipelines.EYES, t -> ShaderKey.ENTITIES_EYES);
+		coreShaderMap.put(RenderPipelines.WEATHER_DEPTH_WRITE, t -> ShaderKey.WEATHER);
+		coreShaderMap.put(RenderPipelines.WEATHER_NO_DEPTH_WRITE, t -> ShaderKey.WEATHER);
+		coreShaderMap.put(RenderPipelines.OPAQUE_PARTICLE, t -> ShaderKey.PARTICLES);
+		coreShaderMap.put(RenderPipelines.TRANSLUCENT_PARTICLE, t -> ShaderKey.PARTICLES_TRANS);
+		coreShaderMap.put(RenderPipelines.CRUMBLING, t -> ShaderKey.CRUMBLING);
+		coreShaderMap.put(RenderPipelines.DRAGON_RAYS, t -> ShaderKey.LIGHTNING);
+		coreShaderMap.put(RenderPipelines.DRAGON_RAYS_DEPTH, t -> ShaderKey.LIGHTNING);
+		coreShaderMap.put(RenderPipelines.LIGHTNING, t -> ShaderKey.LIGHTNING);
+		coreShaderMap.put(RenderPipelines.END_GATEWAY, t -> ShaderKey.BLOCK_ENTITY);
+		coreShaderMap.put(RenderPipelines.LEASH, t -> ShaderKey.LEASH);
+		coreShaderMap.put(RenderPipelines.END_PORTAL, t -> ShaderKey.BLOCK_ENTITY);
+		coreShaderMap.put(RenderPipelines.WATER_MASK, t -> ShaderKey.BASIC);
+		coreShaderMap.put(RenderPipelines.TEXT, t -> ShaderKey.TEXT);
+		coreShaderMap.put(RenderPipelines.TEXT_INTENSITY, t -> ShaderKey.TEXT_INTENSITY);
+		coreShaderMap.put(RenderPipelines.TEXT_SEE_THROUGH, t -> ShaderKey.TEXT);
+		coreShaderMap.put(RenderPipelines.TEXT_POLYGON_OFFSET, t -> ShaderKey.TEXT);
+		coreShaderMap.put(RenderPipelines.TEXT_BACKGROUND, t -> ShaderKey.TEXT_BG);
+		coreShaderMap.put(RenderPipelines.TEXT_BACKGROUND_SEE_THROUGH, t -> ShaderKey.TEXT_BG);
+		coreShaderMap.put(RenderPipelines.TEXT_INTENSITY_SEE_THROUGH, t -> ShaderKey.TEXT);
+		coreShaderMap.put(RenderPipelines.DRAGON_EXPLOSION_ALPHA, t -> ShaderKey.ENTITIES_ALPHA);
+		coreShaderMap.put(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, t -> ShaderKey.TERRAIN_TRANSLUCENT);
+		coreShaderMap.put(RenderPipelines.ARMOR_TRANSLUCENT, MixinShaderManager_Overrides::getTranslucent);
+		coreShaderMap.put(RenderPipelines.GLINT, t -> ShaderKey.GLINT);
+		coreShaderMap.put(RenderPipelines.LINES, t -> ShaderKey.LINES);
+		coreShaderMap.put(RenderPipelines.ENTITY_SOLID_Z_OFFSET_FORWARD, MixinShaderManager_Overrides::getSolid);
+		coreShaderMap.put(RenderPipelines.ENTITY_TRANSLUCENT, MixinShaderManager_Overrides::getTranslucent);
+		coreShaderMap.put(RenderPipelines.ITEM_ENTITY_TRANSLUCENT_CULL, MixinShaderManager_Overrides::getTranslucent);
+		coreShaderMap.put(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE, i -> ShaderKey.ENTITIES_EYES_TRANS);
+		coreShaderMap.put(CloudRenderer.CLOUDS_FULL, i -> ShaderKey.CLOUDS_SODIUM);
+		coreShaderMap.put(CloudRenderer.CLOUDS_FLAT, i -> ShaderKey.CLOUDS_SODIUM);
+		coreShaderMap.put(RenderPipelines.CELESTIAL, i -> ShaderKey.SKY_TEXTURED_COLOR);
+		coreShaderMap.put(RenderPipelines.SUNRISE_SUNSET, i -> ShaderKey.SKY_BASIC_COLOR);
+		coreShaderMap.put(RenderPipelines.SKY, i -> ShaderKey.SKY_BASIC);
+		coreShaderMap.put(RenderPipelines.STARS, i -> ShaderKey.SKY_BASIC);
 
-			coreShaderMapShadow.put(CoreShaders.POSITION, p -> ShaderKey.SHADOW_BASIC);
-			coreShaderMapShadow.put(CoreShaders.POSITION_TEX, p -> ShaderKey.SHADOW_TEX);
-			coreShaderMapShadow.put(CoreShaders.POSITION_TEX_COLOR, p -> ShaderKey.SHADOW_TEX_COLOR);
-			coreShaderMapShadow.put(CoreShaders.POSITION_COLOR, p -> ShaderKey.SHADOW_BASIC_COLOR);
-			coreShaderMapShadow.put(CoreShaders.PARTICLE, p -> ShaderKey.SHADOW_PARTICLES);
-			coreShaderMapShadow.put(ShaderAccess.TRANSLUCENT_PARTICLE_SHADER, p -> ShaderKey.SHADOW_PARTICLES);
-			coreShaderMapShadow.put(ShaderAccess.WEATHER_SHADER, p -> ShaderKey.SHADOW_PARTICLES);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_SOLID, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ARMOR_CUTOUT_NO_CULL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_GLINT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_GLINT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_GLINT_TRANSLUCENT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ARMOR_ENTITY_GLINT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT_NO_CULL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_CUTOUT_NO_CULL_Z_OFFSET, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_SMOOTH_CUTOUT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_SHADOW, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_TRANSLUCENT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_DECAL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_ALPHA, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ITEM_ENTITY_TRANSLUCENT_CULL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_SOLID, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_CUTOUT, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_CUTOUT_MIPPED, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TRANSLUCENT, p -> ShaderOverrides.isBlockEntities((IrisRenderingPipeline) p) ? ShaderKey.SHADOW_ENTITIES_CUTOUT : ShaderKey.SHADOW_TERRAIN_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TRIPWIRE, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ARMOR_TRANSLUCENT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_LINES, p -> ShaderKey.SHADOW_LINES);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT_BACKGROUND, p -> ShaderKey.SHADOW_TEXT_BG);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT_BACKGROUND_SEE_THROUGH, p -> ShaderKey.SHADOW_TEXT_BG);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT, p -> ShaderKey.SHADOW_TEXT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT_SEE_THROUGH, p -> ShaderKey.SHADOW_TEXT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT_INTENSITY, p -> ShaderKey.SHADOW_TEXT_INTENSITY);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TEXT_INTENSITY_SEE_THROUGH, p -> ShaderKey.SHADOW_TEXT_INTENSITY);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_EYES, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENTITY_NO_OUTLINE, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_BREEZE_WIND, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_ENERGY_SWIRL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_BEACON_BEAM, p -> ShaderKey.SHADOW_BEACON_BEAM);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_LIGHTNING, p -> ShaderKey.SHADOW_LIGHTNING);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_END_PORTAL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_END_GATEWAY, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_LEASH, p -> ShaderKey.SHADOW_LEASH);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_WATER_MASK, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_CLOUDS, p -> ShaderKey.SHADOW_CLOUDS);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_CRUMBLING, p -> ShaderKey.SHADOW_BASIC);
-			coreShaderMapShadow.put(CloudRendererAccessor.getCLOUDS_SHADER(), p -> ShaderKey.SHADOW_CLOUDS);
-			coreShaderMapShadow.put(CoreShaders.RENDERTYPE_TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
 
-		// Check that all shaders are accounted for
-		for (ShaderProgram program : CoreShaders.getProgramsToPreload()) {
-			if (coreShaderMap.containsKey(program) && !coreShaderMapShadow.containsKey(program)) {
-				throw new IllegalStateException("Shader program " + program + " is not accounted for in the shadow list");
-			}
-		}
+
+		coreShaderMapShadow.put(RenderPipelines.ARMOR_CUTOUT_NO_CULL, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ARMOR_DECAL_CUTOUT_NO_CULL, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_CUTOUT, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.END_SKY, t -> ShaderKey.TEXTURED);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_CUTOUT_NO_CULL, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_CUTOUT_NO_CULL_Z_OFFSET, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_SMOOTH_CUTOUT, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_DECAL, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_SOLID, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_SHADOW, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.EYES, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.WEATHER_DEPTH_WRITE, t -> ShaderKey.SHADOW_PARTICLES);
+		coreShaderMapShadow.put(RenderPipelines.WEATHER_NO_DEPTH_WRITE, t -> ShaderKey.SHADOW_PARTICLES);
+		coreShaderMapShadow.put(RenderPipelines.OPAQUE_PARTICLE, t -> ShaderKey.SHADOW_PARTICLES);
+		coreShaderMapShadow.put(RenderPipelines.TRANSLUCENT_PARTICLE, t -> ShaderKey.SHADOW_PARTICLES);
+		coreShaderMapShadow.put(RenderPipelines.CRUMBLING, t -> ShaderKey.SHADOW_BASIC);
+		coreShaderMapShadow.put(RenderPipelines.DRAGON_RAYS, t -> ShaderKey.SHADOW_LIGHTNING);
+		coreShaderMapShadow.put(RenderPipelines.DRAGON_RAYS_DEPTH, t -> ShaderKey.SHADOW_LIGHTNING);
+		coreShaderMapShadow.put(RenderPipelines.LIGHTNING, t -> ShaderKey.SHADOW_LIGHTNING);
+		coreShaderMapShadow.put(RenderPipelines.END_GATEWAY, t -> ShaderKey.SHADOW_BLOCK);
+		coreShaderMapShadow.put(RenderPipelines.LEASH, t -> ShaderKey.SHADOW_LEASH);
+		coreShaderMapShadow.put(RenderPipelines.END_PORTAL, t -> ShaderKey.SHADOW_BLOCK);
+		coreShaderMapShadow.put(RenderPipelines.WATER_MASK, t -> ShaderKey.SHADOW_BASIC);
+		coreShaderMapShadow.put(RenderPipelines.TEXT, t -> ShaderKey.SHADOW_TEXT);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_INTENSITY, t -> ShaderKey.SHADOW_TEXT_INTENSITY);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_SEE_THROUGH, t -> ShaderKey.SHADOW_TEXT);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_POLYGON_OFFSET, t -> ShaderKey.SHADOW_TEXT);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_BACKGROUND, t -> ShaderKey.SHADOW_TEXT_BG);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_BACKGROUND_SEE_THROUGH, t -> ShaderKey.SHADOW_TEXT_BG);
+		coreShaderMapShadow.put(RenderPipelines.TEXT_INTENSITY_SEE_THROUGH, t -> ShaderKey.SHADOW_TEXT);
+		coreShaderMapShadow.put(RenderPipelines.DRAGON_EXPLOSION_ALPHA, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, t -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ARMOR_TRANSLUCENT, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.GLINT, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.LINES, t -> ShaderKey.LINES);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_SOLID_Z_OFFSET_FORWARD, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_TRANSLUCENT, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ITEM_ENTITY_TRANSLUCENT_CULL, t -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE, i -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
+		coreShaderMapShadow.put(CloudRenderer.CLOUDS_FULL, i -> ShaderKey.SHADOW_CLOUDS);
+		coreShaderMapShadow.put(CloudRenderer.CLOUDS_FLAT, i -> ShaderKey.SHADOW_CLOUDS);
+		coreShaderMapShadow.put(RenderPipelines.CELESTIAL, i -> ShaderKey.SHADOW_TEX);
+		coreShaderMapShadow.put(RenderPipelines.SUNRISE_SUNSET, i -> ShaderKey.SHADOW_BASIC);
+		coreShaderMapShadow.put(RenderPipelines.SKY, i -> ShaderKey.SHADOW_BASIC);
+		coreShaderMapShadow.put(RenderPipelines.STARS, i -> ShaderKey.SHADOW_BASIC);
 	}
 
 	private static ShaderKey getCutout(Object p) {
@@ -192,32 +176,25 @@ public abstract class MixinShaderManager_Overrides {
 		}
 	}
 
-	private Set<ShaderProgram> missingShaders = new HashSet<>();
+	private Set<RenderPipeline> missingShaders = new HashSet<>();
 
 	@Inject(method = "getProgram", at = @At(value = "HEAD"), cancellable = true)
-	private void redirectIrisProgram(ShaderProgram shaderProgram, CallbackInfoReturnable<CompiledShaderProgram> cir) {
+	private void redirectIrisProgram(RenderPipeline shaderProgram, CallbackInfoReturnable<CompiledShaderProgram> cir) {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		if (pipeline instanceof IrisRenderingPipeline irisPipeline && irisPipeline.shouldOverrideShaders()) {
-			ShaderProgram newProgram = shaderProgram;
+			RenderPipeline newProgram = shaderProgram;
 
-			if (newProgram == ShaderAccess.MEKANISM_FLAME) {
-				CompiledShaderProgram result = irisPipeline.getShaderMap().getShader(ShadowRenderingState.areShadowsCurrentlyBeingRendered() ? ShaderKey.MEKANISM_FLAME_SHADOW : ShaderKey.MEKANISM_FLAME);
-
-				if (result != null) cir.setReturnValue(result);
-			} else if (shaderProgram == ShaderAccess.MEKASUIT) {
-				newProgram = CoreShaders.RENDERTYPE_ENTITY_CUTOUT;
-			}
 
 			CompiledShaderProgram program = override(irisPipeline, newProgram);
 
 			if (program != null) {
 				cir.setReturnValue(program);
 			} else if (missingShaders.add(shaderProgram)) {
-				Iris.logger.error("Missing program " + shaderProgram.configId() + " in override list. This is not a critical problem, but it could lead to weird rendering.", new Throwable());
+				Iris.logger.error("Missing program " + shaderProgram.getLocation() + " in override list. This is not a critical problem, but it could lead to weird rendering.", new Throwable());
 			}
 		} else {
-			if (shaderProgram == ShaderAccess.MEKANISM_FLAME) {
+			/*if (shaderProgram == ShaderAccess.MEKANISM_FLAME) {
 				cir.setReturnValue(getProgram(CoreShaders.POSITION_TEX_COLOR));
 			} else if (shaderProgram == ShaderAccess.MEKASUIT) {
 				cir.setReturnValue(getProgram(CoreShaders.RENDERTYPE_ENTITY_CUTOUT));
@@ -227,17 +204,17 @@ public abstract class MixinShaderManager_Overrides {
 				cir.setReturnValue(getProgram(CoreShaders.PARTICLE));
 			} else if (shaderProgram == ShaderAccess.WEATHER_SHADER) {
 				cir.setReturnValue(getProgram(CoreShaders.PARTICLE));
-			}
+			}*/
 		}
 	}
 
-	private static CompiledShaderProgram override(IrisRenderingPipeline pipeline, ShaderProgram shaderProgram) {
+	private static CompiledShaderProgram override(IrisRenderingPipeline pipeline, RenderPipeline shaderProgram) {
 		ShaderKey shaderKey = convertToShaderKey(pipeline, shaderProgram);
 
 		return shaderKey == null ? null : pipeline.getShaderMap().getShader(shaderKey);
 	}
 
-	private static ShaderKey convertToShaderKey(IrisRenderingPipeline pipeline, ShaderProgram shaderProgram) {
+	private static ShaderKey convertToShaderKey(IrisRenderingPipeline pipeline, RenderPipeline shaderProgram) {
 		return ShadowRenderingState.areShadowsCurrentlyBeingRendered()? coreShaderMapShadow.getOrDefault(shaderProgram, FAKE_FUNCTION).apply(pipeline) : coreShaderMap.getOrDefault(shaderProgram, FAKE_FUNCTION).apply(pipeline);
 	}
 }

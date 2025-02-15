@@ -115,7 +115,7 @@ public class PBRTextureManager {
 					loader.load(texture, Minecraft.getInstance().getResourceManager(), consumer);
 					return consumer.toHolder();
 				} catch (Exception e) {
-					Iris.logger.debug("Failed to load PBR textures for texture " + id, e);
+					Iris.logger.info("Failed to load PBR textures for texture " + id, e);
 				} finally {
 					GlStateManager._bindTexture(previousTextureBinding);
 				}

@@ -3,7 +3,6 @@ package net.irisshaders.iris.pathways;
 import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -46,7 +45,6 @@ public class FullScreenQuadRenderer {
 	public void begin() {
 		((VertexBufferHelper) quad).saveBinding();
 		RenderSystem.disableDepthTest();
-		BufferUploader.reset();
 		quad.bind();
 	}
 

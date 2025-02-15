@@ -5,8 +5,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,14 +21,14 @@ public class MixinBlockRenderer {
 	private boolean hasOverride;
 
 	@Inject(method = "renderModel", at = @At("HEAD"))
-	private void iris$renderModelHead(BakedModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
+	private void iris$renderModelHead(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
 		if (WorldRenderingSettings.INSTANCE.getBlockTypeIds().containsKey(state.getBlock())) {
 			hasOverride = true;
 		}
 	}
 
 	@Inject(method = "renderModel", at = @At("TAIL"))
-	private void iris$renderModelTail(BakedModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
+	private void iris$renderModelTail(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
 		hasOverride = false;
 	}
 

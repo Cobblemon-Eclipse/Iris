@@ -10,8 +10,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TextureUtil.class)
 public class MixinTextureUtil {
-	@Inject(method = "generateTextureId", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;assertOnRenderThreadOrInit()V", shift = At.Shift.AFTER), cancellable = true)
-	private static void generateTextureId(CallbackInfoReturnable<Integer> cir) {
-		cir.setReturnValue(IrisRenderSystem.createTexture(GL46C.GL_TEXTURE_2D));
-	}
+
 }

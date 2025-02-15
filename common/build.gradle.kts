@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version "1.8.10"
+    id("fabric-loom") version "1.9.2"
     id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
 
@@ -59,7 +59,7 @@ dependencies {
 
     modCompileOnly("net.fabricmc.fabric-api:fabric-renderer-api-v1:3.2.9+1172e897d7")
 
-    modImplementation("maven.modrinth", "sodium", "mc1.21.4-0.6.2-fabric")
+    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w07a-local.jar")))
     modCompileOnly("org.antlr:antlr4-runtime:4.13.1")
     modCompileOnly("io.github.douira:glsl-transformer:2.0.1")
     modCompileOnly("org.anarres:jcpp:1.4.14")
@@ -121,6 +121,7 @@ loom {
         val main by creating { // to match the default mod generated for Forge
             sourceSet("vendored")
             sourceSet("main")
+
         }
     }
 }

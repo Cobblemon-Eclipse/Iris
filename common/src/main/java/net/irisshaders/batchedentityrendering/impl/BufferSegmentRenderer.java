@@ -1,6 +1,7 @@
 package net.irisshaders.batchedentityrendering.impl;
 
-import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 
 public class BufferSegmentRenderer {
 	public BufferSegmentRenderer() {
@@ -21,6 +22,9 @@ public class BufferSegmentRenderer {
 	 * Like draw(), but it doesn't setup / tear down the render type.
 	 */
 	public void drawInner(BufferSegment segment) {
-		BufferUploader.drawWithShader(segment.meshData());
+		VertexBuffer vertexBuffer = segment.meshData().drawState().format().getImmediateDrawVertexBuffer();
+		vertexBuffer.bind();
+		vertexBuffer.upload(segment.meshData());
+		vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), segment.type().getCompiledShaderProgram());
 	}
 }

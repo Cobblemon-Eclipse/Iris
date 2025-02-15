@@ -1,6 +1,8 @@
 package net.irisshaders.iris.compat.dh;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiFramebuffer;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiGenericObjectShaderProgram;
@@ -15,7 +17,6 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.CloudSetting;
 import net.irisshaders.iris.targets.Blaze3dRenderTargetExt;
-import net.irisshaders.iris.targets.DepthTexture;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL20C;
@@ -39,7 +40,7 @@ public class DHCompatInternal {
 	private GlFramebuffer dhWaterFramebuffer;
 	private GlFramebuffer dhShadowFramebuffer;
 	private DhFrameBufferWrapper dhShadowFramebufferWrapper;
-	private DepthTexture depthTexNoTranslucent;
+	private GpuTexture depthTexNoTranslucent;
 	private boolean translucentDepthDirty;
 	private int storedDepthTex;
 	private boolean incompatible = false;
@@ -164,25 +165,26 @@ public class DHCompatInternal {
 		}
 		if (storedDepthTex != depthTex && dhTerrainFramebuffer != null) {
 			storedDepthTex = depthTex;
-			dhTerrainFramebuffer.addDepthAttachment(depthTex);
+			GpuTexture realDepth = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
+			dhTerrainFramebuffer.addDepthAttachment(realDepth);
 			if (dhWaterFramebuffer != null) {
-				dhWaterFramebuffer.addDepthAttachment(depthTex);
+				dhWaterFramebuffer.addDepthAttachment(realDepth);
 			}
 			if (dhGenericFramebuffer != null) {
-				dhGenericFramebuffer.addDepthAttachment(depthTex);
+				dhGenericFramebuffer.addDepthAttachment(realDepth);
 			}
 		}
 	}
 
 	public void createDepthTex(int width, int height) {
 		if (depthTexNoTranslucent != null) {
-			depthTexNoTranslucent.destroy();
+			depthTexNoTranslucent.close();
 			depthTexNoTranslucent = null;
 		}
 
 		translucentDepthDirty = true;
 
-		depthTexNoTranslucent = new DepthTexture("DH depth tex", width, height, DepthBufferFormat.DEPTH32F);
+		depthTexNoTranslucent = new GpuTexture("DH depth tex", TextureFormat.DEPTH32, width, height, 1);
 	}
 
 	public void clear() {
@@ -259,11 +261,11 @@ public class DHCompatInternal {
 	public void copyTranslucents(int width, int height) {
 		if (translucentDepthDirty) {
 			translucentDepthDirty = false;
-			RenderSystem.bindTexture(depthTexNoTranslucent.getTextureId());
+			depthTexNoTranslucent.bind();
 			dhTerrainFramebuffer.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, DepthBufferFormat.DEPTH32F.getGlInternalFormat(), 0, 0, width, height, 0);
 		} else {
-			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex, null, depthTexNoTranslucent.getTextureId(), width, height);
+			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex, null, depthTexNoTranslucent.glId(), width, height);
 		}
 	}
 
@@ -278,7 +280,7 @@ public class DHCompatInternal {
 	public int getDepthTexNoTranslucent() {
 		if (depthTexNoTranslucent == null) return 0;
 
-		return depthTexNoTranslucent.getTextureId();
+		return depthTexNoTranslucent.glId();
 	}
 
 	public IDhApiGenericObjectShaderProgram getGenericShader() {

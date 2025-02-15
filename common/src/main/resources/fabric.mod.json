@@ -36,13 +36,8 @@
   ],
   "accessWidener": "iris.accesswidener",
   "depends": {
-    "fabricloader": ">=0.12.3",
-    "minecraft": [
-      "1.21.x"
-    ],
-    "sodium": [
-      "0.6.x"
-    ]
+    "fabricloader": ">=0.12.3"
+
   },
   "breaks": {
     "embeddium": "*",
@@ -67,6 +62,9 @@
         "fabric",
         "quilt"
       ]
+    },
+    "loom:injected_interfaces": {
+      "net/minecraft/class_10792": ["net/irisshaders/iris/mixinterface/GpuTextureExtension"]
     }
   }
 }

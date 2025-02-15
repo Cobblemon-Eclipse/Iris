@@ -26,8 +26,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.GameRenderer;
@@ -84,6 +84,11 @@ public class MixinLevelRenderer {
 	@Final
 	private LevelTargetBundle targets;
 	private boolean warned;
+
+	@Inject(method = "doEntityOutline", at = @At("HEAD"), cancellable = true)
+	private void i(CallbackInfo ci) {
+		//if (Screen.hasShiftDown()) ci.cancel();
+	}
 
 	// Begin shader rendering after buffers have been cleared.
 	// At this point we've ensured that Minecraft's main framebuffer is cleared.
@@ -176,11 +181,6 @@ public class MixinLevelRenderer {
 	private void iris$beginSky(CallbackInfo ci) {
 		// Use CUSTOM_SKY until levelFogColor is called as a heuristic to catch FabricSkyboxes.
 		pipeline.setPhase(WorldRenderingPhase.CUSTOM_SKY);
-
-		// We've changed the phase, but vanilla doesn't update the shader program at this point before rendering stuff,
-		// so we need to manually refresh the shader program so that the correct shader override gets applied.
-		// TODO: Move the injection instead
-		RenderSystem.setShader(CoreShaders.POSITION);
 	}
 
 	@Inject(method = { "method_62215", NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "RETURN"))

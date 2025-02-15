@@ -6,6 +6,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.caffeinemc.mods.sodium.client.gl.GlObject;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlShader;
+import net.caffeinemc.mods.sodium.client.gl.shader.ShaderParser;
 import net.caffeinemc.mods.sodium.client.gl.shader.ShaderType;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderBindingPoints;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -32,6 +33,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.sodium.terrain.FormatAnalyzer;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.opengl.GL43C;
+import org.lwjgl.opengl.GL46C;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -97,7 +99,7 @@ public class SodiumPrograms {
 		for (Map.Entry<PatchShaderType, String> entry : transformed.entrySet()) {
 			if (entry.getValue() == null) continue;
 			newMap.put(entry.getKey(), new GlShader(ShaderType.fromGlShaderType(entry.getKey().glShaderType.id),
-				ResourceLocation.fromNamespaceAndPath("iris", "sodium-shader-" + passName), entry.getValue()));
+				ResourceLocation.fromNamespaceAndPath("iris", "sodium-shader-" + passName), new ShaderParser.ParsedShader(entry.getValue(), new String[0])));
 		}
 		return newMap;
 	}
@@ -169,10 +171,10 @@ public class SodiumPrograms {
 				int handle = ((GlObject) shader).handle();
 				GLDebug.nameObject(GL43C.GL_PROGRAM, handle, "sodium-terrain-" + pass.toString().toLowerCase(Locale.ROOT));
 
-				if (!hasNormal) hasNormal = GlStateManager._glGetAttribLocation(handle, "iris_Normal") != -1;
-				if (!hasMidBlock) hasMidBlock = GlStateManager._glGetAttribLocation(handle, "at_midBlock") != -1;
-				if (!hasBlockId) hasBlockId = GlStateManager._glGetAttribLocation(handle, "mc_Entity") != -1;
-				if (!hasMidUv) hasMidUv = GlStateManager._glGetAttribLocation(handle, "mc_midTexCoord") != -1;
+				if (!hasNormal) hasNormal = GL46C.glGetAttribLocation(handle, "iris_Normal") != -1;
+				if (!hasMidBlock) hasMidBlock = GL46C.glGetAttribLocation(handle, "at_midBlock") != -1;
+				if (!hasBlockId) hasBlockId = GL46C.glGetAttribLocation(handle, "mc_Entity") != -1;
+				if (!hasMidUv) hasMidUv = GL46C.glGetAttribLocation(handle, "mc_midTexCoord") != -1;
 
 				return new SodiumShader(pipeline, pass, shader, handle, source.getDirectives().getBlendModeOverride().orElse(null),
 					createBufferBlendOverrides(source), customUniforms, flipState,

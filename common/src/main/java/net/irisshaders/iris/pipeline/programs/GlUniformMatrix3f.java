@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniform;
 import org.joml.Matrix3fc;
 import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL46C;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -17,7 +18,7 @@ public class GlUniformMatrix3f extends GlUniform<Matrix3fc> {
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			FloatBuffer buf = stack.callocFloat(9);
 			value.get(buf);
-			GlStateManager._glUniformMatrix3(this.index, false, buf);
+			GL46C.glUniformMatrix3fv(this.index, false, buf);
 		}
 	}
 }

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -182,10 +183,22 @@ public class UpdateChecker {
 			if (textParts.length > 1) {
 				MutableComponent component1 = Component.literal(textParts[0]);
 				MutableComponent component2 = Component.literal(textParts[1]);
-				MutableComponent link = Component.literal(usedIrisInstaller ? "the Iris Installer" : info.modHost).withStyle(arg -> arg.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, usedIrisInstaller ? info.installer : info.modDownload)).withUnderlined(true));
+				MutableComponent link = Component.literal(usedIrisInstaller ? "the Iris Installer" : info.modHost).withStyle(arg -> {
+					try {
+						return arg.withClickEvent(new ClickEvent.OpenUrl(new URI(usedIrisInstaller ? info.installer : info.modDownload))).withUnderlined(true);
+					} catch (URISyntaxException e) {
+						throw new RuntimeException(e);
+					}
+				});
 				return Optional.of(component1.append(link).append(component2));
 			} else {
-				MutableComponent link = Component.literal(usedIrisInstaller ? "the Iris Installer" : info.modHost).withStyle(arg -> arg.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, usedIrisInstaller ? info.installer : info.modDownload)).withUnderlined(true));
+				MutableComponent link = Component.literal(usedIrisInstaller ? "the Iris Installer" : info.modHost).withStyle(arg -> {
+					try {
+						return arg.withClickEvent(new ClickEvent.OpenUrl(new URI(usedIrisInstaller ? info.installer : info.modDownload))).withUnderlined(true);
+					} catch (URISyntaxException e) {
+						throw new RuntimeException(e);
+					}
+				});
 				return Optional.of(Component.literal(textParts[0]).append(link));
 			}
 		} else {

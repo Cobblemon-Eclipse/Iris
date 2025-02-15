@@ -6,7 +6,7 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "BufferSourceAccessor",
-    "CompositeStateAccessor",
+    "RenderPipelineAccessor",
     "MixinBannerRenderer",
     "MixinBufferBuilder_SegmentRendering",
     "MixinBufferSource",

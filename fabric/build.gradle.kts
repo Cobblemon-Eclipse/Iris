@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version ("1.8.10")
+    id("fabric-loom") version ("1.9.2")
 }
 
 val MINECRAFT_VERSION: String by rootProject.extra
@@ -59,12 +59,12 @@ dependencies {
     addEmbeddedFabricModule("fabric-api-base")
     addEmbeddedFabricModule("fabric-key-binding-api-v1")
     addRuntimeFabricModule("fabric-block-view-api-v2")
-    addRuntimeFabricModule("fabric-renderer-api-v1")
+    modRuntimeOnly(files("fabric-renderer-api-v1-5.0.6+c327076a88.jar"))
     addRuntimeFabricModule("fabric-rendering-data-attachment-v1")
     addRuntimeFabricModule("fabric-rendering-fluids-v1")
     addRuntimeFabricModule("fabric-resource-loader-v0")
 
-    modImplementation("maven.modrinth", "sodium", "mc1.21.4-0.6.3-fabric")
+    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w07a-local.jar")))
     implementAndInclude("org.antlr:antlr4-runtime:4.13.1")
     implementAndInclude("io.github.douira:glsl-transformer:2.0.1")
     implementAndInclude("org.anarres:jcpp:1.4.14")
@@ -101,6 +101,13 @@ loom {
             configName = "Fabric Client"
             ideConfigGenerated(true)
             runDir("run")
+        }
+        create("clientWithRenderdoc") {
+            client()
+            configName = "Fabric Client With RD"
+            ideConfigGenerated(true)
+            runDir("run")
+            environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
         }
     }
 }

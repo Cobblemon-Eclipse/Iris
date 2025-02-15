@@ -1,5 +1,6 @@
 package net.irisshaders.iris.gl.texture;
 
+import com.mojang.blaze3d.textures.TextureFormat;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GL43C;
@@ -43,7 +44,11 @@ public enum DepthBufferFormat {
 		return Objects.requireNonNullElse(format, DepthBufferFormat.DEPTH);
 	}
 
-	public int getGlInternalFormat() {
+	public static DepthBufferFormat fromMojang(TextureFormat depthBufferFormat) {
+		return DepthBufferFormat.DEPTH32; // TODO: This is the only supported format right now
+	}
+
+    public int getGlInternalFormat() {
 		return switch (this) {
 			case DEPTH -> GL30C.GL_DEPTH_COMPONENT;
 			case DEPTH16 -> GL30C.GL_DEPTH_COMPONENT16;
@@ -74,5 +79,9 @@ public enum DepthBufferFormat {
 
 	public boolean isCombinedStencil() {
 		return combinedStencil;
+	}
+
+	public TextureFormat toMojang() {
+		return TextureFormat.DEPTH32; // TODO: This is the only supported format right now
 	}
 }
