@@ -251,6 +251,25 @@ public class CompositeRenderer {
 	}
 
 	public void renderAll() {
+		if (passes.isEmpty()) {
+			Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
+			ProgramUniforms.clearActiveUniforms();
+			ProgramSamplers.clearActiveSamplers();
+			GlStateManager._glUseProgram(0);
+
+			// NB: Unbinding all of these textures is necessary for proper shaderpack reloading.
+			for (int i = 0; i < SamplerLimits.get().getMaxTextureUnits(); i++) {
+				// Unbind all textures that we may have used.
+				// NB: This is necessary for shader pack reloading to work propely
+				if (GlStateManagerAccessor.getTEXTURES()[i].binding != 0) {
+					RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + i);
+					RenderSystem.bindTexture(0);
+				}
+			}
+
+			RenderSystem.activeTexture(GL15C.GL_TEXTURE0);
+			return;
+		}
 		GLDebug.pushGroup(20 + compositePass.ordinal(), compositePass.name().toLowerCase(Locale.ROOT));
 		RenderSystem.disableBlend();
 

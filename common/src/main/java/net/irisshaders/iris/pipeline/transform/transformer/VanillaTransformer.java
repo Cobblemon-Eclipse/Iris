@@ -190,10 +190,10 @@ public class VanillaTransformer {
 
 		if (parameters.hasChunkOffset) {
 			boolean doInjection = root.replaceReferenceExpressionsReport(t, "gl_ModelViewMatrix",
-				"(iris_ModelViewMat * _iris_internal_translate(iris_ChunkOffset))");
+				"(iris_ModelViewMat * _iris_internal_translate(iris_ModelOffset))");
 			if (doInjection) {
 				tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_FUNCTIONS,
-					"uniform vec3 iris_ChunkOffset;",
+					"uniform vec3 iris_ModelOffset;",
 					"mat4 _iris_internal_translate(vec3 offset) {" +
 						"return mat4(1.0, 0.0, 0.0, 0.0," +
 						"0.0, 1.0, 0.0, 0.0," +

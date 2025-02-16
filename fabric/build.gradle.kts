@@ -1,57 +1,67 @@
 plugins {
-    id("java")
-    id("idea")
-    id("fabric-loom") version ("1.9.2")
-}
+    id("multiloader-platform")
 
-val MINECRAFT_VERSION: String by rootProject.extra
-val PARCHMENT_VERSION: String? by rootProject.extra
-val FABRIC_LOADER_VERSION: String by rootProject.extra
-val FABRIC_API_VERSION: String by rootProject.extra
-val MOD_VERSION: String by rootProject.extra
-
-repositories {
-    mavenLocal()
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = uri("https://api.modrinth.com/maven")
-            }
-        }
-        filter {
-            includeGroup("maven.modrinth")
-        }
-    }
+    id("fabric-loom") version ("1.10.1")
 }
 
 base {
-    archivesName.set("iris-fabric")
+    archivesName = "iris-fabric"
+}
+
+val configurationCommonModJava: Configuration = configurations.create("commonJava") {
+    isCanBeResolved = true
+}
+val configurationCommonModJavaCompile: Configuration = configurations.create("commonJavaCompile") {
+    isCanBeResolved = true
+}
+val configurationCommonModResources: Configuration = configurations.create("commonResources") {
+    isCanBeResolved = true
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${MINECRAFT_VERSION}")
+    configurationCommonModJava(project(path = ":common", configuration = "commonMainJava"))
+    configurationCommonModJava(project(path = ":common", configuration = "commonApiJava"))
+    configurationCommonModJava(project(path = ":common", configuration = "commonVendoredJava"))
+    configurationCommonModJavaCompile(project(path = ":common", configuration = "commonHeadersJava"))
+
+    configurationCommonModResources(project(path = ":common", configuration = "commonMainResources"))
+    configurationCommonModResources(project(path = ":common", configuration = "commonApiResources"))
+    configurationCommonModResources(project(path = ":common", configuration = "commonVendoredResources"))
+}
+
+sourceSets.apply {
+    main {
+        compileClasspath += configurationCommonModJava
+        compileClasspath += configurationCommonModJavaCompile
+        runtimeClasspath += configurationCommonModJava
+    }
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:${BuildConfig.MINECRAFT_VERSION}")
     mappings(loom.layered {
         officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
+
+        if (BuildConfig.PARCHMENT_VERSION != null) {
+            parchment("org.parchmentmc.data:parchment-${BuildConfig.MINECRAFT_VERSION}:${BuildConfig.PARCHMENT_VERSION}@zip")
         }
     })
-    modImplementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
-    fun addRuntimeFabricModule(name: String) {
-        val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modRuntimeOnly(module)
-    }
+    modImplementation("net.fabricmc:fabric-loader:${BuildConfig.FABRIC_LOADER_VERSION}")
 
     fun addEmbeddedFabricModule(name: String) {
-        val module = fabricApi.module(name, FABRIC_API_VERSION)
+        val module = fabricApi.module(name, "0.116.1+1.21.5")
         modImplementation(module)
         include(module)
     }
 
-    fun implementAndInclude(name: String) {
-        modImplementation(name)
+    fun addRuntimeFabricModule(name: String) {
+        val module = fabricApi.module(name, "0.116.1+1.21.5")
+        modImplementation(module)
+    }
+
+    fun modInclude(name : String) {
+        modRuntimeOnly(name)
         include(name)
     }
 
@@ -59,37 +69,19 @@ dependencies {
     addEmbeddedFabricModule("fabric-api-base")
     addEmbeddedFabricModule("fabric-key-binding-api-v1")
     addRuntimeFabricModule("fabric-block-view-api-v2")
-    modRuntimeOnly(files("fabric-renderer-api-v1-5.0.6+c327076a88.jar"))
     addRuntimeFabricModule("fabric-rendering-data-attachment-v1")
     addRuntimeFabricModule("fabric-rendering-fluids-v1")
     addRuntimeFabricModule("fabric-resource-loader-v0")
 
     modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w07a-local.jar")))
-    implementAndInclude("org.antlr:antlr4-runtime:4.13.1")
-    implementAndInclude("io.github.douira:glsl-transformer:2.0.1")
-    implementAndInclude("org.anarres:jcpp:1.4.14")
-
-    implementation(project.project(":common").sourceSets.getByName("vendored").output)
-    implementation(project.project(":common").sourceSets.getByName("api").output)
-    compileOnly(project.project(":common").sourceSets.getByName("headers").output)
-    implementation(project.project(":common").sourceSets.getByName("main").output)
-
-    compileOnly(files(rootDir.resolve("DHApi.jar")))
-}
-
-tasks.named("compileTestJava").configure {
-    enabled = false
-}
-
-tasks.named("test").configure {
-    enabled = false
+    modInclude("org.antlr:antlr4-runtime:4.13.1")
+    modInclude("io.github.douira:glsl-transformer:2.0.1")
+    modInclude("org.anarres:jcpp:1.4.14")
 }
 
 loom {
-    if (project(":common").file("src/main/resources/iris.accesswidener").exists())
-        accessWidenerPath.set(project(":common").file("src/main/resources/iris.accesswidener"))
+    accessWidenerPath.set(file("src/main/resources/iris-fabric.accesswidener"))
 
-    @Suppress("UnstableApiUsage")
     mixin {
         defaultRefmapName.set("iris-fabric.refmap.json")
         useLegacyMixinAp = false
@@ -98,37 +90,25 @@ loom {
     runs {
         named("client") {
             client()
-            configName = "Fabric Client"
+            configName = "Fabric/Client"
+            appendProjectPathToConfigName = false
             ideConfigGenerated(true)
-            runDir("run")
-        }
-        create("clientWithRenderdoc") {
-            client()
-            configName = "Fabric Client With RD"
-            ideConfigGenerated(true)
-            runDir("run")
             environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
+            runDir("run")
         }
     }
 }
 
 tasks {
-    processResources {
-        from(project.project(":common").sourceSets.main.get().resources)
-        inputs.property("version", project.version)
-
-        filesMatching("fabric.mod.json") {
-            expand(mapOf("version" to project.version))
-        }
-    }
-
     jar {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(zipTree(project.project(":common").tasks.jar.get().archiveFile))
-
-        manifest.attributes["Main-Class"] = "net.irisshaders.iris.LaunchWarn"
+        from(configurationCommonModJava)
     }
 
-    remapJar.get().destinationDirectory = rootDir.resolve("build").resolve("libs")
+    remapJar {
+        destinationDirectory.set(file(rootProject.layout.buildDirectory).resolve("mods"))
+    }
+
+    processResources {
+        from(configurationCommonModResources)
+    }
 }

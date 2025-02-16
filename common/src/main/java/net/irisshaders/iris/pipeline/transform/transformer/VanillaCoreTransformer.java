@@ -49,8 +49,8 @@ public class VanillaCoreTransformer {
 		root.rename("normalMatrix", "iris_NormalMat");
 		root.rename("gl_NormalMatrix", "iris_NormalMat");
 		addIfNotExists(root, t, tree, "iris_NormalMat", Type.F32MAT3X3, StorageType.UNIFORM);
-		root.rename("chunkOffset", "iris_ChunkOffset");
-		addIfNotExists(root, t, tree, "iris_ChunkOffset", Type.F32VEC3, StorageType.UNIFORM);
+		root.rename("chunkOffset", "iris_ModelOffset");
+		addIfNotExists(root, t, tree, "iris_ModelOffset", Type.F32VEC3, StorageType.UNIFORM);
 
 		CommonTransformer.upgradeStorageQualifiers(t, tree, root, parameters);
 

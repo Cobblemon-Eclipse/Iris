@@ -248,7 +248,7 @@ public class ShadowRenderer {
 	private void configureSampler(int glTextureId, PackShadowDirectives.SamplingSettings settings) {
 		if (settings.getMipmap()) {
 			int filteringMode = settings.getNearest() ? GL20C.GL_NEAREST_MIPMAP_NEAREST : GL20C.GL_LINEAR_MIPMAP_LINEAR;
-			mipmapPasses.add(new MipmapPass(glTextureId, filteringMode));
+			mipmapPasses.add(new GLMipmapPass(glTextureId, filteringMode));
 		}
 
 		if (!settings.getNearest()) {
@@ -265,7 +265,7 @@ public class ShadowRenderer {
 		if (settings.getMipmap()) {
 			// TODO THIS IS WRONG
 			//int filteringMode = settings.getNearest() ? GL20C.GL_NEAREST_MIPMAP_NEAREST : GL20C.GL_LINEAR_MIPMAP_LINEAR;
-			mipmapPasses.add(new MipmapPass(texture.glId(), settings.getNearest() ? GL20C.GL_NEAREST_MIPMAP_NEAREST : GL20C.GL_LINEAR_MIPMAP_LINEAR));
+			mipmapPasses.add(new MCMipmapPass(texture, !settings.getNearest(), true));
 			if (!settings.getNearest()) {
 				// Make sure that things are smoothed
 				texture.setTextureFilter(FilterMode.LINEAR, true);
@@ -288,7 +288,12 @@ public class ShadowRenderer {
 		RenderSystem.activeTexture(GL20C.GL_TEXTURE4);
 
 		for (MipmapPass mipmapPass : mipmapPasses) {
-			setupMipmappingForTexture(mipmapPass.texture(), mipmapPass.targetFilteringMode());
+			if (mipmapPass instanceof GLMipmapPass(int texture, int targetFilteringMode)) {
+				setupMipmappingForTexture(texture, targetFilteringMode);
+			} else if (mipmapPass instanceof MCMipmapPass(GpuTexture texture, boolean linear, boolean mipmap)) {
+				IrisRenderSystem.generateMipmaps(texture.glId(), GL20C.GL_TEXTURE_2D);
+				texture.setTextureFilter(linear ? FilterMode.LINEAR : FilterMode.NEAREST, mipmap);
+			}
 		}
 
 		RenderSystem.activeTexture(GL20C.GL_TEXTURE0);
@@ -773,8 +778,14 @@ public class ShadowRenderer {
 		((MemoryTrackingRenderBuffers) buffers).freeAndDeleteBuffers();
 	}
 
-	private record MipmapPass(int texture, int targetFilteringMode) {
+	private interface MipmapPass {}
 
+	private record GLMipmapPass(int texture, int targetFilteringMode) implements MipmapPass {
+
+
+	}
+
+	private record MCMipmapPass(GpuTexture texture, boolean linear, boolean mipmap) implements MipmapPass {
 
 	}
 }

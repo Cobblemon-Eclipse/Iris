@@ -8,6 +8,7 @@ import com.mojang.blaze3d.shaders.CompiledShader;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -77,6 +78,7 @@ public class ExtendedShader extends CompiledShaderProgram {
 	private final float[] tempFloats = new float[16];
 	private final float[] tempFloats2 = new float[9];
 	private int textureToUnswizzle;
+	private int normalMatLocation;
 
 	public ExtendedShader(int programId, String string, VertexFormat vertexFormat, boolean usesTessellation,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
@@ -99,7 +101,15 @@ public class ExtendedShader extends CompiledShaderProgram {
 		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMatInverse", Uniform.Type.MATRIX4X4));
 		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMatInverse", Uniform.Type.MATRIX4X4));
 
-		samplerList.add("Sampler0");
+		if (vertexFormat.contains(VertexFormatElement.UV0)) {
+			samplerList.add("Sampler0");
+		}
+		if (vertexFormat.contains(VertexFormatElement.UV1)) {
+			samplerList.add("Sampler1");
+		}
+		if (vertexFormat.contains(VertexFormatElement.UV2)) {
+			samplerList.add("Sampler2");
+		}
 		setupUniforms(uniformList, samplerList);
 
 
@@ -107,7 +117,7 @@ public class ExtendedShader extends CompiledShaderProgram {
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(string, programId);
 
-		uniformBuilder.uniformMatrix3("iris_NormalMat", () -> normalMatrix, (a) -> {});
+		this.normalMatLocation = GlStateManager._glGetUniformLocation(programId, "iris_NormalMat");
 		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(programId, IrisSamplers.WORLD_RESERVED_TEXTURE_UNITS);
 		uniformCreator.accept(uniformBuilder);
 		ProgramImages.Builder builder = ProgramImages.builder(programId);
@@ -167,6 +177,8 @@ public class ExtendedShader extends CompiledShaderProgram {
 		}
 	}
 
+	private static float[] tmpFloat9 = new float[9];
+
 	@Override
 	public void apply() {
 		CapturedRenderingState.INSTANCE.setCurrentAlphaTest(alphaTest);
@@ -194,6 +206,10 @@ public class ExtendedShader extends CompiledShaderProgram {
 
 		samplers.update();
 		uniforms.update();
+
+		if (this.normalMatLocation > -1) {
+			GL46C.glUniformMatrix3fv(normalMatLocation, false, normalMatrix.get(tmpFloat9));
+		}
 
 		List<Uniform> uniformList = super.uniforms;
 		for (Uniform uniform : uniformList) {

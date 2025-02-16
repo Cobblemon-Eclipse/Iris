@@ -1273,6 +1273,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 			RenderSystem.setShaderColor(fogColor.x, fogColor.y, fogColor.z, fogColor.w);
 
+			setPhase(WorldRenderingPhase.SKY);
+
 			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection());
 
 			RenderSystem.depthMask(true);

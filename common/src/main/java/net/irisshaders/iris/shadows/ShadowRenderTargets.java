@@ -42,6 +42,8 @@ public class ShadowRenderTargets {
 	private boolean fullClearRequired;
 	private boolean translucentDepthDirty;
 
+	private static final double LN_OF_2 = Math.log(2);
+
 	public ShadowRenderTargets(WorldRenderingPipeline pipeline, int resolution, PackShadowDirectives shadowDirectives) {
 		this.shadowDirectives = shadowDirectives;
 		this.size = pipeline.hasFeature(FeatureFlags.HIGHER_SHADOWCOLOR) ? PackShadowDirectives.MAX_SHADOW_COLOR_BUFFERS_IRIS : PackShadowDirectives.MAX_SHADOW_COLOR_BUFFERS_OF;
@@ -53,12 +55,14 @@ public class ShadowRenderTargets {
 		linearFiltered = new boolean[size];
 		buffersToBeCleared = new IntArrayList();
 
-		this.mainDepth = new GpuTexture("shadowtex0", TextureFormat.DEPTH32, resolution, resolution, 1);
+		int mipSize = (int) Math.floor(Math.log(resolution) / LN_OF_2);
+
+		this.mainDepth = new GpuTexture("shadowtex0", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(0).getMipmap() ? mipSize : 1);
 		this.mainDepth.setTextureFilter(FilterMode.NEAREST, false);
 		this.mainDepth.setAddressMode(AddressMode.CLAMP_TO_EDGE);
 		this.mainDepth.bind();
 
-		this.noTranslucents = new GpuTexture("shadowtex1", TextureFormat.DEPTH32, resolution, resolution, 1);
+		this.noTranslucents = new GpuTexture("shadowtex1", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(1).getMipmap() ? mipSize : 1);
 		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 		this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
 		this.noTranslucents.bind();

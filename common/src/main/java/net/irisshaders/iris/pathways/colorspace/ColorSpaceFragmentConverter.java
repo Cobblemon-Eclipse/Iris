@@ -70,7 +70,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		ProgramBuilder builder = ProgramBuilder.begin("colorSpaceFragment", vertexSource, null, source, ImmutableSet.of());
 
 		builder.uniformMatrix(UniformUpdateFrequency.ONCE, "projection", () -> new Matrix4f(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1));
-		builder.addDynamicSampler(() -> target.glId(), "readImage");
+		builder.addDynamicSampler(() -> target.flushAndId(), "readImage");
 
 		swapTexture = GlStateManager._genTexture();
 		IrisRenderSystem.texImage2D(swapTexture, GL30C.GL_TEXTURE_2D, 0, GL30C.GL_RGBA8, width, height, 0, GL30C.GL_RGBA, GL30C.GL_UNSIGNED_BYTE, null);

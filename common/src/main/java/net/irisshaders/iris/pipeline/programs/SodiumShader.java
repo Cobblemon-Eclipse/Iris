@@ -7,6 +7,9 @@ import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat3v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
+
+
+import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -138,6 +141,8 @@ public class SodiumShader implements ChunkShaderInterface {
 
 	@Override
 	public void setupState() {
+		GLDebug.pushNow();
+
 		applyBlendModes();
 		updateUniforms();
 		images.update();

@@ -56,7 +56,7 @@ public class ColorSpaceComputeConverter implements ColorSpaceConverter {
 		source = JcppProcessor.glslPreprocessSource(source, defineList);
 
 		ProgramBuilder builder = ProgramBuilder.beginCompute("colorSpaceCompute", source, ImmutableSet.of());
-		builder.addTextureImage(() -> target.glId(), InternalTextureFormat.RGBA8, "readImage");
+		builder.addTextureImage(() -> target.flushAndId(), InternalTextureFormat.RGBA8, "readImage");
 		this.program = builder.buildCompute();
 	}
 
