@@ -19,6 +19,7 @@ public class PackDirectives {
 	private final PackRenderTargetDirectives renderTargetDirectives;
 	private final PackShadowDirectives shadowDirectives;
 	private final float drynessHalfLife;
+	private int fallbackTex;
 	private boolean supportsColorCorrection;
 	private int noiseTextureResolution;
 	private float sunPathRotation;
@@ -85,6 +86,7 @@ public class PackDirectives {
 		frustumCulling = properties.getFrustumCulling().orElse(true);
 		occlusionCulling = properties.getOcclusionCulling().orElse(true);
 		oldLighting = properties.getOldLighting().orElse(false);
+		fallbackTex = properties.getFallbackTex();
 		supportsColorCorrection = properties.supportsColorCorrection().orElse(false);
 		concurrentCompute = properties.getConcurrentCompute().orElse(false);
 		oldHandLight = properties.getOldHandLight().orElse(true);
@@ -108,6 +110,7 @@ public class PackDirectives {
 		explicitFlips = directives.explicitFlips;
 		scaleOverrides = directives.scaleOverrides;
 		prepareBeforeShadow = directives.prepareBeforeShadow;
+		fallbackTex = directives.fallbackTex;
 		particleRenderingSettings = directives.particleRenderingSettings;
 		textureMap = directives.textureMap;
 	}
@@ -246,6 +249,10 @@ public class PackDirectives {
 
 	public boolean supportsColorCorrection() {
 		return supportsColorCorrection;
+	}
+
+	public int getFallbackTex() {
+		return fallbackTex;
 	}
 
 	public void acceptDirectivesFrom(DirectiveHolder directives) {

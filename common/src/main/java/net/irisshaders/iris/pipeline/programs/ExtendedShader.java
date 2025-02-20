@@ -41,6 +41,7 @@ import org.lwjgl.opengl.GL46C;
 import org.lwjgl.opengl.KHRDebug;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -278,6 +279,11 @@ public class ExtendedShader extends CompiledShaderProgram {
 		this.LINE_WIDTH = super.getUniform("iris_LineWidth");
 		this.GAME_TIME = super.getUniform("iris_GameTime");
 		this.MODEL_OFFSET = super.getUniform("iris_ModelOffset");
+	}
+
+	@Override
+	public void setShouldSkip(MethodHandle s) {
+
 	}
 
 
