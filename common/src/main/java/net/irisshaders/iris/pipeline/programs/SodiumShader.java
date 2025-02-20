@@ -3,11 +3,13 @@ package net.irisshaders.iris.pipeline.programs;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.caffeinemc.mods.sodium.client.gl.device.GLRenderDevice;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat2v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat3v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
+import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
 import net.caffeinemc.mods.sodium.mixin.core.render.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
@@ -157,12 +159,15 @@ public class SodiumShader implements ChunkShaderInterface {
 		// There is a limited amount of sub-texel precision when using hardware texture sampling. The mapped texture
 		// area must be "shrunk" by at least one sub-texel to avoid bleed between textures in the atlas. And since we
 		// offset texture coordinates in the vertex format by one texel, we also need to undo that here.
-		double subTexelPrecision = (1 << SUB_TEXEL_PRECISION_BITS);
-		double subTexelOffset = 1.0f / (1 << 15);
-		this.uniformTexCoordShrink.set(
-			(float) (subTexelOffset + ((1.0D / textureAtlas.getWidth()) / subTexelPrecision)),
-			(float) (subTexelOffset + ((1.0D / textureAtlas.getHeight()) / subTexelPrecision))
-		);
+		double subTexelPrecision = (1 << GLRenderDevice.INSTANCE.getSubTexelPrecisionBits());
+		double subTexelOffset = 1.0f / CompactChunkVertex.TEXTURE_MAX_VALUE;
+
+		if (this.uniformTexCoordShrink != null) {
+			this.uniformTexCoordShrink.set(
+				(float) (subTexelOffset - (((1.0D / textureAtlas.getWidth()) / subTexelPrecision))),
+				(float) (subTexelOffset - (((1.0D / textureAtlas.getHeight()) / subTexelPrecision)))
+			);
+		}
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;
