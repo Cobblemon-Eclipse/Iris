@@ -150,7 +150,7 @@ public class CustomTextureManager {
 					if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 						texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 					}
-					return texture != null ? texture.getId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getId();
+					return texture != null ? texture.getTexture().flushAndId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().glId();
 				}, TextureType.TEXTURE_2D);
 			} else {
 				location = location.substring(0, extensionIndex - pbrType.getSuffix().length()) + location.substring(extensionIndex);
@@ -163,7 +163,7 @@ public class CustomTextureManager {
 						if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 							texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 						}
-						int id = texture.getId();
+						int id = texture.getTexture().glId();
 						PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
 						AbstractTexture pbrTexture = switch (pbrType) {
 							case NORMAL -> pbrHolder.normalTexture();
@@ -172,16 +172,13 @@ public class CustomTextureManager {
 
 						TextureFormat textureFormat = TextureFormatLoader.getFormat();
 						if (textureFormat != null) {
-							int previousBinding = GlStateManagerAccessor.getTEXTURES()[GlStateManagerAccessor.getActiveTexture()].binding;
-							GlStateManager._bindTexture(pbrTexture.getId());
 							textureFormat.setupTextureParameters(pbrType, pbrTexture);
-							GlStateManager._bindTexture(previousBinding);
 						}
 
-						return pbrTexture.getId();
+						return pbrTexture.getTexture().flushAndId();
 					}
 
-					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getId();
+					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().glId();
 				}, TextureType.TEXTURE_2D);
 			}
 		}

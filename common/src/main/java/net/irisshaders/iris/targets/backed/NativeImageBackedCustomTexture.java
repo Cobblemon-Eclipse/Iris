@@ -1,6 +1,8 @@
 package net.irisshaders.iris.targets.backed;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.AddressMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.texture.TextureAccess;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -20,15 +22,8 @@ public class NativeImageBackedCustomTexture extends DynamicTexture implements Te
 
 		// By default, images are unblurred and not clamped.
 
-		if (textureData.getFilteringData().shouldBlur()) {
-			IrisRenderSystem.texParameteri(getId(), GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER, GL11C.GL_LINEAR);
-			IrisRenderSystem.texParameteri(getId(), GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MAG_FILTER, GL11C.GL_LINEAR);
-		}
-
-		if (textureData.getFilteringData().shouldClamp()) {
-			IrisRenderSystem.texParameteri(getId(), GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_S, GL13C.GL_CLAMP_TO_EDGE);
-			IrisRenderSystem.texParameteri(getId(), GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_T, GL13C.GL_CLAMP_TO_EDGE);
-		}
+		getTexture().setAddressMode(textureData.getFilteringData().shouldClamp() ? AddressMode.CLAMP_TO_EDGE : AddressMode.REPEAT);
+		getTexture().setTextureFilter(textureData.getFilteringData().shouldBlur() ? FilterMode.LINEAR : FilterMode.NEAREST, false);
 	}
 
 	private static NativeImage create(byte[] content) throws IOException {
@@ -54,6 +49,6 @@ public class NativeImageBackedCustomTexture extends DynamicTexture implements Te
 
 	@Override
 	public IntSupplier getTextureId() {
-		return this::getId;
+		return this.getTexture()::flushAndId;
 	}
 }

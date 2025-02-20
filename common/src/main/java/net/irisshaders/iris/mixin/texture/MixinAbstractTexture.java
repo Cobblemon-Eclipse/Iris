@@ -43,11 +43,6 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 		check();
 	}
 
-	@Inject(method = "getId", at = @At("HEAD"))
-	private void iris$check3(CallbackInfoReturnable<GpuTexture> cir) {
-		check();
-	}
-
 	@Unique
 	private void check() {
 		if (this.texture.glId() != lastId) {

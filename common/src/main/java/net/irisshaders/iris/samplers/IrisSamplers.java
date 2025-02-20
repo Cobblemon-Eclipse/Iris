@@ -182,20 +182,20 @@ public class IrisSamplers {
 			samplers.addExternalSampler(ALBEDO_TEXTURE_UNIT, "tex", "texture", "gtexture");
 		} else {
 			// TODO: Rebind unbound sampler IDs instead of hardcoding a list...
-			samplers.addDynamicSampler(whitePixel::getId, "tex", "texture", "gtexture",
+			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "tex", "texture", "gtexture",
 				"gcolor", "colortex0");
 		}
 
 		if (hasLightmap) {
 			samplers.addExternalSampler(LIGHTMAP_TEXTURE_UNIT, "lightmap");
 		} else {
-			samplers.addDynamicSampler(whitePixel::getId, "lightmap");
+			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "lightmap");
 		}
 
 		if (hasOverlay) {
 			samplers.addExternalSampler(OVERLAY_TEXTURE_UNIT, "iris_overlay");
 		} else {
-			samplers.addDynamicSampler(whitePixel::getId, "iris_overlay");
+			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "iris_overlay");
 		}
 
 		samplers.addDynamicSampler(pipeline::getCurrentNormalTexture, StateUpdateNotifiers.normalTextureChangeNotifier, "normals");

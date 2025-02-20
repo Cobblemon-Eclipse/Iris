@@ -44,6 +44,6 @@ public class NativeImageBackedNoiseTexture extends DynamicTexture implements Tex
 
 	@Override
 	public IntSupplier getTextureId() {
-		return this::getId;
+		return this.getTexture()::glId;
 	}
 }

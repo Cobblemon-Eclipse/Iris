@@ -67,7 +67,6 @@ public class PBRTextureManager {
 		} catch (Exception e) {
 			//
 		}
-		texture.releaseId();
 	}
 
 	public static void notifyPBRTexturesChanged() {

@@ -3,12 +3,15 @@ package net.irisshaders.iris.pipeline.programs;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.caffeinemc.mods.sodium.client.gl.device.GLRenderDevice;
+import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat2v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat3v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
 
 
+import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
@@ -41,6 +44,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	private final GlUniformMatrix4f uniformProjectionMatrixInv;
 	private final GlUniformMatrix3f uniformNormalMatrix;
 	private final GlUniformFloat3v uniformRegionOffset;
+	private final GlUniformFloat2v uniformTexCoordShrink;
 	private final ProgramImages images;
 	private final ProgramSamplers samplers;
 	private final ProgramUniforms uniforms;
@@ -61,6 +65,7 @@ public class SodiumShader implements ChunkShaderInterface {
 		this.uniformProjectionMatrix = context.bindUniformOptional("iris_ProjectionMatrix", GlUniformMatrix4f::new);
 		this.uniformProjectionMatrixInv = context.bindUniformOptional("iris_ProjectionMatrixInv", GlUniformMatrix4f::new);
 		this.uniformRegionOffset = context.bindUniformOptional("u_RegionOffset", GlUniformFloat3v::new);
+		this.uniformTexCoordShrink = context.bindUniform("u_TexCoordShrink", GlUniformFloat2v::new);
 
 		this.alphaTest = alphaTest;
 		this.containsTessellation = containsTessellation;
@@ -171,6 +176,14 @@ public class SodiumShader implements ChunkShaderInterface {
 		samplers.update();
 		uniforms.update();
 		customUniforms.push(this);
+
+		double subTexelPrecision = (1 << GLRenderDevice.INSTANCE.getSubTexelPrecisionBits());
+		double subTexelOffset = 1.0f / CompactChunkVertex.TEXTURE_MAX_VALUE;
+
+		this.uniformTexCoordShrink.set(
+			(float) (subTexelOffset - (((1.0D / RenderSystem.getShaderTexture(0).getWidth(0)) / subTexelPrecision))),
+			(float) (subTexelOffset - (((1.0D / RenderSystem.getShaderTexture(0).getHeight(0)) / subTexelPrecision)))
+		);
 	}
 
 	@Override

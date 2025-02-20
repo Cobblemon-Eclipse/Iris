@@ -737,7 +737,7 @@ public class Iris {
 		return DHCompat.lastPackIncompatible();
 	}
 
-	public static boolean isPackInUseQuick() {
+	public static boolean  isPackInUseQuick() {
 		return getPipelineManager().getPipelineNullable() instanceof IrisRenderingPipeline;
 	}
 

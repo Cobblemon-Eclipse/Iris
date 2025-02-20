@@ -28,7 +28,7 @@ public class MixinRenderSystem {
 
 	@Inject(method = "setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/AbstractTexture;getTexture()Lcom/mojang/blaze3d/textures/GpuTexture;", shift = At.Shift.AFTER))
 	private static void _setShaderTexture(int unit, ResourceLocation resourceLocation, CallbackInfo ci, @Local AbstractTexture tex) {
-		TextureTracker.INSTANCE.onSetShaderTexture(unit, tex.getId());
+		TextureTracker.INSTANCE.onSetShaderTexture(unit, tex.getTexture().glId());
 	}
 
 	@Inject(method = "setShaderTexture(ILcom/mojang/blaze3d/textures/GpuTexture;)V", at = @At("RETURN"))

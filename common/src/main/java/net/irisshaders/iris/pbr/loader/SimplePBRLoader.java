@@ -37,7 +37,7 @@ public class SimplePBRLoader implements PBRTextureLoader<SimpleTexture> {
 		TextureContents contents = loadContentsSafe(pbrTexture, resourceManager);
 
 		if (contents == null) {
-			pbrTexture.releaseId();
+			pbrTexture.close();
 			return null;
 		}
 		pbrTexture.apply(contents);

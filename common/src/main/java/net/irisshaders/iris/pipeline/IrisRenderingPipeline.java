@@ -810,8 +810,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	public void onSetShaderTexture(int id) {
 		if (shouldBindPBR && isRenderingWorld) {
 			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
-			currentNormalTexture = pbrHolder.normalTexture().getId();
-			currentSpecularTexture = pbrHolder.specularTexture().getId();
+			currentNormalTexture = pbrHolder.normalTexture().getTexture().flushAndId();
+			currentSpecularTexture = pbrHolder.specularTexture().getTexture().flushAndId();
 
 			TextureFormat textureFormat = TextureFormatLoader.getFormat();
 			if (textureFormat != null) {

@@ -122,7 +122,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	public void upload(int atlasWidth, int atlasHeight, int mipLevel) {
 		this.texture = new GpuTexture("PBR", TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
 		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
-		int glId = getId();
+		int glId = getTexture().flushAndId();
 		TextureManipulationUtil.fillWithColor(glId, mipLevel, type.getDefaultValue());
 		width = atlasWidth;
 		height = atlasHeight;
@@ -209,7 +209,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	@Override
 	public void dumpContents(ResourceLocation id, Path path) {
 		String fileName = id.toDebugFileName();
-		TextureUtil.writeAsPNG(path, fileName, getId(), mipLevel, width, height);
+		TextureUtil.writeAsPNG(path, fileName, texture, mipLevel, a -> a); // TODO?
 		dumpSpriteNames(path, fileName, texturesByName);
 	}
 
