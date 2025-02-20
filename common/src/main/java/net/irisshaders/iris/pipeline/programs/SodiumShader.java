@@ -10,7 +10,6 @@ import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
-import net.caffeinemc.mods.sodium.mixin.core.render.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -18,6 +17,7 @@ import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.state.FogMode;
+import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
@@ -152,7 +152,7 @@ public class SodiumShader implements ChunkShaderInterface {
 		images.update();
 		bindTextures();
 
-		var textureAtlas = (TextureAtlasAccessor) Minecraft.getInstance()
+		var textureAtlas = Minecraft.getInstance()
 			.getTextureManager()
 			.getTexture(TextureAtlas.LOCATION_BLOCKS);
 
@@ -164,8 +164,8 @@ public class SodiumShader implements ChunkShaderInterface {
 
 		if (this.uniformTexCoordShrink != null) {
 			this.uniformTexCoordShrink.set(
-				(float) (subTexelOffset - (((1.0D / textureAtlas.getWidth()) / subTexelPrecision))),
-				(float) (subTexelOffset - (((1.0D / textureAtlas.getHeight()) / subTexelPrecision)))
+				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetWidth()) / subTexelPrecision))),
+				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetHeight()) / subTexelPrecision)))
 			);
 		}
 
