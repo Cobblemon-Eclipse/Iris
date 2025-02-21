@@ -10,11 +10,11 @@ object Constants {
     // https://semver.org/
     const val MOD_VERSION: String = "1.7.5"
 
-    const val CUSTOM_SODIUM: Boolean = false
-    const val CUSTOM_SODIUM_NAME: String = ""
+    const val CUSTOM_SODIUM: Boolean = true
+    const val CUSTOM_SODIUM_NAME: String = "sodium-fabric-0.5.12-snapshot+mc1.20.1-build.612.jar"
 
     const val IS_SHARED_BETA: Boolean = false
-    const val ACTIVATE_RENDERDOC: Boolean = false
+    const val ACTIVATE_RENDERDOC: Boolean = true
     const val BETA_TAG: String = "DH Support"
     const val BETA_VERSION = 4
 
@@ -41,7 +41,7 @@ plugins {
     // This prevents a lot of issues where the build script can fail randomly because the Fabric Maven server
     // is not reachable for some reason, and it makes builds much more reproducible. Observation also shows that it
     // really helps to improve startup times on slow connections.
-    id("fabric-loom") version "1.5.7"
+    id("fabric-loom") version "1.9.2"
     id("org.ajoberstar.grgit") version "5.2.2"
     id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
@@ -66,6 +66,7 @@ loom {
             if (Constants.ACTIVATE_RENDERDOC && DefaultNativePlatform.getCurrentOperatingSystem().isLinux) {
                 environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
             }
+            vmArgs("-Dsodium.checks.issue2561=false")
         }
     }
 

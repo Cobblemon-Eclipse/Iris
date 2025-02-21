@@ -6,6 +6,7 @@ import me.jellysquid.mods.sodium.client.gl.device.RenderDevice;
 import me.jellysquid.mods.sodium.client.gl.tessellation.TessellationBinding;
 import me.jellysquid.mods.sodium.client.render.chunk.DefaultChunkRenderer;
 import me.jellysquid.mods.sodium.client.render.chunk.ShaderChunkRenderer;
+import me.jellysquid.mods.sodium.client.render.chunk.shader.ChunkShaderBindingPoints;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkMeshAttribute;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
 import net.irisshaders.iris.compat.sodium.impl.IrisChunkShaderBindingPoints;
@@ -28,14 +29,14 @@ public abstract class MixinRegionChunkRenderer extends ShaderChunkRenderer {
 		}
 
 		attributes = new GlVertexAttributeBinding[]{
-			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.ATTRIBUTE_POSITION_ID,
-				vertexFormat.getAttribute(ChunkMeshAttribute.POSITION_MATERIAL_MESH)),
-			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.ATTRIBUTE_COLOR,
-				vertexFormat.getAttribute(ChunkMeshAttribute.COLOR_SHADE)),
-			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.ATTRIBUTE_BLOCK_TEXTURE,
-				vertexFormat.getAttribute(ChunkMeshAttribute.BLOCK_TEXTURE)),
-			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.ATTRIBUTE_LIGHT_TEXTURE,
-				vertexFormat.getAttribute(ChunkMeshAttribute.LIGHT_TEXTURE)),
+			new GlVertexAttributeBinding(ChunkShaderBindingPoints.ATTRIBUTE_POSITION,
+				vertexFormat.getAttribute(ChunkMeshAttribute.POSITION)),
+			new GlVertexAttributeBinding(ChunkShaderBindingPoints.ATTRIBUTE_COLOR,
+				vertexFormat.getAttribute(ChunkMeshAttribute.COLOR)),
+			new GlVertexAttributeBinding(ChunkShaderBindingPoints.ATTRIBUTE_TEXTURE,
+				vertexFormat.getAttribute(ChunkMeshAttribute.TEXTURE)),
+			new GlVertexAttributeBinding(ChunkShaderBindingPoints.ATTRIBUTE_LIGHT_MATERIAL_INDEX,
+				vertexFormat.getAttribute(ChunkMeshAttribute.LIGHT_MATERIAL_INDEX)),
 			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.MID_BLOCK,
 				vertexFormat.getAttribute(IrisChunkMeshAttributes.MID_BLOCK)),
 			new GlVertexAttributeBinding(IrisChunkShaderBindingPoints.BLOCK_ID,
