@@ -1,5 +1,9 @@
 import org.ajoberstar.grgit.Grgit
+import org.apache.commons.io.FileUtils
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import java.net.URI
+import java.net.URL
+import java.nio.file.Files
 
 object Constants {
     // https://fabricmc.net/develop/
@@ -20,6 +24,10 @@ object Constants {
 
     const val SODIUM_VERSION: String = "mc1.20.1-0.5.10"
 }
+
+// THIS IS HORRIBLE JUST TO MAKE NIGHTLY WORK
+val horror = URL("https://cdn.discordapp.com/attachments/1249486573771296830/1342603638278983821/sodium-fabric-0.5.12-snapshotmc1.20.1-build.612.jar?ex=67ba3c93&is=67b8eb13&hm=c97689728f6caaf9e3f1f9e36ae8b5662816e6c7ead4c49fcb2f9c2f829c85a4&")
+FileUtils.copyURLToFile(horror, rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.5.12-snapshot+mc1.20.1-build.612.jar"))
 
 repositories {
     exclusiveContent {
