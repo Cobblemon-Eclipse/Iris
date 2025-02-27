@@ -1,6 +1,8 @@
 package net.irisshaders.iris.shadows;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -215,9 +217,9 @@ public class ShadowRenderer {
 
 		RenderSystem.activeTexture(GL20C.GL_TEXTURE4);
 
-		configureDepthSampler(targets.getDepthTexture(), depthSamplingSettings.get(0));
+		configureDepthSampler((GlTexture) targets.getDepthTexture(), depthSamplingSettings.get(0));
 
-		configureDepthSampler(targets.getDepthTextureNoTranslucents(), depthSamplingSettings.get(1));
+		configureDepthSampler((GlTexture) targets.getDepthTextureNoTranslucents(), depthSamplingSettings.get(1));
 
 		for (int i = 0; i < targets.getNumColorTextures(); i++) {
 			if (targets.get(i) != null) {
@@ -230,7 +232,7 @@ public class ShadowRenderer {
 		RenderSystem.activeTexture(GL20C.GL_TEXTURE0);
 	}
 
-	private void configureDepthSampler(GpuTexture glTextureId, PackShadowDirectives.DepthSamplingSettings settings) {
+	private void configureDepthSampler(GlTexture glTextureId, PackShadowDirectives.DepthSamplingSettings settings) {
 		if (settings.getHardwareFiltering() && !separateHardwareSamplers) {
 			// We have to do this or else shadow hardware filtering breaks entirely!
 			IrisRenderSystem.texParameteri(glTextureId.glId(), GL20C.GL_TEXTURE_2D, GL20C.GL_TEXTURE_COMPARE_MODE, GL30C.GL_COMPARE_REF_TO_TEXTURE);
@@ -291,7 +293,7 @@ public class ShadowRenderer {
 			if (mipmapPass instanceof GLMipmapPass(int texture, int targetFilteringMode)) {
 				setupMipmappingForTexture(texture, targetFilteringMode);
 			} else if (mipmapPass instanceof MCMipmapPass(GpuTexture texture, boolean linear, boolean mipmap)) {
-				IrisRenderSystem.generateMipmaps(texture.glId(), GL20C.GL_TEXTURE_2D);
+				IrisRenderSystem.generateMipmaps(texture.flushAndId(), GL20C.GL_TEXTURE_2D);
 				texture.setTextureFilter(linear ? FilterMode.LINEAR : FilterMode.NEAREST, mipmap);
 			}
 		}
@@ -387,7 +389,7 @@ public class ShadowRenderer {
 
 	public void setupShadowViewport() {
 		// Set up the viewport
-		RenderSystem.viewport(0, 0, resolution, resolution);
+		GlStateManager._viewport(0, 0, resolution, resolution);
 	}
 
 	public void renderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera) {
@@ -496,7 +498,7 @@ public class ShadowRenderer {
 		// However, it only partially resolves issues of light leaking into caves.
 		//
 		// TODO: Better way of preventing light from leaking into places where it shouldn't
-		RenderSystem.disableCull();
+		GlStateManager._disableCull();
 
 		// Render all opaque terrain unless pack requests not to
 		if (shouldRenderTerrain) {
@@ -506,7 +508,7 @@ public class ShadowRenderer {
 		}
 
 		// Reset our viewport in case Sodium overrode it
-		RenderSystem.viewport(0, 0, resolution, resolution);
+		GlStateManager._viewport(0, 0, resolution, resolution);
 
 		profiler.popPush("entities");
 
@@ -599,12 +601,10 @@ public class ShadowRenderer {
 		profiler.popPush("restore gl state");
 
 		// Restore backface culling
-		RenderSystem.enableCull();
-
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
+		GlStateManager._enableCull();
 
 		// Restore the old viewport
-		RenderSystem.viewport(0, 0, client.getMainRenderTarget().width, client.getMainRenderTarget().height);
+		GlStateManager._viewport(0, 0, client.getMainRenderTarget().width, client.getMainRenderTarget().height);
 
 		if (levelRenderer instanceof CullingDataCache) {
 			((CullingDataCache) levelRenderer).restoreState();

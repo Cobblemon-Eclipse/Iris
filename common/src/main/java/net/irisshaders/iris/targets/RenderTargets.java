@@ -1,10 +1,12 @@
 package net.irisshaders.iris.targets;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.opengl.GlTexture;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.DepthBufferFormat;
@@ -22,15 +24,15 @@ import java.util.Map;
 
 public class RenderTargets {
 	private final RenderTarget[] targets;
-	private GpuTexture noTranslucents;
-	private GpuTexture noHand;
+	private GlTexture noTranslucents;
+	private GlTexture noHand;
 	private final GlFramebuffer depthSourceFb;
 	private final GlFramebuffer noTranslucentsDestFb;
 	private final GlFramebuffer noHandDestFb;
 	private final List<GlFramebuffer> ownedFramebuffers;
 	private final Map<Integer, PackRenderTargetDirectives.RenderTargetSettings> targetSettingsMap;
 	private final PackDirectives packDirectives;
-	private GpuTexture currentDepthTexture;
+	private GlTexture currentDepthTexture;
 	private DepthBufferFormat currentDepthFormat;
 	private DepthCopyStrategy copyStrategy;
 	private int cachedWidth;
@@ -48,7 +50,7 @@ public class RenderTargets {
 		targetSettingsMap = renderTargets;
 		this.packDirectives = packDirectives;
 
-		this.currentDepthTexture = depthTexture;
+		this.currentDepthTexture = (GlTexture) depthTexture;
 		this.currentDepthFormat = depthFormat;
 		this.copyStrategy = DepthCopyStrategy.fastest(currentDepthFormat.isCombinedStencil());
 
@@ -64,15 +66,13 @@ public class RenderTargets {
 
 		this.depthSourceFb = createFramebufferWritingToMain(new int[]{0});
 
-		this.noTranslucents = new GpuTexture("depthtex1", currentDepthFormat.toMojang(), width, height, 1);
+		this.noTranslucents = (GlTexture) RenderSystem.getDevice().createTexture("depthtex1", currentDepthFormat.toMojang(), width, height, 1);
 		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 		this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-		this.noTranslucents.bind();
 
-		this.noHand = new GpuTexture("dephtex2", currentDepthFormat.toMojang(), width, height, 1);
+		this.noHand = (GlTexture) RenderSystem.getDevice().createTexture("dephtex2", currentDepthFormat.toMojang(), width, height, 1);
 		this.noHand.setTextureFilter(FilterMode.NEAREST, false);
 		this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-		this.noTranslucents.bind();
 
 		this.noTranslucentsDestFb = createFramebufferWritingToMain(new int[]{0});
 		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
@@ -158,7 +158,7 @@ public class RenderTargets {
 		boolean recreateDepth = false;
 		if (cachedDepthBufferVersion != newDepthBufferVersion) {
 			recreateDepth = true;
-			currentDepthTexture = newDepthTextureId;
+			currentDepthTexture = (GlTexture) newDepthTextureId;
 			cachedDepthBufferVersion = newDepthBufferVersion;
 		}
 
@@ -178,15 +178,13 @@ public class RenderTargets {
 			this.translucentDepthDirty = true;
 			this.handDepthDirty = true;
 
-			this.noTranslucents = new GpuTexture("depthtex1", currentDepthFormat.toMojang(), newWidth, newHeight, 1);
+			this.noTranslucents = (GlTexture) RenderSystem.getDevice().createTexture("depthtex1", currentDepthFormat.toMojang(), newWidth, newHeight, 1);
 			this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 			this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-			this.noTranslucents.bind();
 
-			this.noHand = new GpuTexture("dephtex2", currentDepthFormat.toMojang(), newWidth, newHeight, 1);
+			this.noHand = (GlTexture) RenderSystem.getDevice().createTexture("dephtex2", currentDepthFormat.toMojang(), newWidth, newHeight, 1);
 			this.noHand.setTextureFilter(FilterMode.NEAREST, false);
 			this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-			this.noTranslucents.bind();
 		}
 
 		if (recreateDepth || depthFormatChanged || sizeChanged) {
@@ -235,11 +233,11 @@ public class RenderTargets {
 	public void copyPreTranslucentDepth() {
 		if (translucentDepthDirty) {
 			translucentDepthDirty = false;
-			noTranslucents.bind();
+			GlStateManager._bindTexture(noTranslucents.glId());
 			depthSourceFb.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, currentDepthFormat.getGlInternalFormat(), 0, 0, cachedWidth, cachedHeight, 0);
 		} else {
-			copyStrategy.copy(depthSourceFb, getDepthTexture().glId(), noTranslucentsDestFb, noTranslucents.glId(),
+			copyStrategy.copy(depthSourceFb, currentDepthTexture.glId(), noTranslucentsDestFb, noTranslucents.glId(),
 				getCurrentWidth(), getCurrentHeight());
 		}
 	}
@@ -247,11 +245,11 @@ public class RenderTargets {
 	public void copyPreHandDepth() {
 		if (handDepthDirty) {
 			handDepthDirty = false;
-			noHand.bind();
+			GlStateManager._bindTexture(noHand.glId());
 			depthSourceFb.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, currentDepthFormat.getGlInternalFormat(), 0, 0, cachedWidth, cachedHeight, 0);
 		} else {
-			copyStrategy.copy(depthSourceFb, getDepthTexture().glId(), noHandDestFb, noHand.glId(),
+			copyStrategy.copy(depthSourceFb, currentDepthTexture.glId(), noHandDestFb, noHand.glId(),
 				getCurrentWidth(), getCurrentHeight());
 		}
 	}

@@ -73,7 +73,7 @@ dependencies {
     addRuntimeFabricModule("fabric-rendering-fluids-v1")
     addRuntimeFabricModule("fabric-resource-loader-v0")
 
-    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w08a-local.jar")))
+    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w09a-local.jar")))
     modInclude("org.antlr:antlr4-runtime:4.13.1")
     modInclude("io.github.douira:glsl-transformer:2.0.1")
     modInclude("org.anarres:jcpp:1.4.14")

@@ -1,9 +1,10 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.Uniform;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -14,7 +15,6 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -22,7 +22,7 @@ import org.joml.Matrix4f;
 import java.io.IOException;
 import java.util.List;
 
-public class FallbackShader extends CompiledShaderProgram {
+public class FallbackShader extends GlProgram {
 	private final IrisRenderingPipeline parent;
 	private final BlendModeOverride blendModeOverride;
 	private final GlFramebuffer writingToBeforeTranslucent;
@@ -71,16 +71,15 @@ public class FallbackShader extends CompiledShaderProgram {
 		if (this.blendModeOverride != null) {
 			BlendModeOverride.restore();
 		}
-
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
 	}
 
 	@Override
-	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f matrix4f, Matrix4f matrix4f2, Window window) {
-		super.setDefaultUniforms(mode, matrix4f, matrix4f2, window);
+	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f matrix4f, Matrix4f matrix4f2, float f, float g) {
+		super.setDefaultUniforms(mode, matrix4f, matrix4f2, f, g);
+
+		this.apply();
 	}
 
-	@Override
 	public void apply() {
 		if (FOG_DENSITY != null && FOG_IS_EXP2 != null) {
 			float fogDensity = CapturedRenderingState.INSTANCE.getFogDensity();
@@ -92,18 +91,11 @@ public class FallbackShader extends CompiledShaderProgram {
 				FOG_DENSITY.set(0.0F);
 				FOG_IS_EXP2.set(0);
 			}
+
+			FOG_DENSITY.upload();
+			FOG_IS_EXP2.upload();
 		}
 
-		if (RenderSystem.getShaderTexture(0) != null) RenderSystem.getShaderTexture(0).bindToUnit(0);
-		if (RenderSystem.getShaderTexture(1) != null) RenderSystem.getShaderTexture(1).bindToUnit(1);
-		if (RenderSystem.getShaderTexture(2) != null) RenderSystem.getShaderTexture(2).bindToUnit(2);
-
-		GlStateManager._glUseProgram(this.getProgramId());
-
-		List<Uniform> uniformList = super.uniforms;
-		for (Uniform uniform : uniformList) {
-			uploadIfNotNull(uniform);
-		}
 
 		GlStateManager._glUniform1i(gtexture, 0);
 		GlStateManager._glUniform1i(overlay, 1);

@@ -1,5 +1,6 @@
 package net.irisshaders.iris.uniforms;
 
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -77,7 +78,7 @@ public final class CommonUniforms {
 		uniforms.uniform2i("atlasSize", () -> {
 			GpuTexture glId = RenderSystem.getShaderTexture(0);
 
-			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId == null ? -1 : glId.glId());
+			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId == null ? -1 : ((GlTexture) glId).glId());
 			if (texture instanceof TextureAtlas atlas) {
 				TextureAtlasAccessor atlasAccessor = (TextureAtlasAccessor) atlas;
 				return new Vector2i(atlasAccessor.callGetWidth(), atlasAccessor.callGetHeight());

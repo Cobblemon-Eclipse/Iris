@@ -1,6 +1,7 @@
 package net.irisshaders.iris.pathways.colorspace;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -89,6 +90,6 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		FullScreenQuadRenderer.INSTANCE.render();
 		Program.unbind();
 		framebuffer.bindAsReadBuffer();
-		IrisRenderSystem.copyTexSubImage2D(targetImage.glId(), GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+		IrisRenderSystem.copyTexSubImage2D(((GlTexture) targetImage).glId(), GL11C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
 	}
 }

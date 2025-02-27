@@ -1,30 +1,31 @@
 package net.irisshaders.batchedentityrendering.impl;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 
 public class BufferSegmentRenderer {
 	public BufferSegmentRenderer() {
 	}
 
 	/**
-	 * Sets up the render type, draws the buffer, and then tears down the render type.
-	 */
-	public void draw(BufferSegment segment) {
-		if (segment.meshData() != null) {
-			segment.type().setupRenderState();
-			drawInner(segment);
-			segment.type().clearRenderState();
-		}
-	}
-
-	/**
 	 * Like draw(), but it doesn't setup / tear down the render type.
 	 */
-	public void drawInner(BufferSegment segment) {
-		VertexBuffer vertexBuffer = segment.meshData().drawState().format().getImmediateDrawVertexBuffer();
-		vertexBuffer.bind();
-		vertexBuffer.upload(segment.meshData());
-		vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), segment.type().getCompiledShaderProgram());
+	public void drawInner(RenderPass currentPass, BufferSegment segment) {
+		GpuBuffer vertexBuffer = segment.meshData().drawState().format().uploadImmediateVertexBuffer(segment.meshData().vertexBuffer());
+
+		GpuBuffer gpuBuffer2 = segment.meshData().indexBuffer() == null ? null : segment.type().getRenderPipeline().getVertexFormat().uploadImmediateIndexBuffer(segment.meshData().indexBuffer());
+
+		if (gpuBuffer2 != null) {
+			currentPass.setIndexBuffer(gpuBuffer2, segment.meshData().drawState().indexType());
+		} else {
+			RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(segment.meshData().drawState().mode());
+			currentPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(segment.meshData().drawState().indexCount()), autoStorageIndexBuffer.type());
+		}
+
+		currentPass.setVertexBuffer(0,  vertexBuffer);
+		currentPass.drawIndexed(0, segment.meshData().drawState().indexCount());
+
+		segment.meshData().close();
 	}
 }

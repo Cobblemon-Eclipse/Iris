@@ -1,26 +1,26 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.opengl.GlProgram;
 import com.mojang.blaze3d.platform.GlStateManager;
 import it.unimi.dsi.fastutil.objects.Object2BooleanFunction;
 import net.irisshaders.iris.gl.shader.ShaderCompileException;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import org.lwjgl.opengl.GL46C;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A specialized map mapping {@link ShaderKey} to {@link CompiledShaderProgram}.
+ * A specialized map mapping {@link ShaderKey} to {@link GlProgram}.
  * Avoids much of the complexity / overhead of an EnumMap while ultimately
  * fulfilling the same function.
  */
 public class ShaderMap {
-	private final CompiledShaderProgram[] shaders;
+	private final GlProgram[] shaders;
 
-	public ShaderMap(ShaderLoadingMap loadingMap, Function<ShaderSupplier, Boolean> deletionFunction, Consumer<CompiledShaderProgram> programConsumer) {
+	public ShaderMap(ShaderLoadingMap loadingMap, Function<ShaderSupplier, Boolean> deletionFunction, Consumer<GlProgram> programConsumer) {
 		ShaderKey[] ids = ShaderKey.values();
 
-		this.shaders = new CompiledShaderProgram[ids.length];
+		this.shaders = new GlProgram[ids.length];
 
 		loadingMap.forAllShaders((key, shader) -> {
 			if (shader != null) {
@@ -30,7 +30,7 @@ public class ShaderMap {
 				}
 
 				checkLinkingState(key, shader);
-				CompiledShaderProgram shaderProgram = shader.shader().get();
+				GlProgram shaderProgram = shader.shader().get();
 				this.shaders[key.ordinal()] = shaderProgram;
 				programConsumer.accept(shaderProgram);
 			}
@@ -49,7 +49,7 @@ public class ShaderMap {
 		}
 	}
 
-	public CompiledShaderProgram getShader(ShaderKey id) {
+	public GlProgram getShader(ShaderKey id) {
 		return shaders[id.ordinal()];
 	}
 }

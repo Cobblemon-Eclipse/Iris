@@ -1,5 +1,9 @@
 package net.irisshaders.batchedentityrendering.impl;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectSortedMaps;
@@ -19,6 +23,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.function.Function;
 
 public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSource implements MemoryTrackingBuffer, Groupable, WrappingMultiBufferSource {
@@ -137,18 +143,43 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 		profiler.push("iris draw buffers");
 
 		for (RenderType type : renderOrder) {
-			if (!typeToSegment.containsKey(type)) continue;
+			try {
+				if (!typeToSegment.containsKey(type)) continue;
 
-			type.setupRenderState();
+				type.setupRenderState();
 
-			renderTypes += 1;
+				RenderTarget renderTarget = type.getRenderTarget();
 
-			for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
-				segmentRenderer.drawInner(segment);
-				drawCalls += 1;
+				try (RenderPass renderPass = RenderSystem.getDevice()
+					.createCommandEncoder()
+					.createRenderPass(
+						renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.useDepth ? renderTarget.getDepthTexture() : null, OptionalDouble.empty()
+					)) {
+					renderPass.setPipeline(type.getRenderPipeline());
+					if (RenderSystem.SCISSOR_STATE.isEnabled()) {
+						renderPass.enableScissor(RenderSystem.SCISSOR_STATE);
+					}
+
+					for (int i = 0; i < 12; i++) {
+						GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
+						if (gpuTexture != null) {
+							renderPass.bindSampler("Sampler" + i, gpuTexture);
+						}
+					}
+
+
+					renderTypes += 1;
+
+					for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
+						segmentRenderer.drawInner(renderPass, segment);
+						drawCalls += 1;
+					}
+				}
+
+				type.clearRenderState();
+			} catch (Exception e) {
+				throw new RuntimeException("Failed to draw " + type, e);
 			}
-
-			type.clearRenderState();
 		}
 
 		int targetClearTime = getTargetClearTime();
@@ -182,11 +213,34 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 
 			type.setupRenderState();
 
+			RenderTarget renderTarget = type.getRenderTarget();
+
 			renderTypes += 1;
 
-			for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
-				segmentRenderer.drawInner(segment);
-				drawCalls += 1;
+			try (RenderPass renderPass = RenderSystem.getDevice()
+				.createCommandEncoder()
+				.createRenderPass(
+					renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.useDepth ? renderTarget.getDepthTexture() : null, OptionalDouble.empty()
+				)) {
+				renderPass.setPipeline(type.getRenderPipeline());
+				if (RenderSystem.SCISSOR_STATE.isEnabled()) {
+					renderPass.enableScissor(RenderSystem.SCISSOR_STATE);
+				}
+
+				for (int i = 0; i < 12; i++) {
+					GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
+					if (gpuTexture != null) {
+						renderPass.bindSampler("Sampler" + i, gpuTexture);
+					}
+				}
+
+
+				renderTypes += 1;
+
+				for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
+					segmentRenderer.drawInner(renderPass, segment);
+					drawCalls += 1;
+				}
 			}
 
 			typeToSegment.remove(type);

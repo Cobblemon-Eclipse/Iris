@@ -1,15 +1,19 @@
 package net.irisshaders.iris.pathways;
 
+import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.opengl.GlBuffer;
+import com.mojang.blaze3d.opengl.GlDevice;
+import com.mojang.blaze3d.platform.GlConst;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.gl.IrisRenderSystem;
-import net.irisshaders.iris.helpers.VertexBufferHelper;
 
 /**
  * Renders a full-screen textured quad to the screen. Used in composite / deferred rendering.
@@ -17,7 +21,7 @@ import net.irisshaders.iris.helpers.VertexBufferHelper;
 public class FullScreenQuadRenderer {
 	public static final FullScreenQuadRenderer INSTANCE = new FullScreenQuadRenderer();
 
-	private final VertexBuffer quad;
+	private final GpuBuffer quad;
 
 	private FullScreenQuadRenderer() {
 		BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -27,11 +31,10 @@ public class FullScreenQuadRenderer {
 		bufferBuilder.addVertex(0.0F, 1.0F, 0.0F).setUv(0.0F, 1.0F);
 		MeshData meshData = bufferBuilder.build();
 
-		quad = new VertexBuffer(BufferUsage.STATIC_WRITE);
-		quad.bind();
-		quad.upload(meshData);
+		quad = RenderSystem.getDevice().createBuffer(() -> "Fullscreen Quad", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+		meshData.close();
+
 		Tesselator.getInstance().clear();
-		VertexBuffer.unbind();
 	}
 
 	public void render() {
@@ -43,14 +46,14 @@ public class FullScreenQuadRenderer {
 	}
 
 	public void begin() {
-		((VertexBufferHelper) quad).saveBinding();
-		RenderSystem.disableDepthTest();
-		quad.bind();
 	}
 
 	public void renderQuad() {
+		GlStateManager._disableDepthTest();
 		IrisRenderSystem.overridePolygonMode();
-		quad.draw();
+		((GlDevice) (RenderSystem.getDevice())).vertexArrayCache().bindVertexArray(DefaultVertexFormat.POSITION_TEX, (GlBuffer) quad);
+		GlStateManager._glBindBuffer(34963, ((GlBuffer) RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6)).handle);
+		GlStateManager._drawElements(GlConst.toGl(VertexFormat.Mode.QUADS), 6, GlConst.toGl(RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type()), 0);
 		IrisRenderSystem.restorePolygonMode();
 	}
 
@@ -61,7 +64,5 @@ public class FullScreenQuadRenderer {
 		// Using quad.getFormat().clearBufferState() causes some Intel drivers to freak out:
 		// https://github.com/IrisShaders/Iris/issues/1214
 
-		RenderSystem.enableDepthTest();
-		((VertexBufferHelper) quad).restoreBinding();
 	}
 }

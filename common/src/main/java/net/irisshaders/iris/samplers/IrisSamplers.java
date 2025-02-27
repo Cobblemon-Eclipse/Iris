@@ -2,6 +2,7 @@ package net.irisshaders.iris.samplers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.opengl.GlTexture;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.image.GlImage;
 import net.irisshaders.iris.gl.sampler.GlSampler;
@@ -182,20 +183,20 @@ public class IrisSamplers {
 			samplers.addExternalSampler(ALBEDO_TEXTURE_UNIT, "tex", "texture", "gtexture");
 		} else {
 			// TODO: Rebind unbound sampler IDs instead of hardcoding a list...
-			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "tex", "texture", "gtexture",
+			samplers.addDynamicSampler(((GlTexture) whitePixel.getTexture())::glId, "tex", "texture", "gtexture",
 				"gcolor", "colortex0");
 		}
 
 		if (hasLightmap) {
 			samplers.addExternalSampler(LIGHTMAP_TEXTURE_UNIT, "lightmap");
 		} else {
-			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "lightmap");
+			samplers.addDynamicSampler(((GlTexture) whitePixel.getTexture())::glId, "lightmap");
 		}
 
 		if (hasOverlay) {
 			samplers.addExternalSampler(OVERLAY_TEXTURE_UNIT, "iris_overlay");
 		} else {
-			samplers.addDynamicSampler(whitePixel.getTexture()::glId, "iris_overlay");
+			samplers.addDynamicSampler(((GlTexture) whitePixel.getTexture())::glId, "iris_overlay");
 		}
 
 		samplers.addDynamicSampler(pipeline::getCurrentNormalTexture, StateUpdateNotifiers.normalTextureChangeNotifier, "normals");

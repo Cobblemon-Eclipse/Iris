@@ -1,6 +1,7 @@
 package net.irisshaders.iris.targets.backed;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -38,8 +39,7 @@ public class NativeImageBackedCustomTexture extends DynamicTexture implements Te
 	public void upload() {
 		NativeImage image = Objects.requireNonNull(getPixels());
 
-		bind();
-		this.texture.write(image);
+		RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, image);
 	}
 
 	@Override

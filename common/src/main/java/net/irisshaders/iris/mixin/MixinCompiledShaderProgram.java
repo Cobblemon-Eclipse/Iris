@@ -1,16 +1,16 @@
 package net.irisshaders.iris.mixin;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.mojang.blaze3d.opengl.GlProgram;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
+import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.pipeline.ShaderRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
 import net.irisshaders.iris.pipeline.programs.FallbackShader;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.lwjgl.opengl.KHRDebug;
 import org.slf4j.Logger;
@@ -23,13 +23,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(CompiledShaderProgram.class)
+@Mixin(GlProgram.class)
 public abstract class MixinCompiledShaderProgram {
 	@Unique
 	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2");
 
 	@Unique
-	private static CompiledShaderProgram lastAppliedShader;
+	private static GlProgram lastAppliedShader;
 
 	@Unique
 	private static boolean shouldOverrideShaders() {
@@ -42,19 +42,12 @@ public abstract class MixinCompiledShaderProgram {
 		}
 	}
 
-	@Inject(method = "apply", at = @At("HEAD"))
-	private void iris$lockDepthColorState(CallbackInfo ci) {
-		if (lastAppliedShader != null) {
-			lastAppliedShader.clear();
-			lastAppliedShader = null;
-		}
-	}
-
-	@Inject(method = "apply", at = @At("TAIL"))
+	@Inject(method = "setDefaultUniforms", at = @At("TAIL"))
 	private void onTail(CallbackInfo ci) {
-		lastAppliedShader = ((CompiledShaderProgram) (Object) this);
+		lastAppliedShader = ((GlProgram) (Object) this);
 		if (((Object) this) instanceof ExtendedShader || ((Object) this) instanceof FallbackShader || !shouldOverrideShaders()) {
 			DepthColorStorage.unlockDepthColor();
+			BlendModeOverride.restore();
 			return;
 		}
 
@@ -70,5 +63,6 @@ public abstract class MixinCompiledShaderProgram {
 		}
 
 		DepthColorStorage.unlockDepthColor();
+		BlendModeOverride.restore();
 	}
 }

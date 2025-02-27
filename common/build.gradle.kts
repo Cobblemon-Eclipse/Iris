@@ -91,7 +91,7 @@ dependencies {
     addDependentFabricModule("fabric-rendering-data-attachment-v1")
     compileOnly("maven.modrinth:distanthorizonsapi:3.0.0")
 
-    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w08a-local.jar")))
+    modImplementation(files(rootDir.resolve("sodium-fabric-0.7.0-snapshot+mc25w09a-local.jar")))
     modCompileOnly("org.antlr:antlr4-runtime:4.13.1")
     modCompileOnly("io.github.douira:glsl-transformer:2.0.1")
     modCompileOnly("org.anarres:jcpp:1.4.14")

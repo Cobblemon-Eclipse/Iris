@@ -53,6 +53,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	private final List<BufferBlendOverride> bufferBlendOverrides;
 	private final float alphaTest;
 	private final boolean containsTessellation;
+	private final boolean isShadowPass;
 
 	public SodiumShader(IrisRenderingPipeline pipeline, SodiumPrograms.Pass pass, ShaderBindingContext context,
 						int handle, BlendModeOverride blendModeOverride,
@@ -70,7 +71,7 @@ public class SodiumShader implements ChunkShaderInterface {
 		this.alphaTest = alphaTest;
 		this.containsTessellation = containsTessellation;
 
-		boolean isShadowPass = pass == SodiumPrograms.Pass.SHADOW || pass == SodiumPrograms.Pass.SHADOW_CUTOUT;
+		this.isShadowPass = pass == SodiumPrograms.Pass.SHADOW || pass == SodiumPrograms.Pass.SHADOW_CUTOUT;
 
 		this.uniforms = buildUniforms(pass, handle, customUniforms);
 		this.customUniforms = customUniforms;
@@ -148,6 +149,10 @@ public class SodiumShader implements ChunkShaderInterface {
 	public void setupState() {
 		GLDebug.pushNow();
 
+		if (isShadowPass) {
+			GlStateManager._disableCull();
+		}
+
 		applyBlendModes();
 		updateUniforms();
 		images.update();
@@ -191,7 +196,6 @@ public class SodiumShader implements ChunkShaderInterface {
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 		BlendModeOverride.restore();
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
 		ImmediateState.usingTessellation = false;
 	}
 }

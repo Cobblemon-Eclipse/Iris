@@ -2,7 +2,7 @@ package net.irisshaders.batchedentityrendering.mixin;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import net.minecraft.client.renderer.DepthTestFunction;
+import com.mojang.blaze3d.platform.DepthTestFunction;
 import net.minecraft.client.renderer.RenderStateShard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;

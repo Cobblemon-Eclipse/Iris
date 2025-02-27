@@ -360,8 +360,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		if (!(f < 1.0F)) {
 			PostChain postChain = this.minecraft.getShaderManager().getPostChain(BLUR_POST_CHAIN_ID, LevelTargetBundle.MAIN_TARGETS);
 			if (postChain != null) {
-				postChain.setUniform("Radius", f);
-				postChain.process(this.minecraft.getMainRenderTarget(), ((GameRendererAccessor) this.minecraft.gameRenderer).getResourcePool());
+				postChain.process(this.minecraft.getMainRenderTarget(), ((GameRendererAccessor) this.minecraft.gameRenderer).getResourcePool(), rp -> {
+					rp.setUniform("Radius", f);
+				});
 			}
 
 		}
@@ -370,7 +371,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	@Override
 	protected void renderBlurredBackground() {
 		processFixedBlur();
-		this.minecraft.getMainRenderTarget().bindWrite(false);
 	}
 
 	@Override

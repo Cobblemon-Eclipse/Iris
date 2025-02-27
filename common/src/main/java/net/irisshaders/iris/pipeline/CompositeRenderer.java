@@ -252,7 +252,6 @@ public class CompositeRenderer {
 
 	public void renderAll() {
 		if (passes.isEmpty()) {
-			Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
 			ProgramUniforms.clearActiveUniforms();
 			ProgramSamplers.clearActiveSamplers();
 			GlStateManager._glUseProgram(0);
@@ -263,7 +262,7 @@ public class CompositeRenderer {
 				// NB: This is necessary for shader pack reloading to work propely
 				if (GlStateManagerAccessor.getTEXTURES()[i].binding != 0) {
 					RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + i);
-					RenderSystem.bindTexture(0);
+					GlStateManager._bindTexture(0);
 				}
 			}
 
@@ -271,7 +270,7 @@ public class CompositeRenderer {
 			return;
 		}
 		GLDebug.pushGroup(20 + compositePass.ordinal(), compositePass.name().toLowerCase(Locale.ROOT));
-		RenderSystem.disableBlend();
+		GlStateManager._disableBlend();
 
 		FullScreenQuadRenderer.INSTANCE.begin();
 		com.mojang.blaze3d.pipeline.RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
@@ -312,14 +311,14 @@ public class CompositeRenderer {
 			float scaledHeight = renderPass.viewHeight * renderPass.viewportScale.scale();
 			int beginWidth = (int) (renderPass.viewWidth * renderPass.viewportScale.viewportX());
 			int beginHeight = (int) (renderPass.viewHeight * renderPass.viewportScale.viewportY());
-			RenderSystem.viewport(beginWidth, beginHeight, (int) scaledWidth, (int) scaledHeight);
+			GlStateManager._viewport(beginWidth, beginHeight, (int) scaledWidth, (int) scaledHeight);
 
 			renderPass.framebuffer.bind();
 			renderPass.program.use();
 			if (renderPass.blendModeOverride != null) {
 				renderPass.blendModeOverride.apply();
 			} else {
-				RenderSystem.disableBlend();
+				GlStateManager._disableBlend();
 			}
 
 			// program is the identifier for composite :shrug:
@@ -335,7 +334,6 @@ public class CompositeRenderer {
 
 		// Make sure to reset the viewport to how it was before... Otherwise weird issues could occur.
 		// Also bind the "main" framebuffer if it isn't already bound.
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 		GlStateManager._glUseProgram(0);
@@ -346,7 +344,7 @@ public class CompositeRenderer {
 			// NB: This is necessary for shader pack reloading to work propely
 			if (GlStateManagerAccessor.getTEXTURES()[i].binding != 0) {
 				RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + i);
-				RenderSystem.bindTexture(0);
+				GlStateManager._bindTexture(0);
 			}
 		}
 

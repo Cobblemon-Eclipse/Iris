@@ -63,7 +63,7 @@ public class ProgramSamplers {
 
 		if (initializer != null) {
 			for (GlUniform1iCall call : initializer) {
-				RenderSystem.glUniform1i(call.location(), call.value());
+				GlStateManager._glUniform1i(call.location(), call.value());
 			}
 
 			initializer = null;

@@ -183,7 +183,7 @@ public class ShadowCompositeRenderer {
 	}
 
 	public void renderAll() {
-		RenderSystem.disableBlend();
+		GlStateManager._disableBlend();
 
 		FullScreenQuadRenderer.INSTANCE.begin();
 
@@ -221,7 +221,7 @@ public class ShadowCompositeRenderer {
 			float scaledHeight = renderTargets.getResolution() * renderPass.viewportScale.scale();
 			int beginWidth = (int) (renderTargets.getResolution() * renderPass.viewportScale.viewportX());
 			int beginHeight = (int) (renderTargets.getResolution() * renderPass.viewportScale.viewportY());
-			RenderSystem.viewport(beginWidth, beginHeight, (int) scaledWidth, (int) scaledHeight);
+			GlStateManager._viewport(beginWidth, beginHeight, (int) scaledWidth, (int) scaledHeight);
 
 			renderPass.framebuffer.bind();
 			renderPass.program.use();

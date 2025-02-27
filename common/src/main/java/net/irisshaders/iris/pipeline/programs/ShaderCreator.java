@@ -7,7 +7,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.shaders.CompiledShader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.JsonOps;
@@ -38,7 +37,6 @@ import net.irisshaders.iris.uniforms.VanillaUniforms;
 import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.network.chat.Component;
@@ -169,6 +167,7 @@ public class ShaderCreator {
 	}
 
 
+	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2");
 
 	public static int link(String name, String vertex, String geometry, String tessControl, String tessEval, String fragment, VertexFormat vertexFormat, boolean isFallback) throws ShaderCompileException {
 		int i = GlStateManager.glCreateProgram();
@@ -188,9 +187,19 @@ public class ShaderCreator {
 			attachIfValid(i, fragS);
 
 			if (isFallback) {
-				vertexFormat.bindAttributes(i);
+				int j = 0;
+
+				for (String string2 : vertexFormat.getElementAttributeNames()) {
+					GlStateManager._glBindAttribLocation(i, j, string2);
+					j++;
+				}
 			} else {
-				((VertexFormatExtension) vertexFormat).bindAttributesIris(i);
+				int j = 0;
+
+				for (String string : vertexFormat.getElementAttributeNames()) {
+					GlStateManager._glBindAttribLocation(i, j, ATTRIBUTE_LIST.contains(string) ? "iris_" + string : string		);
+					j++;
+				}
 			}
 			GlStateManager.glLinkProgram(i);
 

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 public class ByteBufferBuilderHolder implements MemoryTrackingBuffer {
 	private final ByteBufferBuilder builder;
 	private long lastUse;
+	private boolean wasUsedSince;
 
 	public ByteBufferBuilderHolder(ByteBufferBuilder builder) {
 		this.lastUse = System.currentTimeMillis();
@@ -21,7 +22,10 @@ public class ByteBufferBuilderHolder implements MemoryTrackingBuffer {
 			this.builder.close();
 			return true;
 		} else {
+			if (!wasUsedSince) return false;
+			// TODO POSSIBLE MEMORY LEAK
 			this.builder.clear();
+			wasUsedSince = false;
 			return false;
 		}
 	}
@@ -57,5 +61,6 @@ public class ByteBufferBuilderHolder implements MemoryTrackingBuffer {
 
 	public void wasUsed() {
 		this.lastUse = System.currentTimeMillis();
+		wasUsedSince = true;
 	}
 }

@@ -1,17 +1,25 @@
 package net.irisshaders.iris.pathways;
 
+import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 /**
  * Renders the sky horizon. Vanilla Minecraft simply uses the "clear color" for its horizon, and then draws a plane
@@ -44,8 +52,9 @@ public class HorizonRenderer {
 	 * Sine of 22.5 degrees.
 	 */
 	private static final float SIN_22_5 = (float) Math.sin(Math.toRadians(22.5));
-	private VertexBuffer buffer;
+	private GpuBuffer buffer;
 	private int currentRenderDistance;
+	private int indexCount;
 
 	public HorizonRenderer() {
 		currentRenderDistance = Minecraft.getInstance().options.getEffectiveRenderDistance();
@@ -64,11 +73,11 @@ public class HorizonRenderer {
 		buildHorizon(currentRenderDistance * 16, buffer);
 		MeshData meshData = buffer.build();
 
-		this.buffer = new VertexBuffer(BufferUsage.STATIC_WRITE);
-		this.buffer.bind();
-		this.buffer.upload(meshData);
+
+		this.buffer = RenderSystem.getDevice().createBuffer(() -> "Horizon", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+		this.indexCount = meshData.drawState().indexCount();
+		meshData.close();
 		Tesselator.getInstance().clear();
-		VertexBuffer.unbind();
 	}
 
 	private void buildQuad(VertexConsumer consumer, float x1, float z1, float x2, float z2) {
@@ -161,9 +170,31 @@ public class HorizonRenderer {
 			rebuildBuffer();
 		}
 
-		buffer.bind();
-		buffer.drawWithRenderPipeline(RenderPipelines.SKY, t -> {});
-		VertexBuffer.unbind();
+		RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
+
+		try (RenderPass renderPass = RenderSystem.getDevice()
+			.createCommandEncoder()
+			.createRenderPass(
+				renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.useDepth ? renderTarget.getDepthTexture() : null, OptionalDouble.empty()
+			)) {
+			renderPass.setPipeline(RenderPipelines.SKY);
+			renderPass.setVertexBuffer(0, buffer);
+			if (RenderSystem.SCISSOR_STATE.isEnabled()) {
+				renderPass.enableScissor(RenderSystem.SCISSOR_STATE);
+			}
+
+			for (int i = 0; i < 12; i++) {
+				GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
+				if (gpuTexture != null) {
+					renderPass.bindSampler("Sampler" + i, gpuTexture);
+				}
+			}
+
+			RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+			renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(indexCount), autoStorageIndexBuffer.type());
+
+			renderPass.drawIndexed(0, indexCount);
+		}
 	}
 
 	public void destroy() {

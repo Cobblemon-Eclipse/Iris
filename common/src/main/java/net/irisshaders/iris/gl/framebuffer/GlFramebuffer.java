@@ -1,5 +1,6 @@
 package net.irisshaders.iris.gl.framebuffer;
 
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.textures.GpuTexture;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
@@ -7,7 +8,9 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import net.irisshaders.iris.gl.GlResource;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.texture.DepthBufferFormat;
+import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL32C;
 
 public class GlFramebuffer extends GlResource {
 	private final Int2IntMap attachments;
@@ -30,9 +33,9 @@ public class GlFramebuffer extends GlResource {
 		int fb = getGlId();
 
 		if (depthBufferFormat.isCombinedStencil()) {
-			IrisRenderSystem.framebufferTexture2D(fb, GL30C.GL_FRAMEBUFFER, GL30C.GL_DEPTH_STENCIL_ATTACHMENT, GL30C.GL_TEXTURE_2D, texture.glId(), 0);
+			IrisRenderSystem.framebufferTexture2D(fb, GL30C.GL_FRAMEBUFFER, GL30C.GL_DEPTH_STENCIL_ATTACHMENT, GL30C.GL_TEXTURE_2D, ((GlTexture) texture).glId(), 0);
 		} else {
-			IrisRenderSystem.framebufferTexture2D(fb, GL30C.GL_FRAMEBUFFER, GL30C.GL_DEPTH_ATTACHMENT, GL30C.GL_TEXTURE_2D, texture.glId(), 0);
+			IrisRenderSystem.framebufferTexture2D(fb, GL30C.GL_FRAMEBUFFER, GL30C.GL_DEPTH_ATTACHMENT, GL30C.GL_TEXTURE_2D, ((GlTexture) texture).glId(), 0);
 		}
 
 		this.hasDepthAttachment = true;
@@ -99,7 +102,7 @@ public class GlFramebuffer extends GlResource {
 	public int getStatus() {
 		bind();
 
-		return GlStateManager.glCheckFramebufferStatus(GL30C.GL_FRAMEBUFFER);
+		return GL32C.glCheckFramebufferStatus(GL30C.GL_FRAMEBUFFER);
 	}
 
 	public int getId() {

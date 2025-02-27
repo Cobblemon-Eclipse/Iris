@@ -1,11 +1,13 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
-import com.mojang.blaze3d.shaders.CompiledShader;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.mojang.blaze3d.opengl.Uniform;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -29,7 +31,6 @@ import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class ExtendedShader extends CompiledShaderProgram {
+public class ExtendedShader extends GlProgram {
 	private static final Matrix4f identity;
 	private static ExtendedShader lastApplied;
 
@@ -89,17 +90,17 @@ public class ExtendedShader extends CompiledShaderProgram {
 
 		List<RenderPipeline.UniformDescription> uniformList = new ArrayList<>();
 		List<String> samplerList = new ArrayList<>();
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMat", Uniform.Type.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMat", Uniform.Type.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_TextureMat", Uniform.Type.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ColorModulator", Uniform.Type.VEC4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogColor", Uniform.Type.VEC4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelOffset", Uniform.Type.VEC3));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogStart", Uniform.Type.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogEnd", Uniform.Type.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_GlintAlpha", Uniform.Type.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMatInverse", Uniform.Type.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMatInverse", Uniform.Type.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMat", UniformType.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMat", UniformType.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_TextureMat", UniformType.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ColorModulator", UniformType.VEC4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogColor", UniformType.VEC4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelOffset", UniformType.VEC3));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogStart", UniformType.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_FogEnd", UniformType.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_GlintAlpha", UniformType.FLOAT));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMatInverse", UniformType.MATRIX4X4));
+		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMatInverse", UniformType.MATRIX4X4));
 
 		if (vertexFormat.contains(VertexFormatElement.UV0)) {
 			samplerList.add("Sampler0");
@@ -156,14 +157,12 @@ public class ExtendedShader extends CompiledShaderProgram {
 			BlendModeOverride.restore();
 		}
 
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
-
-		super.clear();
+		GlStateManager._glUseProgram(0);
 	}
 
 	@Override
-	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f modelView, Matrix4f projection, Window window) {
-		super.setDefaultUniforms(mode, modelView, projection, window);
+	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f modelView, Matrix4f projection, float f, float g) {
+		super.setDefaultUniforms(mode, modelView, projection, f, g);
 		if (modelViewInverse != null) {
 			modelViewInverse.set(modelView.invert(tempMatrix4f));
 		}
@@ -175,11 +174,12 @@ public class ExtendedShader extends CompiledShaderProgram {
 		if (projectionInverse != null) {
 			projectionInverse.set(projection.invert(tempMatrix4f));
 		}
+
+		apply();
 	}
 
 	private static float[] tmpFloat9 = new float[9];
 
-	@Override
 	public void apply() {
 		CapturedRenderingState.INSTANCE.setCurrentAlphaTest(alphaTest);
 
@@ -190,12 +190,12 @@ public class ExtendedShader extends CompiledShaderProgram {
 		GlStateManager._activeTexture(i);
 
 		if (intensitySwizzle) {
-			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).glId());
-			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).glId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
+			IrisRenderSystem.addUnswizzle(((GlTexture) RenderSystem.getShaderTexture(0)).glId());
+			IrisRenderSystem.texParameteriv(((GlTexture) RenderSystem.getShaderTexture(0)).glId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
 				new int[]{GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED});
 		}
 
-		if (RenderSystem.getShaderTexture(0) != null) RenderSystem.getShaderTexture(0).bindToUnit(0);
+		//if (RenderSystem.getShaderTexture(0) != null) RenderSystem.getShaderTexture(0).bindToUnit(0);
 		if (RenderSystem.getShaderTexture(1) != null) RenderSystem.getShaderTexture(1).bindToUnit(1);
 		if (RenderSystem.getShaderTexture(2) != null) RenderSystem.getShaderTexture(2).bindToUnit(2);
 
@@ -211,7 +211,7 @@ public class ExtendedShader extends CompiledShaderProgram {
 			GL46C.glUniformMatrix3fv(normalMatLocation, false, normalMatrix.get(tmpFloat9));
 		}
 
-		List<Uniform> uniformList = super.uniforms;
+		List<Uniform> uniformList = super.getUniforms();
 		for (Uniform uniform : uniformList) {
 			uploadIfNotNull(uniform);
 		}
@@ -267,10 +267,8 @@ public class ExtendedShader extends CompiledShaderProgram {
 
 		for (String string2 : list2) {
 			int j = Uniform.glGetUniformLocation(this.getProgramId(), string2);
-			if (j != -1) {
-				super.samplers.add(string2);
-				this.samplerLocations.add(j);
-			}
+			super.samplers.add(string2);
+			super.samplerLocations.add(j);
 		}
 
 		this.MODEL_VIEW_MATRIX = super.getUniform("iris_ModelViewMat");

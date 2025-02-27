@@ -2,6 +2,7 @@ package net.irisshaders.iris.pbr.texture;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
@@ -120,7 +121,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	public void upload(int atlasWidth, int atlasHeight, int mipLevel) {
-		this.texture = new GpuTexture("PBR", TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
+		this.texture = RenderSystem.getDevice().createTexture("PBR", TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
 		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
 		int glId = getTexture().flushAndId();
 		TextureManipulationUtil.fillWithColor(glId, mipLevel, type.getDefaultValue());
@@ -184,7 +185,6 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	public void cycleAnimationFrames() {
-		bind();
 		for (TextureAtlasSprite.Ticker ticker : animatedTextures) {
 			ticker.tickAndUpload(texture);
 		}

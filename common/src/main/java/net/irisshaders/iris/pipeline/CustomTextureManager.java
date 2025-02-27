@@ -101,7 +101,7 @@ public class CustomTextureManager {
 			// Special code path for the light texture. While shader packs hardcode the primary light texture, it's
 			// possible that a mod will create a different light texture, so this code path is robust to that.
 			return new TextureWrapper(() -> ((LightTextureAccessor) Minecraft.getInstance().gameRenderer.lightTexture())
-				.getLightTexture().getColorTexture().flushAndId(), TextureType.TEXTURE_2D);
+				.getLightTexture().flushAndId(), TextureType.TEXTURE_2D);
 		} else if (textureData instanceof CustomTextureData.RawData1D rawData1D) {
 			GlTexture texture = new GlTexture(TextureType.TEXTURE_1D, rawData1D.getSizeX(), 0, 0, rawData1D.getInternalFormat().getGlFormat(), rawData1D.getPixelFormat().getGlFormat(), rawData1D.getPixelType().getGlFormat(), rawData1D.getContent(), rawData1D.getFilteringData());
 			ownedRawTextures.add(texture);
@@ -150,7 +150,7 @@ public class CustomTextureManager {
 					if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 						texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 					}
-					return texture != null ? texture.getTexture().flushAndId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().glId();
+					return texture != null ? texture.getTexture().flushAndId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().flushAndId();
 				}, TextureType.TEXTURE_2D);
 			} else {
 				location = location.substring(0, extensionIndex - pbrType.getSuffix().length()) + location.substring(extensionIndex);
@@ -163,7 +163,7 @@ public class CustomTextureManager {
 						if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 							texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 						}
-						int id = texture.getTexture().glId();
+						int id = texture.getTexture().flushAndId();
 						PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
 						AbstractTexture pbrTexture = switch (pbrType) {
 							case NORMAL -> pbrHolder.normalTexture();
@@ -178,7 +178,7 @@ public class CustomTextureManager {
 						return pbrTexture.getTexture().flushAndId();
 					}
 
-					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().glId();
+					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().flushAndId();
 				}, TextureType.TEXTURE_2D);
 			}
 		}

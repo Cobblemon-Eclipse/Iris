@@ -53,7 +53,7 @@ public abstract class MixinLevelRenderer {
 	}
 
 	@Inject(method = { "method_62214" }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderBuffers;bufferSource()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;"))
-	private void iris$renderOpaqueParticles(FogParameters fogParameters, DeltaTracker deltaTracker, Camera camera, ProfilerFiller profilerFiller, Matrix4f matrix4f, Matrix4f matrix4f2, ResourceHandle resourceHandle, ResourceHandle resourceHandle2, ResourceHandle resourceHandle3, boolean bl, Frustum frustum, ResourceHandle resourceHandle4, CallbackInfo ci) {
+	private void iris$renderOpaqueParticles(FogParameters fogParameters, DeltaTracker deltaTracker, Camera camera, ProfilerFiller profilerFiller, Matrix4f matrix4f, Matrix4f matrix4f2, ResourceHandle resourceHandle, ResourceHandle resourceHandle2, boolean bl, Frustum frustum, ResourceHandle resourceHandle3, ResourceHandle resourceHandle4, CallbackInfo ci) {
 		Profiler.get().popPush("opaque_particles");
 
 		ParticleRenderingSettings settings = getRenderingSettings();

@@ -1,5 +1,7 @@
 package net.irisshaders.iris.compat.dh;
 
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
@@ -184,7 +186,7 @@ public class DHCompatInternal {
 
 		translucentDepthDirty = true;
 
-		depthTexNoTranslucent = new GpuTexture("DH depth tex", TextureFormat.DEPTH32, width, height, 1);
+		depthTexNoTranslucent = RenderSystem.getDevice().createTexture("DH depth tex", TextureFormat.DEPTH32, width, height, 1);
 	}
 
 	public void clear() {
@@ -261,11 +263,11 @@ public class DHCompatInternal {
 	public void copyTranslucents(int width, int height) {
 		if (translucentDepthDirty) {
 			translucentDepthDirty = false;
-			depthTexNoTranslucent.bind();
+			GlStateManager._bindTexture(((GlTexture) depthTexNoTranslucent).glId());
 			dhTerrainFramebuffer.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, DepthBufferFormat.DEPTH32F.getGlInternalFormat(), 0, 0, width, height, 0);
 		} else {
-			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex, null, depthTexNoTranslucent.glId(), width, height);
+			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex, null, ((GlTexture) depthTexNoTranslucent).glId(), width, height);
 		}
 	}
 
@@ -280,7 +282,7 @@ public class DHCompatInternal {
 	public int getDepthTexNoTranslucent() {
 		if (depthTexNoTranslucent == null) return 0;
 
-		return depthTexNoTranslucent.glId();
+		return ((GlTexture) depthTexNoTranslucent).glId();
 	}
 
 	public IDhApiGenericObjectShaderProgram getGenericShader() {

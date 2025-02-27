@@ -1,11 +1,13 @@
 package net.irisshaders.iris.layer;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.batchedentityrendering.impl.BlendingStateHolder;
 import net.irisshaders.batchedentityrendering.impl.TransparencyType;
 import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
 import net.irisshaders.iris.mixin.rendertype.RenderTypeAccessor;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +59,18 @@ public class OuterWrappedRenderType extends RenderType implements WrappableRende
 	}
 
 	@Override
-	public @Nullable CompiledShaderProgram getCompiledShaderProgram() {
-		return wrapped.getCompiledShaderProgram();
+	public void draw(MeshData meshData) {
+		wrapped.draw(meshData);
+	}
+
+	@Override
+	public RenderTarget getRenderTarget() {
+		return wrapped.getRenderTarget();
+	}
+
+	@Override
+	public RenderPipeline getRenderPipeline() {
+		return wrapped.getRenderPipeline();
 	}
 
 	@Override

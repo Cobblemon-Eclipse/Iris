@@ -1,8 +1,13 @@
 package net.irisshaders.iris.mixin;
 
+import com.mojang.blaze3d.opengl.GlDevice;
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.targets.Blaze3dRenderTargetExt;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL43C;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +25,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinRenderTarget implements Blaze3dRenderTargetExt {
 
 	@Shadow
-	public int frameBufferId;
-	@Shadow
 	@Final
 	public boolean useDepth;
+	@Shadow
+	@Nullable
+	protected GpuTexture colorTexture;
+	@Shadow
+	@Nullable
+	protected GpuTexture depthTexture;
 	@Unique
 	private int iris$depthBufferVersion;
 	@Unique
@@ -38,7 +47,7 @@ public class MixinRenderTarget implements Blaze3dRenderTargetExt {
 	@Inject(method = "createBuffers", at = @At(value = "RETURN"))
 	private void nameDepthBuffer(int i, int j, CallbackInfo ci) {
 
-		GLDebug.nameObject(GL43C.GL_FRAMEBUFFER, this.frameBufferId, "Main framebuffer");
+		GLDebug.nameObject(GL43C.GL_FRAMEBUFFER, ((GlTexture) this.colorTexture).getFbo(((GlDevice) RenderSystem.getDevice()).directStateAccess(), this.depthTexture), "Main framebuffer");
 	}
 
 	@Override

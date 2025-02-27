@@ -1,6 +1,8 @@
 package net.irisshaders.iris.shadows;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -25,8 +27,8 @@ import java.util.List;
 public class ShadowRenderTargets {
 	private final RenderTarget[] targets;
 	private final PackShadowDirectives shadowDirectives;
-	private final GpuTexture mainDepth;
-	private final GpuTexture noTranslucents;
+	private final GlTexture mainDepth;
+	private final GlTexture noTranslucents;
 	private final GlFramebuffer depthSourceFb;
 	private final GlFramebuffer noTranslucentsDestFb;
 	private final boolean[] flipped;
@@ -57,15 +59,13 @@ public class ShadowRenderTargets {
 
 		int mipSize = (int) Math.floor(Math.log(resolution) / LN_OF_2);
 
-		this.mainDepth = new GpuTexture("shadowtex0", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(0).getMipmap() ? mipSize : 1);
+		this.mainDepth = (GlTexture) RenderSystem.getDevice().createTexture("shadowtex0", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(0).getMipmap() ? mipSize : 1);
 		this.mainDepth.setTextureFilter(FilterMode.NEAREST, false);
 		this.mainDepth.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-		this.mainDepth.bind();
 
-		this.noTranslucents = new GpuTexture("shadowtex1", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(1).getMipmap() ? mipSize : 1);
+		this.noTranslucents = (GlTexture) RenderSystem.getDevice().createTexture("shadowtex1", TextureFormat.DEPTH32, resolution, resolution, shadowDirectives.getDepthSamplingSettings().get(1).getMipmap() ? mipSize : 1);
 		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 		this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-		this.noTranslucents.bind();
 
 		this.ownedFramebuffers = new ArrayList<>();
 		this.resolution = resolution;
@@ -170,11 +170,11 @@ public class ShadowRenderTargets {
 		return resolution;
 	}
 
-	public GpuTexture getDepthTexture() {
+	public GlTexture getDepthTexture() {
 		return mainDepth;
 	}
 
-	public GpuTexture getDepthTextureNoTranslucents() {
+	public GlTexture getDepthTextureNoTranslucents() {
 		return noTranslucents;
 	}
 

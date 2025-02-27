@@ -209,7 +209,7 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 			matrix.get(buffer);
 			buffer.rewind();
 
-			RenderSystem.glUniformMatrix4(index, buffer);
+			GlStateManager._glUniformMatrix4(index, buffer);
 		}
 	}
 
@@ -282,8 +282,8 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 
 	public void fillIndirectUniformData(DhApiRenderParam dhApiRenderParam, DhApiRenderableBoxGroupShading dhApiRenderableBoxGroupShading, IDhApiRenderableBoxGroup boxGroup, DhApiVec3d camPos) {
 		bind(dhApiRenderParam);
-		RenderSystem.enableDepthTest();
-		RenderSystem.depthFunc(GL30C.GL_LEQUAL);
+		GlStateManager._enableDepthTest();
+		GlStateManager._depthFunc(GL30C.GL_LEQUAL);
 		this.setUniform(this.instancedShaderOffsetChunkUniform,
 			new DhApiVec3i(
 				getChunkPosFromDouble(boxGroup.getOriginBlockPos().x),

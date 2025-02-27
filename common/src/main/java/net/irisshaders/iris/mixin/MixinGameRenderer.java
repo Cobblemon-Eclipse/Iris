@@ -1,7 +1,9 @@
 package net.irisshaders.iris.mixin;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlUtil;
+
+import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
@@ -49,8 +51,8 @@ public class MixinGameRenderer {
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void iris$logSystem(Minecraft arg, ItemInHandRenderer arg2, ResourceManager arg3, RenderBuffers arg4, CallbackInfo ci) {
 		Iris.logger.info("Hardware information:");
-		Iris.logger.info("CPU: " + GlUtil.getCpuInfo());
-		Iris.logger.info("GPU: " + GlUtil.getRenderer() + " (Supports OpenGL " + GlUtil.getOpenGLVersion() + ")");
+		Iris.logger.info("CPU: " + GLX._getCpuInfo());
+		Iris.logger.info("GPU: " + RenderSystem.getDevice().getRenderer() + " (Supports OpenGL " + RenderSystem.getDevice().getVersion() + ")");
 		Iris.logger.info("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + ")");
 	}
 

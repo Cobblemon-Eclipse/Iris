@@ -2,6 +2,7 @@ package net.irisshaders.iris.mixin.texture;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -24,19 +25,11 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 	private int lastId;
 
 	@Shadow
-	public abstract void bind();
-
-	@Shadow
 	public abstract GpuTexture getTexture();
 
 	@Shadow
 	@Nullable
 	protected GpuTexture texture;
-
-	@Inject(method = "bind", at = @At("HEAD"))
-	private void iris$check(CallbackInfo ci) {
-		check();
-	}
 
 	@Inject(method = "getTexture", at = @At("HEAD"))
 	private void iris$check2(CallbackInfoReturnable<GpuTexture> cir) {
@@ -45,9 +38,10 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 
 	@Unique
 	private void check() {
-		if (this.texture.glId() != lastId) {
-			TextureTracker.INSTANCE.trackTexture(this.texture.glId(), (AbstractTexture) (Object) this);
-			lastId = this.texture.glId();
+		GlTexture  tx = (GlTexture) (Object) this.texture;
+		if (tx.glId() != lastId) {
+			TextureTracker.INSTANCE.trackTexture(tx.glId(), (AbstractTexture) (Object) this);
+			lastId = tx.glId();
 		}
 	}
 }

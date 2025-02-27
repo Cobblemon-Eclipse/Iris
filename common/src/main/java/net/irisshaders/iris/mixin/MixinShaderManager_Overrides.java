@@ -1,5 +1,8 @@
 package net.irisshaders.iris.mixin;
 
+import com.mojang.blaze3d.opengl.GlDevice;
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.GlRenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -16,7 +19,6 @@ import net.irisshaders.iris.pipeline.programs.ShaderOverrides;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderManager;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +36,8 @@ import java.util.Set;
 
 import static net.irisshaders.iris.pipeline.programs.ShaderOverrides.isBlockEntities;
 
-@Mixin(ShaderManager.class)
+@Mixin(GlDevice.class)
 public abstract class MixinShaderManager_Overrides {
-	@Shadow
-	public abstract @Nullable CompiledShaderProgram getProgram(RenderPipeline shaderProgram);
 
 	private static final Function<IrisRenderingPipeline, ShaderKey> FAKE_FUNCTION = p -> null;
 
@@ -193,15 +193,15 @@ public abstract class MixinShaderManager_Overrides {
 
 	private Set<RenderPipeline> missingShaders = new HashSet<>();
 
-	@Inject(method = "getProgram", at = @At(value = "HEAD"), cancellable = true)
-	private void redirectIrisProgram(RenderPipeline shaderProgram, CallbackInfoReturnable<CompiledShaderProgram> cir) {
+	@Inject(method = "getOrCompilePipeline", at = @At(value = "HEAD"), cancellable = true)
+	private void redirectIrisProgram(RenderPipeline shaderProgram, CallbackInfoReturnable<GlRenderPipeline> cir) {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		if (pipeline instanceof IrisRenderingPipeline irisPipeline && irisPipeline.shouldOverrideShaders()) {
 			RenderPipeline newProgram = shaderProgram;
 
 
-			CompiledShaderProgram program = override(irisPipeline, newProgram);
+			GlRenderPipeline program = override(irisPipeline, newProgram);
 
 			if (program != null) {
 				cir.setReturnValue(program);
@@ -223,10 +223,10 @@ public abstract class MixinShaderManager_Overrides {
 		}
 	}
 
-	private static CompiledShaderProgram override(IrisRenderingPipeline pipeline, RenderPipeline shaderProgram) {
+	private static GlRenderPipeline override(IrisRenderingPipeline pipeline, RenderPipeline shaderProgram) {
 		ShaderKey shaderKey = convertToShaderKey(pipeline, shaderProgram);
 
-		return shaderKey == null ? null : pipeline.getShaderMap().getShader(shaderKey);
+		return shaderKey == null ? null : pipeline.getCachedShader(shaderProgram, shaderKey);
 	}
 
 	private static ShaderKey convertToShaderKey(IrisRenderingPipeline pipeline, RenderPipeline shaderProgram) {
