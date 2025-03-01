@@ -1,10 +1,22 @@
 package net.irisshaders.iris.pathways;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.irisshaders.iris.gl.GLDebug;
+import net.irisshaders.iris.gl.GlCustomState;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
+import net.irisshaders.iris.gl.framebuffer.ViewportData;
 import net.irisshaders.iris.gl.program.Program;
 import net.irisshaders.iris.gl.program.ProgramBuilder;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
@@ -13,38 +25,59 @@ import net.irisshaders.iris.gl.texture.DepthCopyStrategy;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.gl.texture.PixelType;
 import net.irisshaders.iris.gl.uniform.UniformUpdateFrequency;
+import net.irisshaders.iris.mixin.GlTextureInvoker;
 import net.irisshaders.iris.uniforms.SystemTimeUniforms;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector2i;
 import org.lwjgl.opengl.GL21C;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 public class CenterDepthSampler {
 	private static final double LN2 = Math.log(2);
+	private static final Matrix4f PROJECTION = new Matrix4f(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1);
 	private final Program program;
 	private final GlFramebuffer framebuffer;
-	private final int texture;
-	private final int altTexture;
+	private final GlTexture texture;
+	private final GlTexture altTexture;
+	private final Supplier<GpuTexture> depthSupplier;
 	private boolean hasFirstSample;
 	private boolean everRetrieved;
 	private boolean destroyed;
 
-	public CenterDepthSampler(IntSupplier depthSupplier, float halfLife) {
-		this.texture = GlStateManager._genTexture();
-		this.altTexture = GlStateManager._genTexture();
+	private RenderPipeline pipeline = RenderPipeline.builder().withoutBlend().withLocation(ResourceLocation.fromNamespaceAndPath("iris", "depth_smoothing"))
+		.withVertexShader("core/blit_screen")
+		.withFragmentShader("core/blit_screen")
+		.withoutBlend()
+		.withDepthWrite(false)
+		.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+		.withColorWrite(true, true)
+		.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
+		.build();
+
+	public CenterDepthSampler(Supplier<GpuTexture> depthSupplier, float halfLife) {
+		int tTex = GlStateManager._genTexture();
+		int aTex = GlStateManager._genTexture();
 		this.framebuffer = new GlFramebuffer();
 
 		InternalTextureFormat format = InternalTextureFormat.R32F;
-		setupColorTexture(texture, format);
-		setupColorTexture(altTexture, format);
+		setupColorTexture(tTex, format);
+		setupColorTexture(aTex, format);
 		GlStateManager._bindTexture(0);
 
-		this.framebuffer.addColorAttachment(0, texture);
+		this.texture = GlTextureInvoker.create("Center Depth Sampler", TextureFormat.RGBA8, 1, 1, 1, tTex);
+		this.altTexture = GlTextureInvoker.create("Center Depth Sampler 2", TextureFormat.RGBA8, 1, 1, 1, aTex);
+
+		this.framebuffer.addColorAttachment(0, tTex);
 		ProgramBuilder builder;
 
 		try {
@@ -56,12 +89,13 @@ public class CenterDepthSampler {
 			throw new RuntimeException(e);
 		}
 
-		builder.addDynamicSampler(depthSupplier, "depth");
-		builder.addDynamicSampler(() -> altTexture, "altDepth");
+		this.depthSupplier = depthSupplier;
+		builder.addDynamicSampler(() -> depthSupplier.get().flushAndId(), "depth");
+		builder.addDynamicSampler(() -> aTex, "altDepth");
 		builder.uniform1f(UniformUpdateFrequency.PER_FRAME, "lastFrameTime", SystemTimeUniforms.TIMER::getLastFrameTime);
 		builder.uniform1f(UniformUpdateFrequency.ONCE, "decay", () -> (1.0f / ((halfLife * 0.1) / LN2)));
 		// TODO: can we just do this for all composites?
-		builder.uniformMatrix(UniformUpdateFrequency.ONCE, "projection", () -> new Matrix4f(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1));
+		builder.uniformMatrix(UniformUpdateFrequency.ONCE, "projection", () -> PROJECTION);
 		this.program = builder.build();
 	}
 
@@ -74,19 +108,24 @@ public class CenterDepthSampler {
 
 		hasFirstSample = true;
 
-		this.framebuffer.bind();
-		this.program.use();
+		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(texture, OptionalInt.empty())) {
+			pass.bindSampler("depth", depthSupplier.get());
+			pass.bindSampler("altDepth", altTexture);
+			pass.setPipeline(pipeline);
+			pass.iris$setCustomState(new GlCustomState(this.program, this.framebuffer, null, ViewportData.defaultValue(), new Vector2i(1, 1)));
+			pass.setVertexBuffer(0, FullScreenQuadRenderer.INSTANCE.getQuad());
+			RenderSystem.AutoStorageIndexBuffer buf = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+			pass.setIndexBuffer(buf.getBuffer(6), buf.type());
 
-		GlStateManager._viewport(0, 0, 1, 1);
+			program.use();
+			pass.drawIndexed(0, 6);
 
-		FullScreenQuadRenderer.INSTANCE.render();
-
-		ProgramUniforms.clearActiveUniforms();
-		ProgramSamplers.clearActiveSamplers();
+			BlendModeOverride.restore();
+			GLDebug.popGroup();
+		}
 
 		// The API contract of DepthCopyStrategy claims it can only copy depth, however the 2 non-stencil methods used are entirely capable of copying color as of now.
-		DepthCopyStrategy.fastest(false).copy(this.framebuffer, texture, null, altTexture, 1, 1);
-
+		DepthCopyStrategy.fastest(false).copy(this.framebuffer, texture.glId(), null, altTexture.glId(), 1, 1);
 	}
 
 	public void setupColorTexture(int texture, InternalTextureFormat format) {
@@ -99,7 +138,7 @@ public class CenterDepthSampler {
 	}
 
 	public int getCenterDepthTexture() {
-		return altTexture;
+		return altTexture.glId();
 	}
 
 	public void setUsage(boolean usage) {
@@ -107,8 +146,8 @@ public class CenterDepthSampler {
 	}
 
 	public void destroy() {
-		GlStateManager._deleteTexture(texture);
-		GlStateManager._deleteTexture(altTexture);
+		texture.close();
+		altTexture.close();
 		framebuffer.destroy();
 		program.destroy();
 		destroyed = true;

@@ -4,9 +4,11 @@ import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.opengl.GlBuffer;
+import com.mojang.blaze3d.opengl.GlCommandEncoder;
 import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -51,8 +53,6 @@ public class FullScreenQuadRenderer {
 	public void renderQuad() {
 		GlStateManager._disableDepthTest();
 		IrisRenderSystem.overridePolygonMode();
-		((GlDevice) (RenderSystem.getDevice())).vertexArrayCache().bindVertexArray(DefaultVertexFormat.POSITION_TEX, (GlBuffer) quad);
-		GlStateManager._glBindBuffer(34963, ((GlBuffer) RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6)).handle);
 		GlStateManager._drawElements(GlConst.toGl(VertexFormat.Mode.QUADS), 6, GlConst.toGl(RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type()), 0);
 		IrisRenderSystem.restorePolygonMode();
 	}
@@ -64,5 +64,9 @@ public class FullScreenQuadRenderer {
 		// Using quad.getFormat().clearBufferState() causes some Intel drivers to freak out:
 		// https://github.com/IrisShaders/Iris/issues/1214
 
+	}
+
+	public GpuBuffer getQuad() {
+		return quad;
 	}
 }

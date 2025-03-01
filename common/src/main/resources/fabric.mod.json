@@ -64,7 +64,8 @@
       ]
     },
     "loom:injected_interfaces": {
-      "net/minecraft/class_10792": ["net/irisshaders/iris/mixinterface/GpuTextureExtension"]
+      "net/minecraft/class_10792": ["net/irisshaders/iris/mixinterface/GpuTextureExtension"],
+      "net/minecraft/class_10883": ["net/irisshaders/iris/mixinterface/RenderPassExtension"]
     }
   }
 }

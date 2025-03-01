@@ -11,6 +11,8 @@ accessible  class   net/minecraft/client/renderer/FogRenderer$FogData
 accessible  class   net/minecraft/client/renderer/texture/Stitcher$Holder
 accessible  class   net/minecraft/world/level/biome/Biome$ClimateSettings
 accessible  class   net/minecraft/client/Options$FieldAccess
+accessible field com/mojang/blaze3d/opengl/GlRenderPass scissorState Lcom/mojang/blaze3d/systems/ScissorState;
+accessible field com/mojang/blaze3d/opengl/GlRenderPass pipeline Lcom/mojang/blaze3d/opengl/GlRenderPipeline;
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
 accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
 accessible class net/minecraft/client/renderer/texture/SpriteContents$Ticker

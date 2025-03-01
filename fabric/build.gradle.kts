@@ -93,6 +93,7 @@ loom {
             configName = "Fabric/Client"
             appendProjectPathToConfigName = false
             ideConfigGenerated(true)
+            programArgs("--renderDebugLabels")
             environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
             runDir("run")
         }
