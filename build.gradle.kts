@@ -14,7 +14,7 @@ object Constants {
     // https://semver.org/
     const val MOD_VERSION: String = "1.7.6"
 
-    const val CUSTOM_SODIUM: Boolean = true
+    const val CUSTOM_SODIUM: Boolean = false
     const val CUSTOM_SODIUM_NAME: String = "sodium-fabric-0.5.12-snapshot+mc1.20.1-build.612.jar"
 
     const val IS_SHARED_BETA: Boolean = false
@@ -22,12 +22,8 @@ object Constants {
     const val BETA_TAG: String = "DH Support"
     const val BETA_VERSION = 4
 
-    const val SODIUM_VERSION: String = "mc1.20.1-0.5.10"
+    const val SODIUM_VERSION: String = "mc1.20.1-0.5.12-beta.2-fabric"
 }
-
-// THIS IS HORRIBLE JUST TO MAKE NIGHTLY WORK
-val horror = URL("https://cdn.discordapp.com/attachments/1249486573771296830/1342603638278983821/sodium-fabric-0.5.12-snapshotmc1.20.1-build.612.jar?ex=67ba3c93&is=67b8eb13&hm=c97689728f6caaf9e3f1f9e36ae8b5662816e6c7ead4c49fcb2f9c2f829c85a4&")
-FileUtils.copyURLToFile(horror, rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.5.12-snapshot+mc1.20.1-build.612.jar"))
 
 repositories {
     exclusiveContent {
