@@ -79,7 +79,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 	@Override
 	protected void renderListBackground(GuiGraphics pAbstractSelectionList0) {
 		float transition = screen.listTransition.getAsFloat();
-		RenderSystem.enableBlend();
+		//RenderSystem.enableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
 		pAbstractSelectionList0.blit(RenderType::guiTextured,
 			MENU_LIST_BACKGROUND,
@@ -87,7 +87,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		);
 		if (transition < 0.99f) pAbstractSelectionList0.flush();
 
-		RenderSystem.disableBlend();
+		//RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
@@ -96,13 +96,13 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		float transition = screen.listTransition.getAsFloat();
 		if (transition < 0.02f) return;
 		if (transition < 0.99f) pAbstractSelectionList0.flush();
-		RenderSystem.enableBlend();
+		//RenderSystem.enableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
 		pAbstractSelectionList0.blit(RenderType::guiTextured, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
 		pAbstractSelectionList0.blit(RenderType::guiTextured, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
 		if (transition < 0.99f) pAbstractSelectionList0.flush();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-		RenderSystem.disableBlend();
+		//RenderSystem.disableBlend();
 	}
 
 	public void addHeader(Component text, boolean backButton) {

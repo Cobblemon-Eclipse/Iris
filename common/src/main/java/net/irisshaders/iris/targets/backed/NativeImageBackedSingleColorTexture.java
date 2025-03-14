@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 
 public class NativeImageBackedSingleColorTexture extends DynamicTexture {
 	public NativeImageBackedSingleColorTexture(int red, int green, int blue, int alpha) {
-		super(create(ColorARGB.pack(red, green, blue, alpha)));
+		super(() -> "Single color texture", create(ColorARGB.pack(red, green, blue, alpha)));
 	}
 
 	public NativeImageBackedSingleColorTexture(int rgba) {

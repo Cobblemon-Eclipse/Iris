@@ -38,6 +38,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -230,7 +231,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 					Iris.getUpdateChecker().getUpdateLink().ifPresent(Util.getPlatform()::openUri);
 				}
 				this.minecraft.setScreen(this);
-			}, Iris.getUpdateChecker().getUpdateLink().orElse(""), true));
+			}, Iris.getUpdateChecker().getUpdateLink().map(URI::toString).orElse(""), true));
 		}
 		return super.mouseClicked(d, e, i);
 	}
@@ -374,8 +375,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		if (!(f < 1.0F)) {
 			PostChain postChain = this.minecraft.getShaderManager().getPostChain(BLUR_POST_CHAIN_ID, LevelTargetBundle.MAIN_TARGETS);
 			if (postChain != null) {
-				postChain.setUniform("Radius", f);
-				postChain.process(this.minecraft.getMainRenderTarget(), ((GameRendererAccessor) this.minecraft.gameRenderer).getResourcePool());
+				postChain.process(this.minecraft.getMainRenderTarget(), ((GameRendererAccessor) this.minecraft.gameRenderer).getResourcePool(), renderPass -> renderPass.setUniform("Radius", f));
 			}
 
 		}
@@ -384,7 +384,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	@Override
 	protected void renderBlurredBackground() {
 		processFixedBlur();
-		this.minecraft.getMainRenderTarget().bindWrite(false);
 	}
 
 	@Override

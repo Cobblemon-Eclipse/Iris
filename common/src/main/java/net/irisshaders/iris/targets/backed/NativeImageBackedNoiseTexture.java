@@ -1,6 +1,7 @@
 package net.irisshaders.iris.targets.backed;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.gl.texture.TextureAccess;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -11,7 +12,7 @@ import java.util.function.IntSupplier;
 
 public class NativeImageBackedNoiseTexture extends DynamicTexture implements TextureAccess {
 	public NativeImageBackedNoiseTexture(int size) {
-		super(create(size));
+		super(() -> "Noise / " + size, create(size));
 	}
 
 	private static NativeImage create(int size) {
@@ -33,8 +34,7 @@ public class NativeImageBackedNoiseTexture extends DynamicTexture implements Tex
 	public void upload() {
 		NativeImage image = Objects.requireNonNull(getPixels());
 
-		bind();
-		image.upload(0, 0, 0, false);
+		RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, image);
 	}
 
 	@Override
@@ -44,6 +44,6 @@ public class NativeImageBackedNoiseTexture extends DynamicTexture implements Tex
 
 	@Override
 	public IntSupplier getTextureId() {
-		return this::getId;
+		return this.getTexture()::getGlId;
 	}
 }

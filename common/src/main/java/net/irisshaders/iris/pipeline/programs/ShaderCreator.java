@@ -5,8 +5,7 @@ import com.google.common.primitives.Ints;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.shaders.CompiledShader;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.JsonOps;
@@ -37,9 +36,8 @@ import net.irisshaders.iris.uniforms.VanillaUniforms;
 import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
-import net.minecraft.client.renderer.CompiledShaderProgram;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.ShaderManager;
-import net.minecraft.client.renderer.ShaderProgramConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -153,7 +151,7 @@ public class ShaderCreator {
 
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
-				return new ExtendedShader(id, shaderResourceFactory, name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);
@@ -186,11 +184,8 @@ public class ShaderCreator {
 			attachIfValid(i, tessEvalS);
 			attachIfValid(i, fragS);
 
-			if (isFallback) {
-				vertexFormat.bindAttributes(i);
-			} else {
-				((VertexFormatExtension) vertexFormat).bindAttributesIris(i);
-			}
+			((VertexFormatExtension) vertexFormat).bindAttributesIris(isFallback, i);
+
 			GlStateManager.glLinkProgram(i);
 
 				detachIfValid(i, vertexS);
@@ -249,52 +244,11 @@ public class ShaderCreator {
 		String vertex = ShaderSynthesizer.vsh(true, inputs, fogMode, entityLighting, isLeash);
 		String fragment = ShaderSynthesizer.fsh(inputs, fogMode, alpha, intensityTex, isLeash);
 
-
-		String shaderJsonString = String.format("""
-			    {
-			    "blend": {
-			        "func": "add",
-			        "srcrgb": "srcalpha",
-			        "dstrgb": "1-srcalpha"
-			    },
-			    "vertex": "%s",
-			    "fragment": "%s",
-			    "attributes": [
-			        "Position",
-			        "Color",
-			        "UV0",
-			        "UV1",
-			        "UV2",
-			        "Normal"
-			    ],
-			    "uniforms": [
-			        		{ "name": "TextureMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ModelOffset", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
-			        		{ "name": "ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-			        		{ "name": "GlintAlpha", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "Light0_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
-			        		{ "name": "Light1_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
-			        		{ "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
-			        		{ "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "FogDensity", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "FogIsExp2", "type": "int", "count": 1, "values": [ 0 ] },
-			        		{ "name": "AlphaTestValue", "type": "float", "count": 1, "values": [ 0.0 ] },
-			        		{ "name": "LineWidth", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "ScreenSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
-			        		{ "name": "FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] }
-			    ]
-			}""", name, name);
 		ShaderPrinter.printProgram(name)
 			.addSource(PatchShaderType.VERTEX, vertex)
 			.addSource(PatchShaderType.FRAGMENT, fragment)
 			.print();
 
-		JsonElement jsonElement = JsonParser.parseString(shaderJsonString);
-		ShaderProgramConfig shaderProgramConfig = ShaderProgramConfig.CODEC.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonSyntaxException::new);
-
-		ResourceProvider shaderResourceFactory = new IrisProgramResourceFactory(shaderJsonString, vertex, null, null, null, fragment);
 
 		int id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
 		GLDebug.nameObject(KHRDebug.GL_PROGRAM, id, name + "_fallback");
@@ -302,7 +256,8 @@ public class ShaderCreator {
 		// TODO 24w34a FALLBACK
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
-				return new FallbackShader(id, shaderProgramConfig, shaderResourceFactory, name, vertexFormat, writingToBeforeTranslucent,
+				// TODO 1.21.5 (oh no)
+				return new FallbackShader(id, RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, writingToBeforeTranslucent,
 					writingToAfterTranslucent, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -321,60 +276,19 @@ public class ShaderCreator {
 		String vertex = ShaderSynthesizer.vsh(true, inputs, fogMode, entityLighting, isLeash);
 		String fragment = ShaderSynthesizer.fsh(inputs, fogMode, alpha, intensityTex, isLeash);
 
-
-		String shaderJsonString = String.format("""
-			    {
-			    "blend": {
-			        "func": "add",
-			        "srcrgb": "srcalpha",
-			        "dstrgb": "1-srcalpha"
-			    },
-			    "vertex": "%s",
-			    "fragment": "%s",
-			    "attributes": [
-			        "Position",
-			        "Color",
-			        "UV0",
-			        "UV1",
-			        "UV2",
-			        "Normal"
-			    ],
-			    "uniforms": [
-			        		{ "name": "TextureMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
-			        		{ "name": "ModelOffset", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
-			        		{ "name": "ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
-			        		{ "name": "GlintAlpha", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "Light0_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
-			        		{ "name": "Light1_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
-			        		{ "name": "FogStart", "type": "float", "count": 1, "values": [ 0.0 ] },
-			        		{ "name": "FogEnd", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "FogDensity", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "FogIsExp2", "type": "int", "count": 1, "values": [ 0 ] },
-			        		{ "name": "AlphaTestValue", "type": "float", "count": 1, "values": [ 0.0 ] },
-			        		{ "name": "LineWidth", "type": "float", "count": 1, "values": [ 1.0 ] },
-			        		{ "name": "ScreenSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
-			        		{ "name": "FogColor", "type": "float", "count": 4, "values": [ 0.0, 0.0, 0.0, 0.0 ] }
-			    ]
-			}""", name, name);
 		ShaderPrinter.printProgram(name)
 			.addSource(PatchShaderType.VERTEX, vertex)
 			.addSource(PatchShaderType.FRAGMENT, fragment)
 			.print();
-
-		JsonElement jsonElement = JsonParser.parseString(shaderJsonString);
-		ShaderProgramConfig shaderProgramConfig = ShaderProgramConfig.CODEC.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonSyntaxException::new);
-
-		ResourceProvider shaderResourceFactory = new IrisProgramResourceFactory(shaderJsonString, vertex, null, null, null, fragment);
 
 		int id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
 
 		// TODO 24w34a FALLBACK
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
+				// TODO: Fix
 				GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), new int[]{0});
-				return new FallbackShader(id, shaderProgramConfig, shaderResourceFactory, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
+				return new FallbackShader(id, RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -420,7 +334,7 @@ public class ShaderCreator {
 		return new ShaderSupplier(shaderKey, id, () -> {
 			GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), source.getDirectives().hasUnknownDrawBuffers() ? new int[]{0, 1} : source.getDirectives().getDrawBuffers());
 			try {
-				return new ExtendedShader(id, shaderResourceFactory, name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);

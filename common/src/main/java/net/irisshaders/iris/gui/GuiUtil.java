@@ -1,5 +1,6 @@
 package net.irisshaders.iris.gui;
 
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -37,7 +38,7 @@ public final class GuiUtil {
 	 * used for succeeding draw calls.
 	 */
 	public static void bindIrisWidgetsTexture() {
-		RenderSystem.setShaderTexture(0, IRIS_WIDGETS_TEX);
+		RenderSystem.setShaderTexture(0, Minecraft.getInstance().getTextureManager().getTexture(IRIS_WIDGETS_TEX).getTexture());
 	}
 
 	/**
@@ -62,7 +63,7 @@ public final class GuiUtil {
 		int vOffset = disabled ? 46 : hovered ? 86 : 66;
 
 		// Sets RenderSystem to use solid white as the tint color for blend mode, and enables blend mode
-		RenderSystem.enableBlend();
+		GlStateManager._enableBlend();
 
 		// Top left section
 		guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
@@ -190,7 +191,7 @@ public final class GuiUtil {
 		 */
 		public void draw(GuiGraphics guiGraphics, int x, int y) {
 			// Sets RenderSystem to use solid white as the tint color for blend mode (1.16), and enables blend mode
-			RenderSystem.enableBlend();
+			GlStateManager._enableBlend();
 
 			// Draw the texture to the screen
 			guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x, y, u, v, width, height, 256, 256);

@@ -1,6 +1,6 @@
 package net.irisshaders.iris.pbr;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;

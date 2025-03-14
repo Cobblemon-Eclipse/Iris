@@ -1,7 +1,7 @@
 package net.irisshaders.iris.mixin;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.mojang.blaze3d.opengl.GlProgram;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
@@ -13,8 +13,8 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
 import net.irisshaders.iris.pipeline.programs.FallbackShader;
 import net.irisshaders.iris.shadows.ShadowRenderer;
+import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.lwjgl.opengl.KHRDebug;
 import org.slf4j.Logger;
@@ -33,21 +33,13 @@ import static net.irisshaders.iris.compat.SkipList.ALWAYS;
 import static net.irisshaders.iris.compat.SkipList.NONE;
 import static net.irisshaders.iris.compat.SkipList.shouldSkipList;
 
-@Mixin(CompiledShaderProgram.class)
+@Mixin(GlProgram.class)
 public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterface {
 	@Unique
 	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2");
 
 	@Unique
-	private static CompiledShaderProgram lastAppliedShader;
-
-	@Inject(method = "apply", at = @At("HEAD"))
-	private void iris$lockDepthColorState(CallbackInfo ci) {
-		if (lastAppliedShader != null) {
-			lastAppliedShader.clear();
-			lastAppliedShader = null;
-		}
-	}
+	private static GlProgram lastAppliedShader;
 
 	@Unique
 	private MethodHandle shouldSkip;
@@ -55,6 +47,20 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 	static {
 		shouldSkipList.put(ExtendedShader.class, NONE);
 		shouldSkipList.put(FallbackShader.class, NONE);
+	}
+
+	@Redirect(method = "setupUniforms", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V"))
+	private void iris$silence(Logger instance, String s, Object o, Object o1) {
+		if (!isKnownShader()) {
+			instance.warn(s, o, o1);
+		}
+	}
+
+	@Redirect(method = "setupUniforms", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V"))
+	private void iris$silence2(Logger logger, String s, Object o, Object o1) {
+		if (!isKnownShader()) {
+			logger.info(s, o, o1);
+		}
 	}
 
 	@Override
@@ -72,7 +78,7 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 			if (shouldSkip == ALWAYS) return true;
 
 			try {
-				return (boolean) shouldSkip.invoke(((CompiledShaderProgram) (Object) this));
+				return (boolean) shouldSkip.invoke(((GlProgram) (Object) this));
 			} catch (Throwable e) {
 				throw new RuntimeException(e);
 			}
@@ -80,6 +86,7 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 			return !(((Object) this) instanceof ExtendedShader || ((Object) this) instanceof FallbackShader || !shouldOverrideShaders());
 		}
 	}
+
 
 	@Unique
 	private static boolean shouldOverrideShaders() {
@@ -92,7 +99,7 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 		}
 	}
 
-	@Inject(method = "apply", at = @At("TAIL"))
+	@Inject(method = "setDefaultUniforms", at = @At("TAIL"))
 	private void onTail(CallbackInfo ci) {
 		if (!iris$shouldSkipThis()) {
 			if (!isKnownShader() && shouldOverrideShaders()) {
@@ -110,7 +117,11 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 			return;
 		}
 
-		DepthColorStorage.disableDepthColor();
+		if (ImmediateState.isRenderingLevel && !isKnownShader()) {
+			DepthColorStorage.disableDepthColor();
+		} else {
+			DepthColorStorage.unlockDepthColor();
+		}
 	}
 
 	private boolean isKnownShader() {
@@ -124,7 +135,7 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 				WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 				if (pipeline instanceof IrisRenderingPipeline) {
-					Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
+					Minecraft.getInstance().getMainRenderTarget().bindFramebuffer();
 				}
 			}
 

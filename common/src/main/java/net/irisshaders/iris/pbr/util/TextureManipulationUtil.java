@@ -1,6 +1,6 @@
 package net.irisshaders.iris.pbr.util;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
@@ -22,7 +22,7 @@ public class TextureManipulationUtil {
 		IrisRenderSystem.getIntegerv(GL11.GL_VIEWPORT, previousViewport);
 
 		GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, colorFillFBO);
-		GlStateManager._clearColor(
+		IrisRenderSystem.clearColor(
 			(rgba >> 24 & 0xFF) / 255.0f,
 			(rgba >> 16 & 0xFF) / 255.0f,
 			(rgba >> 8 & 0xFF) / 255.0f,
@@ -39,7 +39,7 @@ public class TextureManipulationUtil {
 		}
 
 		GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFramebufferId);
-		GlStateManager._clearColor(previousClearColor[0], previousClearColor[1], previousClearColor[2], previousClearColor[3]);
+		IrisRenderSystem.clearColor(previousClearColor[0], previousClearColor[1], previousClearColor[2], previousClearColor[3]);
 		GlStateManager._bindTexture(previousTextureId);
 		GlStateManager._viewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
 	}

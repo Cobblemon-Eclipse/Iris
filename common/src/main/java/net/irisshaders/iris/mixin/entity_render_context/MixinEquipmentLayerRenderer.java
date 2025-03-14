@@ -19,7 +19,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +47,8 @@ public abstract class MixinEquipmentLayerRenderer {
 	private void changeTrimTemp(CallbackInfo ci, @Local ArmorTrim armorTrim) {
 		if (WorldRenderingSettings.INSTANCE.getItemIds() == null) return;
 
-		EntityState.interposeItemId(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(new NamespacedId("minecraft", "trim_" + armorTrim.material().value().assetName())));
+		// TODO 1.21.5 check
+		EntityState.interposeItemId(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(new NamespacedId("minecraft", "trim_" + armorTrim.material().value().assets().base().suffix())));
 	}
 
 	@Inject(method = V, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/Model;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;II)V", shift = At.Shift.AFTER))

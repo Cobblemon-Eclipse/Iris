@@ -27,7 +27,6 @@ import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.GameRenderer;
@@ -107,7 +106,7 @@ public class MixinLevelRenderer {
 			this.cullingFrustum.prepare(camera.getPosition().x(), camera.getPosition().y(), camera.getPosition().z());
 		}
 
-    pipeline.beginLevelRendering();
+    	pipeline.beginLevelRendering();
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 		IrisRenderSystem.backupAndDisableCullingState(pipeline.shouldDisableOcclusionCulling());
 
@@ -180,7 +179,6 @@ public class MixinLevelRenderer {
 		// We've changed the phase, but vanilla doesn't update the shader program at this point before rendering stuff,
 		// so we need to manually refresh the shader program so that the correct shader override gets applied.
 		// TODO: Move the injection instead
-		RenderSystem.setShader(CoreShaders.POSITION);
 	}
 
 	@Inject(method = { "method_62215", NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "RETURN"))

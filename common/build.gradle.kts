@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version "1.8.10"
+    id("fabric-loom") version "1.10.1"
     id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
 
@@ -68,6 +68,13 @@ dependencies {
     compileOnly(files(rootDir.resolve("DHApi.jar")))
 }
 
+afterEvaluate {
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-Xmaxerrs")
+        options.compilerArgs.add("2000")
+    }
+}
+
 sourceSets {
     val main = getByName("main")
     val headers = create("headers")
@@ -127,6 +134,11 @@ loom {
 }
 
 tasks {
+    processResources {
+        filesMatching("fabric.mod.json") {
+            expand(mapOf("version" to project.version))
+        }
+    }
     getByName<JavaCompile>("compileDesktopJava") {
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()

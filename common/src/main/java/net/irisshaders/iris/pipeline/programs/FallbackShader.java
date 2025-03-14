@@ -1,13 +1,17 @@
 package net.irisshaders.iris.pipeline.programs;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlProgram;
+import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.shaders.Uniform;
+import com.mojang.blaze3d.opengl.Uniform;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.compat.SkipList;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
+import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.mixinterface.ShaderInstanceInterface;
@@ -15,16 +19,15 @@ import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CompiledShaderProgram;
-import net.minecraft.client.renderer.ShaderProgramConfig;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-public class FallbackShader extends CompiledShaderProgram {
+public class FallbackShader extends GlProgram {
 	private final IrisRenderingPipeline parent;
 	private final BlendModeOverride blendModeOverride;
 	private final GlFramebuffer writingToBeforeTranslucent;
@@ -39,13 +42,23 @@ public class FallbackShader extends CompiledShaderProgram {
 	private final int overlay;
 	private final int lightmap;
 
-	public FallbackShader(int programId, ShaderProgramConfig shaderProgramConfig, ResourceProvider resourceFactory, String string, VertexFormat vertexFormat,
+	public FallbackShader(int programId, RenderPipeline pipeline, String string, VertexFormat vertexFormat,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
 						  BlendModeOverride blendModeOverride, float alphaValue, IrisRenderingPipeline parent) throws IOException {
-		super(programId);
+		super(programId, string);
 		((ShaderInstanceInterface) this).setShouldSkip(SkipList.NONE);
 
-		setupUniforms(shaderProgramConfig.uniforms(), shaderProgramConfig.samplers());
+		List<RenderPipeline.UniformDescription> uniforms = new ArrayList<>(pipeline.getUniforms());
+
+		uniforms.add(new RenderPipeline.UniformDescription("AlphaTestValue", UniformType.FLOAT));
+		uniforms.add(new RenderPipeline.UniformDescription("FogDensity", UniformType.FLOAT));
+		uniforms.add(new RenderPipeline.UniformDescription("FogIsExp2", UniformType.INT));
+		uniforms.add(new RenderPipeline.UniformDescription("ModelOffset", UniformType.VEC3));
+		uniforms.add(new RenderPipeline.UniformDescription("TextureMat", UniformType.MATRIX4X4));
+		uniforms.add(new RenderPipeline.UniformDescription("LineWidth", UniformType.FLOAT));
+		uniforms.add(new RenderPipeline.UniformDescription("ScreenSize", UniformType.VEC2));
+
+		setupUniforms(uniforms, pipeline.getSamplers());
 
 		this.parent = parent;
 		this.blendModeOverride = blendModeOverride;
@@ -59,11 +72,14 @@ public class FallbackShader extends CompiledShaderProgram {
 		this.overlay = GlStateManager._glGetUniformLocation(programId, "overlay");
 		this.lightmap = GlStateManager._glGetUniformLocation(programId, "lightmap");
 
+		GlStateManager._glUseProgram(programId);
+
 
 		Uniform ALPHA_TEST_VALUE = this.getUniform("AlphaTestValue");
 
 		if (ALPHA_TEST_VALUE != null) {
 			ALPHA_TEST_VALUE.set(alphaValue);
+			ALPHA_TEST_VALUE.upload();
 		}
 	}
 
@@ -74,17 +90,15 @@ public class FallbackShader extends CompiledShaderProgram {
 		if (this.blendModeOverride != null) {
 			BlendModeOverride.restore();
 		}
-
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
 	}
 
 	@Override
-	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f matrix4f, Matrix4f matrix4f2, Window window) {
-		super.setDefaultUniforms(mode, matrix4f, matrix4f2, window);
-	}
+	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f matrix4f, Matrix4f matrix4f2, float width, float height) {
+		DepthColorStorage.unlockDepthColor();
 
-	@Override
-	public void apply() {
+		super.setDefaultUniforms(mode, matrix4f, matrix4f2, width, height);
+
+
 		if (FOG_DENSITY != null && FOG_IS_EXP2 != null) {
 			float fogDensity = CapturedRenderingState.INSTANCE.getFogDensity();
 
@@ -97,15 +111,12 @@ public class FallbackShader extends CompiledShaderProgram {
 			}
 		}
 
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.ALBEDO_TEXTURE_UNIT, RenderSystem.getShaderTexture(0));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.OVERLAY_TEXTURE_UNIT, RenderSystem.getShaderTexture(1));
-		IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), IrisSamplers.LIGHTMAP_TEXTURE_UNIT, RenderSystem.getShaderTexture(2));
+		if (FOG_DENSITY != null) {
+			FOG_DENSITY.upload();
+		}
 
-		GlStateManager._glUseProgram(this.getProgramId());
-
-		List<Uniform> uniformList = super.uniforms;
-		for (Uniform uniform : uniformList) {
-			uploadIfNotNull(uniform);
+		if (FOG_IS_EXP2 != null) {
+			FOG_IS_EXP2.upload();
 		}
 
 		GlStateManager._glUniform1i(gtexture, 0);

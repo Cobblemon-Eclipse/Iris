@@ -1,5 +1,6 @@
 package net.irisshaders.iris.pbr.format;
 
+import com.mojang.blaze3d.textures.FilterMode;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.mixinterface.AbstractTextureExtended;
 import net.irisshaders.iris.pbr.mipmap.CustomMipmapGenerator;
@@ -47,7 +48,7 @@ public interface TextureFormat {
 
 	default void setupTextureParameters(PBRType pbrType, AbstractTexture texture) {
 		if (!canInterpolateValues(pbrType)) {
-			((AbstractTextureExtended) texture).setNearestFilter();
+			texture.getTexture().setTextureFilter(FilterMode.NEAREST, texture.getTexture().getMipLevels() > 1);
 		}
 	}
 

@@ -1,7 +1,7 @@
 package net.irisshaders.iris.mixin.vertices;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.Iris;
@@ -27,53 +27,16 @@ public abstract class MixinVertexFormat implements VertexFormatExtension {
 	@Shadow
 	public abstract List<String> getElementAttributeNames();
 
-	@Inject(method = "setupBufferState", at = @At("HEAD"), cancellable = true)
-	private void iris$onSetupBufferState(CallbackInfo ci) {
-		if (Iris.isPackInUseQuick() && ImmediateState.renderWithExtendedVertexFormat) {
-			if ((Object) this == DefaultVertexFormat.BLOCK) {
-				IrisVertexFormats.TERRAIN.setupBufferState();
-
-				ci.cancel();
-			} else if ((Object) this == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP) {
-				IrisVertexFormats.GLYPH.setupBufferState();
-
-				ci.cancel();
-			} else if ((Object) this == DefaultVertexFormat.NEW_ENTITY) {
-				IrisVertexFormats.ENTITY.setupBufferState();
-
-				ci.cancel();
-			}
-		}
-	}
-
-	@Inject(method = "clearBufferState", at = @At("HEAD"), cancellable = true)
-	private void iris$onClearBufferState(CallbackInfo ci) {
-		if (Iris.isPackInUseQuick() && ImmediateState.renderWithExtendedVertexFormat) {
-			if ((Object) this == DefaultVertexFormat.BLOCK) {
-				IrisVertexFormats.TERRAIN.clearBufferState();
-
-				ci.cancel();
-			} else if ((Object) this == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP) {
-				IrisVertexFormats.GLYPH.clearBufferState();
-
-				ci.cancel();
-			} else if ((Object) this == DefaultVertexFormat.NEW_ENTITY) {
-				IrisVertexFormats.ENTITY.clearBufferState();
-
-				ci.cancel();
-			}
-		}
-	}
-
 	@Unique
 	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2");
 
 	@Override
-	public void bindAttributesIris(int i) {
+	public void bindAttributesIris(boolean isFallback, int i) {
 		int j = 0;
 
 		for (String string : this.getElementAttributeNames()) {
-			GlStateManager._glBindAttribLocation(i, j, ATTRIBUTE_LIST.contains(string) ? "iris_" + string : string		);
+			//Iris.logger.warn("Binding " + string + " to " + j);
+			GlStateManager._glBindAttribLocation(i, j, ATTRIBUTE_LIST.contains(string) && !isFallback ? "iris_" + string : string);
 			j++;
 		}
 	}

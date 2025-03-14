@@ -1,11 +1,15 @@
 package net.irisshaders.batchedentityrendering.impl;
 
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectSortedMaps;
 import net.irisshaders.batchedentityrendering.impl.ordering.GraphTranslucencyRenderOrderManager;
 import net.irisshaders.batchedentityrendering.impl.ordering.RenderOrderManager;
 import net.irisshaders.iris.layer.WrappingMultiBufferSource;
+import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,6 +23,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.function.Function;
 
 public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSource implements MemoryTrackingBuffer, Groupable, WrappingMultiBufferSource {
@@ -131,7 +137,7 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 	@Override
 	public void endBatch() {
 		ProfilerFiller profiler = Profiler.get();
-
+		ImmediateState.safeToMultiply = true;
 		if (!isReady) readyUp();
 
 		profiler.push("iris draw buffers");
@@ -140,12 +146,30 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			if (!typeToSegment.containsKey(type)) continue;
 
 			type.setupRenderState();
-
 			renderTypes += 1;
 
-			for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
-				segmentRenderer.drawInner(segment);
-				drawCalls += 1;
+			BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+			drawCalls += segments.length;
+
+
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(type.getRenderTarget().getColorTexture(), OptionalInt.empty(), type.getRenderTarget().getDepthTexture(), OptionalDouble.empty())) {
+				pass.setPipeline(type.getRenderPipeline());
+
+				if (RenderSystem.SCISSOR_STATE.isEnabled()) {
+					pass.enableScissor(RenderSystem.SCISSOR_STATE);
+				}
+
+				for(int i = 0; i < 12; ++i) {
+					GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
+					if (gpuTexture != null) {
+						pass.bindSampler("Sampler" + i, gpuTexture);
+					}
+				}
+
+				for (BufferSegment segment : segments) {
+					segmentRenderer.drawInner(type.getRenderPipeline(), pass, segment);
+					segment.close();
+				}
 			}
 
 			type.clearRenderState();
@@ -160,6 +184,7 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 		profiler.popPush("reset");
 
 		removeReady();
+		ImmediateState.safeToMultiply = false;
 
 		profiler.pop();
 	}
@@ -181,12 +206,30 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			types.add(type);
 
 			type.setupRenderState();
-
 			renderTypes += 1;
 
-			for (BufferSegment segment : typeToSegment.getOrDefault(type, Collections.emptyList())) {
-				segmentRenderer.drawInner(segment);
-				drawCalls += 1;
+			BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+			drawCalls += segments.length;
+
+
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(type.getRenderTarget().getColorTexture(), OptionalInt.empty(), type.getRenderTarget().getDepthTexture(), OptionalDouble.empty())) {
+				pass.setPipeline(type.getRenderPipeline());
+
+				if (RenderSystem.SCISSOR_STATE.isEnabled()) {
+					pass.enableScissor(RenderSystem.SCISSOR_STATE);
+				}
+
+				for(int i = 0; i < 12; ++i) {
+					GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
+					if (gpuTexture != null) {
+						pass.bindSampler("Sampler" + i, gpuTexture);
+					}
+				}
+
+				for (BufferSegment segment : segments) {
+					segmentRenderer.drawInner(type.getRenderPipeline(), pass, segment);
+					segment.close();
+				}
 			}
 
 			typeToSegment.remove(type);

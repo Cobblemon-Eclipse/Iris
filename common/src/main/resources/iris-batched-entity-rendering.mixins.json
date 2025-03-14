@@ -6,7 +6,6 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "BufferSourceAccessor",
-    "CompositeStateAccessor",
     "MixinBannerRenderer",
     "MixinBufferBuilder_SegmentRendering",
     "MixinBufferSource",
@@ -20,7 +19,6 @@
     "MixinRenderType",
     "MixinSheets",
     "OutlineBufferSourceAccessor",
-    "RenderStateShardAccessor",
     "RenderTypeAccessor",
     "SectionBufferBuilderPackAccessor"
   ],

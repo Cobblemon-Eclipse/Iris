@@ -1,5 +1,9 @@
 package net.irisshaders.batchedentityrendering.impl.wrappers;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.batchedentityrendering.impl.BlendingStateHolder;
 import net.irisshaders.batchedentityrendering.impl.TransparencyType;
 import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
@@ -15,7 +19,7 @@ public class TaggingRenderTypeWrapper extends RenderType implements WrappableRen
 	private final RenderType wrapped;
 
 	public TaggingRenderTypeWrapper(String name, RenderType wrapped, int tag) {
-		super(name, wrapped.format(), wrapped.mode(), wrapped.bufferSize(),
+		super(name, wrapped.bufferSize(),
 			wrapped.affectsCrumbling(), shouldSortOnUpload(wrapped), wrapped::setupRenderState, wrapped::clearRenderState);
 
 		this.tag = tag;
@@ -29,6 +33,31 @@ public class TaggingRenderTypeWrapper extends RenderType implements WrappableRen
 	@Override
 	public RenderType unwrap() {
 		return this.wrapped;
+	}
+
+	@Override
+	public void draw(MeshData meshData) {
+		wrapped.draw(meshData);
+	}
+
+	@Override
+	public RenderTarget getRenderTarget() {
+		return wrapped.getRenderTarget();
+	}
+
+	@Override
+	public RenderPipeline getRenderPipeline() {
+		return wrapped.getRenderPipeline();
+	}
+
+	@Override
+	public VertexFormat format() {
+		return wrapped.format();
+	}
+
+	@Override
+	public VertexFormat.Mode mode() {
+		return wrapped.mode();
 	}
 
 	@Override

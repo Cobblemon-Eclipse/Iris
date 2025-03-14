@@ -110,11 +110,11 @@ public class ShaderSynthesizer {
 
 		// Overlay Color
 		if (inputs.hasOverlay()) {
-			shader.append("uniform sampler2D overlay;\n");
+			shader.append("uniform sampler2D Sampler1;\n");
 			shader.append("in ivec2 UV1;\n");
 			shader.append("out vec4 overlayColor;\n");
 
-			main.append("    overlayColor = texelFetch(overlay, UV1, 0);\n");
+			main.append("    overlayColor = texelFetch(Sampler1, UV1, 0);\n");
 		}
 
 		// Vertex Texture
@@ -168,10 +168,10 @@ public class ShaderSynthesizer {
 		main.append("float iris_vertexColorAlpha = iris_vertexColor.a;");
 
 		if (inputs.hasTex()) {
-			shader.append("uniform sampler2D gtexture;\n");
+			shader.append("uniform sampler2D Sampler0;\n");
 			shader.append("in vec2 texCoord;\n");
 
-			main.append("    vec4 color = texture(gtexture, texCoord)");
+			main.append("    vec4 color = texture(Sampler0, texCoord)");
 
 			if (intensityTex) {
 				main.append(".rrrr");
@@ -197,10 +197,10 @@ public class ShaderSynthesizer {
 		}
 
 		if (inputs.hasLight()) {
-			shader.append("uniform sampler2D lightmap;\n");
+			shader.append("uniform sampler2D Sampler2;\n");
 			shader.append("in vec2 lightCoord;\n");
 
-			main.append("    color *= texture(lightmap, lightCoord);\n");
+			main.append("    color *= texture(Sampler2, lightCoord);\n");
 		}
 
 		if (fogMode == FogMode.PER_VERTEX || fogMode == FogMode.PER_FRAGMENT) {

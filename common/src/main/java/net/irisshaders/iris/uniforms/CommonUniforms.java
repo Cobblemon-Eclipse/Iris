@@ -1,6 +1,6 @@
 package net.irisshaders.iris.uniforms;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.gl.state.FogMode;
@@ -76,7 +76,7 @@ public final class CommonUniforms {
 		// the shader will always be setup (and therefore uniforms will be re-uploaded)
 		// after the texture is changed and before rendering starts.
 		uniforms.uniform2i("atlasSize", () -> {
-			int glId = RenderSystem.getShaderTexture(0);
+			int glId = RenderSystem.getShaderTexture(0).getGlId();
 
 			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
 			if (texture instanceof TextureAtlas atlas) {

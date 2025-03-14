@@ -42,7 +42,7 @@ public class MixinEntityRenderDispatcher {
 	private static int cachedId;
 
 	@Inject(method = "renderShadow", at = @At("HEAD"), cancellable = true)
-	private static void iris$maybeSuppressEntityShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, float g, LevelReader levelReader, float h, CallbackInfo ci) {
+	private static void iris$maybeSuppressEntityShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, LevelReader levelReader, float g, CallbackInfo ci) {
 		if (!iris$maybeSuppressShadow(ci)) {
 			Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
 
@@ -56,7 +56,7 @@ public class MixinEntityRenderDispatcher {
 	}
 
 	@Inject(method = "renderShadow", at = @At("RETURN"))
-	private static void restoreShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, float g, LevelReader levelReader, float h, CallbackInfo ci) {
+	private static void restoreShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, LevelReader levelReader, float g, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentEntity(cachedId);
 		cachedId = 0;
 	}

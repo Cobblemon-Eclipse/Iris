@@ -2,6 +2,11 @@ package net.irisshaders.iris.compat.sodium.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.caffeinemc.mods.sodium.api.util.NormI8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
@@ -14,6 +19,7 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ShaderKey;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
 import net.irisshaders.iris.vertices.sodium.CloudVertex;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(CloudRenderer.class)
 public abstract class MixinCloudRenderer {
+
 	@Unique
 	private static final int[] NORMALS = new int[]{
 		NormI8.pack(0.0f, -1.0f, 0.0f), // NEG_Y

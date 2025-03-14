@@ -5,4 +5,7 @@ import net.minecraft.client.renderer.RenderType;
 
 public record BufferSegment(MeshData meshData,
 							RenderType type) {
+	public void close() {
+		meshData.close();
+	}
 }

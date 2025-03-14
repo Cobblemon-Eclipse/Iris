@@ -1,5 +1,6 @@
 package net.irisshaders.iris.compat.sodium.mixin;
 
+import com.mojang.blaze3d.opengl.GlStateManager;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -8,6 +9,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
+import net.irisshaders.iris.shadows.ShadowRenderingState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,5 +36,12 @@ public abstract class MixinShaderChunkRenderer {
 		}
 
 		return program;
+	}
+
+	@Redirect(method = "begin", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
+	private void redirectViewport(int i, int j, int k, int l) {
+		if (!ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
+			GlStateManager._viewport(i, j, k, l);
+		}
 	}
 }

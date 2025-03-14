@@ -47,9 +47,9 @@ public class MixinEntityRenderDispatcher {
 	private static final Object2ObjectMap<EntityType<?>, NamespacedId> ENTITY_IDS = new Object2ObjectOpenHashMap<>();
 
 	// Inject after MatrixStack#push since at this point we know that most cancellation checks have already passed.
-	@ModifyVariable(method = "render(Lnet/minecraft/world/entity/Entity;DDDFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V", shift = At.Shift.AFTER),
+	@ModifyVariable(method = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;render(Lnet/minecraft/world/entity/Entity;DDDFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;createRenderState(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/client/renderer/entity/state/EntityRenderState;", shift = At.Shift.AFTER),
 		allow = 1, require = 1, argsOnly = true)
-	private MultiBufferSource iris$beginEntityRender(MultiBufferSource bufferSource, Entity entity) {
+	private <E extends Entity> MultiBufferSource iris$beginEntityRender(MultiBufferSource bufferSource, E entity) {
 		Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
 
 		if (entityIds == null || !ImmediateState.isRenderingLevel) {
@@ -83,8 +83,8 @@ public class MixinEntityRenderDispatcher {
 
 	// Inject before MatrixStack#pop so that our wrapper stack management operations naturally line up
 	// with vanilla's MatrixStack management functions.
-	@Inject(method = "render(Lnet/minecraft/world/entity/Entity;DDDFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
-	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(E entity, double d, double e, double f, float g, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, EntityRenderer<? super E, S> entityRenderer, CallbackInfo ci) {
+	@Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
+	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(S entityRenderState, double d, double e, double f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, EntityRenderer<?, S> entityRenderer, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 	}

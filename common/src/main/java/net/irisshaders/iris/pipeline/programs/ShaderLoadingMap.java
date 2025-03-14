@@ -1,12 +1,10 @@
 package net.irisshaders.iris.pipeline.programs;
 
-import net.minecraft.client.renderer.CompiledShaderProgram;
-
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
- * A specialized map mapping {@link ShaderKey} to {@link CompiledShaderProgram}.
+ * A specialized map mapping {@link ShaderKey} to {@link com.mojang.blaze3d.opengl.GlProgram}.
  * Avoids much of the complexity / overhead of an EnumMap while ultimately
  * fulfilling the same function.
  */

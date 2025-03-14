@@ -1,7 +1,6 @@
 package net.irisshaders.iris.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -66,7 +65,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderDarkDisc", at = @At(value = "HEAD"))
-	private void iris$setVoidRenderStage(PoseStack poseStack, CallbackInfo ci) {
+	private void iris$setVoidRenderStage(CallbackInfo ci) {
 		setPhase(WorldRenderingPhase.VOID);
 	}
 

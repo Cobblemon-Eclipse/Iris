@@ -1,6 +1,9 @@
 package net.irisshaders.iris.shadows;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.irisshaders.iris.features.FeatureFlags;
@@ -22,8 +25,8 @@ import java.util.List;
 public class ShadowRenderTargets {
 	private final RenderTarget[] targets;
 	private final PackShadowDirectives shadowDirectives;
-	private final DepthTexture mainDepth;
-	private final DepthTexture noTranslucents;
+	private final GpuTexture mainDepth;
+	private final GpuTexture noTranslucents;
 	private final GlFramebuffer depthSourceFb;
 	private final GlFramebuffer noTranslucentsDestFb;
 	private final boolean[] flipped;
@@ -50,8 +53,8 @@ public class ShadowRenderTargets {
 		linearFiltered = new boolean[size];
 		buffersToBeCleared = new IntArrayList();
 
-		this.mainDepth = new DepthTexture("shadowtex0", resolution, resolution, DepthBufferFormat.DEPTH);
-		this.noTranslucents = new DepthTexture("shadowtex1", resolution, resolution, DepthBufferFormat.DEPTH);
+		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", TextureFormat.DEPTH32, resolution, resolution, 1);
+		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", TextureFormat.DEPTH32, resolution, resolution, 1);
 
 		this.ownedFramebuffers = new ArrayList<>();
 		this.resolution = resolution;
@@ -69,7 +72,7 @@ public class ShadowRenderTargets {
 		this.depthSourceFb = createFramebufferWritingToMain(new int[]{0});
 
 		this.noTranslucentsDestFb = createFramebufferWritingToMain(new int[]{0});
-		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents.getTextureId());
+		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
 
 		this.translucentDepthDirty = true;
 		boolean shouldRefresh = false;
@@ -95,8 +98,8 @@ public class ShadowRenderTargets {
 			}
 		}
 
-		mainDepth.destroy();
-		noTranslucents.destroy();
+		mainDepth.close();
+		noTranslucents.close();
 	}
 
 	public int getRenderTargetCount() {
@@ -156,11 +159,11 @@ public class ShadowRenderTargets {
 		return resolution;
 	}
 
-	public DepthTexture getDepthTexture() {
+	public GpuTexture getDepthTexture() {
 		return mainDepth;
 	}
 
-	public DepthTexture getDepthTextureNoTranslucents() {
+	public GpuTexture getDepthTextureNoTranslucents() {
 		return noTranslucents;
 	}
 
@@ -176,7 +179,7 @@ public class ShadowRenderTargets {
 				GL30C.GL_DEPTH_BUFFER_BIT,
 				GL30C.GL_NEAREST);
 		} else {
-			DepthCopyStrategy.fastest(false).copy(depthSourceFb, mainDepth.getTextureId(), noTranslucentsDestFb, noTranslucents.getTextureId(),
+			DepthCopyStrategy.fastest(false).copy(depthSourceFb, mainDepth.getGlId(), noTranslucentsDestFb, noTranslucents.getGlId(),
 				resolution, resolution);
 		}
 	}
@@ -213,7 +216,7 @@ public class ShadowRenderTargets {
 		GlFramebuffer framebuffer = new GlFramebuffer();
 		ownedFramebuffers.add(framebuffer);
 
-		framebuffer.addDepthAttachment(mainDepth.getTextureId());
+		framebuffer.addDepthAttachment(mainDepth);
 
 		// NB: Before OpenGL 3.0, all framebuffers are required to have a color
 		// attachment no matter what.
@@ -232,7 +235,7 @@ public class ShadowRenderTargets {
 
 		GlFramebuffer framebuffer = createColorFramebuffer(stageWritesToMain, drawBuffers);
 
-		framebuffer.addDepthAttachment(mainDepth.getTextureId());
+		framebuffer.addDepthAttachment(mainDepth);
 
 		return framebuffer;
 	}
@@ -246,7 +249,7 @@ public class ShadowRenderTargets {
 
 		GlFramebuffer framebuffer = createColorFramebuffer(stageWritesToMain, drawBuffers);
 
-		framebuffer.addDepthAttachment(mainDepth.getTextureId());
+		framebuffer.addDepthAttachment(mainDepth);
 
 		return framebuffer;
 	}
@@ -268,7 +271,7 @@ public class ShadowRenderTargets {
 	public GlFramebuffer createColorFramebufferWithDepth(ImmutableSet<Integer> stageWritesToMain, int[] drawBuffers) {
 		GlFramebuffer framebuffer = createColorFramebuffer(stageWritesToMain, drawBuffers);
 
-		framebuffer.addDepthAttachment(mainDepth.getTextureId());
+		framebuffer.addDepthAttachment(mainDepth);
 
 		return framebuffer;
 	}

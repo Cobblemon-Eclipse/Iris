@@ -10,11 +10,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.lwjgl.system.Configuration;
 
 import java.nio.file.Path;
 import java.text.ParseException;
 
 public class IrisFabricHelpers implements IrisPlatformHelpers {
+	static {
+		if (System.getProperty("user.home").contains("ims") && FabricLoader.getInstance().isDevelopmentEnvironment()) {
+			//Configuration.GLFW_LIBRARY_NAME.set("/usr/lib/libglfw.so");
+		}
+	}
 	@Override
 	public boolean isModLoaded(String modId) {
 		return FabricLoader.getInstance().isModLoaded(modId);

@@ -1,8 +1,10 @@
 package net.irisshaders.iris;
 
 import com.google.common.base.Throwables;
-import com.mojang.blaze3d.platform.GlDebug;
+import com.mojang.blaze3d.opengl.GlDebug;
+import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.caffeinemc.mods.sodium.api.vertex.serializer.VertexSerializerRegistry;
 import net.irisshaders.iris.compat.dh.DHCompat;
@@ -61,6 +63,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -365,7 +368,7 @@ public class Iris {
 		} else {
 			if (Minecraft.getInstance().player != null) {
 				Minecraft.getInstance().player.displayClientMessage(Component.translatable(e instanceof ShaderCompileException ? "iris.load.failure.shader" : "iris.load.failure.generic").append(Component.literal("Copy Info").withStyle(arg -> arg.withUnderlined(true).withColor(
-					ChatFormatting.BLUE).withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, e.getMessage())).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("chat.copy.click"))))), false);
+					ChatFormatting.BLUE).withClickEvent(new ClickEvent.CopyToClipboard(e.getMessage())).withHoverEvent(new HoverEvent.ShowText(Component.translatable("chat.copy.click"))))), false);
 			} else {
 				storedError = Optional.of(e);
 			}
@@ -418,7 +421,7 @@ public class Iris {
 			success = GLDebug.setupDebugMessageCallback();
 		} else {
 			GLDebug.reloadDebugState();
-			GlDebug.enableDebugCallback(Minecraft.getInstance().options.glDebugVerbosity, false);
+			GlDebug.enableDebugCallback(Minecraft.getInstance().options.glDebugVerbosity, false, new HashSet<>(((GlDevice) RenderSystem.getDevice()).getEnabledExtensions()));
 			success = 1;
 		}
 

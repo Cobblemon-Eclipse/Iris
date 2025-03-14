@@ -1,7 +1,8 @@
 package net.irisshaders.iris.pipeline.programs;
 
 import com.google.common.collect.ImmutableSet;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.caffeinemc.mods.sodium.client.gl.device.GLRenderDevice;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat2v;
@@ -13,6 +14,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.Compact
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
+import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
@@ -147,14 +149,16 @@ public class SodiumShader implements ChunkShaderInterface {
 
 	@Override
 	public void setupState() {
+		DepthColorStorage.unlockDepthColor();
+
 		applyBlendModes();
 		updateUniforms();
 		images.update();
-		bindTextures();
 
 		var textureAtlas = Minecraft.getInstance()
 			.getTextureManager()
 			.getTexture(TextureAtlas.LOCATION_BLOCKS);
+		textureAtlas.setFilter(false, textureAtlas.getTexture().getMipLevels() > 1);
 
 		// There is a limited amount of sub-texel precision when using hardware texture sampling. The mapped texture
 		// area must be "shrunk" by at least one sub-texel to avoid bleed between textures in the atlas. And since we
@@ -168,6 +172,7 @@ public class SodiumShader implements ChunkShaderInterface {
 				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetHeight()) / subTexelPrecision)))
 			);
 		}
+		bindTextures();
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;
@@ -175,8 +180,10 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	private void bindTextures() {
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0));
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2));
+		((GlTexture) RenderSystem.getShaderTexture(0)).flushModeChanges();
+		((GlTexture) RenderSystem.getShaderTexture(2)).flushModeChanges();
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0).getGlId());
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2).getGlId());
 		GlStateManager._activeTexture(GL20C.GL_TEXTURE0 + IrisSamplers.LIGHTMAP_TEXTURE_UNIT);
 	}
 
@@ -199,7 +206,6 @@ public class SodiumShader implements ChunkShaderInterface {
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 		BlendModeOverride.restore();
-		Minecraft.getInstance().getMainRenderTarget().bindWrite(false);
 		ImmediateState.usingTessellation = false;
 	}
 }

@@ -13,49 +13,9 @@ import net.minecraft.util.TriState;
 
 import java.util.function.Function;
 
-public class LightningHandler extends RenderType {
-	public static final RenderType IRIS_LIGHTNING = new InnerWrappedRenderType("iris_lightning2", RenderType.create(
-		"iris_lightning",
-		DefaultVertexFormat.POSITION_COLOR,
-		VertexFormat.Mode.QUADS,
-		256,
-		false,
-		true,
-		RenderType.CompositeState.builder()
-			.setShaderState(RENDERTYPE_LIGHTNING_SHADER)
-			.setWriteMaskState(COLOR_DEPTH_WRITE)
-			.setTransparencyState(LIGHTNING_TRANSPARENCY)
-			.setOutputState(WEATHER_TARGET)
-			.createCompositeState(false)
-	), new LightningRenderStateShard());
+public abstract class LightningHandler extends RenderType {
 
-	public static final Function<ResourceLocation, RenderType> MEKANISM_FLAME = Util.memoize(resourceLocation -> {
-		RenderType.CompositeState state = RenderType.CompositeState.builder()
-			.setShaderState(new ShaderStateShard(ShaderAccess.MEKANISM_FLAME))
-			.setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, TriState.DEFAULT, false))
-			.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-			.createCompositeState(true);
-		return create("mek_flame", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 256, true, false, state);
-	});
-
-	public static final RenderType MEKASUIT = create("mekasuit", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 131_072, true, false,
-		RenderType.CompositeState.builder()
-			.setShaderState(new ShaderStateShard(ShaderAccess.MEKASUIT))
-			.setTextureState(BLOCK_SHEET)
-			.setLightmapState(LIGHTMAP)
-			.setOverlayState(OVERLAY)
-			.createCompositeState(true)
-	);
-
-	public static final Function<ResourceLocation, RenderType> SPS = Util.memoize(r -> create("sps", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 1_536, true, false,
-		RenderType.CompositeState.builder()
-			.setShaderState(new ShaderStateShard(ShaderAccess.MEKANISM_FLAME)) // TODO 1.21.2 SPS
-			.setTextureState(new RenderStateShard.TextureStateShard(r, TriState.DEFAULT, false))
-			.setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
-			.createCompositeState(true)
-	));
-
-	public LightningHandler(String pRenderType0, VertexFormat pVertexFormat1, VertexFormat.Mode pVertexFormat$Mode2, int pInt3, boolean pBoolean4, boolean pBoolean5, Runnable pRunnable6, Runnable pRunnable7) {
-		super(pRenderType0, pVertexFormat1, pVertexFormat$Mode2, pInt3, pBoolean4, pBoolean5, pRunnable6, pRunnable7);
+	public LightningHandler(String string, int i, boolean bl, boolean bl2, Runnable runnable, Runnable runnable2) {
+		super(string, i, bl, bl2, runnable, runnable2);
 	}
 }

@@ -1,7 +1,9 @@
 package net.irisshaders.iris.pbr.texture;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
@@ -118,9 +120,12 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	public void upload(int atlasWidth, int atlasHeight, int mipLevel) {
-		int glId = getId();
-		TextureUtil.prepareImage(glId, mipLevel, atlasWidth, atlasHeight);
-		TextureManipulationUtil.fillWithColor(glId, mipLevel, type.getDefaultValue());
+		if (this.texture != null) {
+			this.texture.close();
+		}
+
+		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel);
+		TextureManipulationUtil.fillWithColor(texture.getGlId(), mipLevel, type.getDefaultValue());
 		width = atlasWidth;
 		height = atlasHeight;
 		this.mipLevel = mipLevel;
@@ -171,18 +176,17 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 				SpriteContentsTickerAccessor tickerAccessor = (SpriteContentsTickerAccessor) targetTicker;
 				SpriteContentsAnimatedTextureAccessor infoAccessor = (SpriteContentsAnimatedTextureAccessor) tickerAccessor.getAnimationInfo();
 
-				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex());
+				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture);
 				return;
 			}
 		}
 
-		sprite.uploadFirstFrame();
+		sprite.uploadFirstFrame(texture);
 	}
 
 	public void cycleAnimationFrames() {
-		bind();
 		for (TextureAtlasSprite.Ticker ticker : animatedTextures) {
-			ticker.tickAndUpload();
+			ticker.tickAndUpload(texture);
 		}
 	}
 
@@ -205,7 +209,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	@Override
 	public void dumpContents(ResourceLocation id, Path path) {
 		String fileName = id.toDebugFileName();
-		TextureUtil.writeAsPNG(path, fileName, getId(), mipLevel, width, height);
+		TextureUtil.writeAsPNG(path, fileName, texture, mipLevel, i -> i);
 		dumpSpriteNames(path, fileName, texturesByName);
 	}
 

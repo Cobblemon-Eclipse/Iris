@@ -1,17 +1,23 @@
 package net.irisshaders.iris.pathways;
 
+import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderProgram;
+import net.minecraft.client.renderer.RenderPipelines;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 /**
  * Renders the sky horizon. Vanilla Minecraft simply uses the "clear color" for its horizon, and then draws a plane
@@ -44,8 +50,10 @@ public class HorizonRenderer {
 	 * Sine of 22.5 degrees.
 	 */
 	private static final float SIN_22_5 = (float) Math.sin(Math.toRadians(22.5));
-	private VertexBuffer buffer;
+	private GpuBuffer buffer;
 	private int currentRenderDistance;
+
+	private int indexCount = -1;
 
 	public HorizonRenderer() {
 		currentRenderDistance = Minecraft.getInstance().options.getEffectiveRenderDistance();
@@ -64,11 +72,10 @@ public class HorizonRenderer {
 		buildHorizon(currentRenderDistance * 16, buffer);
 		MeshData meshData = buffer.build();
 
-		this.buffer = new VertexBuffer(BufferUsage.STATIC_WRITE);
-		this.buffer.bind();
-		this.buffer.upload(meshData);
+		this.buffer = RenderSystem.getDevice().createBuffer(() -> "Horizon", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+		this.indexCount = meshData.drawState().indexCount();
+		meshData.close();
 		Tesselator.getInstance().clear();
-		VertexBuffer.unbind();
 	}
 
 	private void buildQuad(VertexConsumer consumer, float x1, float z1, float x2, float z2) {
@@ -155,15 +162,21 @@ public class HorizonRenderer {
 		buildBottomPlane(consumer, 384);
 	}
 
-	public void renderHorizon(Matrix4fc modelView, Matrix4fc projection, ShaderProgram shader) {
+	public void renderHorizon(Matrix4fc modelView, Matrix4fc projection) {
 		if (currentRenderDistance != Minecraft.getInstance().options.getEffectiveRenderDistance()) {
 			currentRenderDistance = Minecraft.getInstance().options.getEffectiveRenderDistance();
 			rebuildBuffer();
 		}
 
-		buffer.bind();
-		buffer.drawWithShader(new Matrix4f(modelView), new Matrix4f(projection), Minecraft.getInstance().getShaderManager().getProgram(shader));
-		VertexBuffer.unbind();
+		RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+		GpuBuffer indexBuffer = indices.getBuffer(indexCount);
+		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty(),
+			Minecraft.getInstance().getMainRenderTarget().getDepthTexture(), OptionalDouble.empty())) {
+			pass.setVertexBuffer(0, buffer);
+			pass.setIndexBuffer(indexBuffer, indices.type());
+			pass.setPipeline(RenderPipelines.SKY);
+			pass.drawIndexed(0, indexCount);
+		}
 	}
 
 	public void destroy() {
