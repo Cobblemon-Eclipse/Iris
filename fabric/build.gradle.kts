@@ -101,6 +101,7 @@ loom {
             configName = "Fabric Client"
             ideConfigGenerated(true)
             runDir("run")
+           // vmArgs("-Dmixin.debug.export=true")
         }
         create("clientWithRenderdoc") {
             client()

@@ -1,8 +1,10 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.blending.AlphaTest;
 import net.irisshaders.iris.gl.blending.AlphaTests;
 import net.irisshaders.iris.gl.state.FogMode;
@@ -159,5 +161,24 @@ public enum ShaderKey {
 		LIGHTMAP,
 		DIFFUSE,
 		DIFFUSE_LM
+	}
+
+	public static ShaderKey findBestMatch(RenderPipeline pipeline, ProgramId programId) {
+		for (ShaderKey key : ShaderKey.values()) {
+			if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat) {
+				Iris.logger.warn("Found perfect program match for " + pipeline.getLocation() + ": " + key);
+				return key;
+			}
+		}
+
+		for (ShaderKey key : ShaderKey.values()) {
+			if (programId == key.getProgram()) {
+				Iris.logger.warn("Found *decent* program match for " + pipeline.getLocation() + ": " + key);
+				return key;
+			}
+		}
+
+		Iris.logger.warn("Somehow couldn't find any match for " + pipeline.getLocation());
+		return null;
 	}
 }

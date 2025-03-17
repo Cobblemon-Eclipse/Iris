@@ -16,6 +16,7 @@
     "MixinBiome",
     "MixinBiomeAmbientSoundsHandler",
     "MixinBiomes",
+    "MixinBlockState",
     "MixinBlockStateBehavior",
     "MixinBooleanState",
     "MixinByteBufferBuilder",

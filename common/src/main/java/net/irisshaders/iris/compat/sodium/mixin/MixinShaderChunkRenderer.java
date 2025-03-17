@@ -7,18 +7,26 @@ import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterfac
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderOptions;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ShaderChunkRenderer.class, remap = false)
 public abstract class MixinShaderChunkRenderer {
 	@Shadow
 	protected abstract GlProgram<ChunkShaderInterface> compileProgram(ChunkShaderOptions options);
+
+	@Inject(method = "begin", at = @At("HEAD"))
+	private void iris$resetState(TerrainRenderPass pass, CallbackInfo ci) {
+		BlendModeOverride.restore();
+	}
 
 	@Redirect(method = "begin", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/ShaderChunkRenderer;compileProgram(Lnet/caffeinemc/mods/sodium/client/render/chunk/shader/ChunkShaderOptions;)Lnet/caffeinemc/mods/sodium/client/gl/shader/GlProgram;"))
 	private GlProgram<ChunkShaderInterface> redirectIrisProgram(ShaderChunkRenderer instance, ChunkShaderOptions options, TerrainRenderPass pass) {

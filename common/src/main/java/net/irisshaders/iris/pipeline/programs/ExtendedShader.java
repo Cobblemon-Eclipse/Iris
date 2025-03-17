@@ -47,6 +47,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.ARBTextureSwizzle;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL43C;
 import org.lwjgl.opengl.GL46C;
 import org.lwjgl.opengl.KHRDebug;
 import org.lwjgl.system.MemoryStack;
@@ -58,6 +59,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -100,6 +102,8 @@ public class ExtendedShader extends GlProgram {
 						  Consumer<DynamicLocationalUniformHolder> uniformCreator, BiConsumer<SamplerHolder, ImageHolder> samplerCreator, boolean isIntensity,
 						  IrisRenderingPipeline parent, @Nullable List<BufferBlendOverride> bufferBlendOverrides, CustomUniforms customUniforms) throws IOException {
 		super(programId, string);
+
+		GLDebug.nameObject(GL43C.GL_PROGRAM, programId, string);
 
 		((ShaderInstanceInterface) this).setShouldSkip(SkipList.NONE);
 

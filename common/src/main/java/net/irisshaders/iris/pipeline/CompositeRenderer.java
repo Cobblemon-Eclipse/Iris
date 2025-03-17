@@ -53,6 +53,7 @@ import net.irisshaders.iris.targets.RenderTargets;
 import net.irisshaders.iris.uniforms.CommonUniforms;
 import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
+import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.opengl.GL15C;
@@ -270,6 +271,8 @@ public class CompositeRenderer {
 	}
 
 	public void renderAll() {
+		ImmediateState.temporarilyIgnorePass = true;
+
 		GLDebug.pushGroup(20 + compositePass.ordinal(), compositePass.name().toLowerCase(Locale.ROOT));
 
 		com.mojang.blaze3d.pipeline.RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
@@ -354,6 +357,9 @@ public class CompositeRenderer {
 		GlStateManager._activeTexture(GL15C.GL_TEXTURE0);
 
 		GLDebug.popGroup();
+
+		ImmediateState.temporarilyIgnorePass = false;
+
 	}
 
 	// TODO: Don't just copy this from DeferredWorldRenderingPipeline
