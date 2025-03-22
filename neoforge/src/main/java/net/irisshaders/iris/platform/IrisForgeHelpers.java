@@ -1,6 +1,8 @@
 package net.irisshaders.iris.platform;
 
+import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.texture.DepthBufferFormat;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -62,5 +64,19 @@ public class IrisForgeHelpers implements IrisPlatformHelpers {
 	@Override
 	public BlockState getBlockAppearance(BlockAndTintGetter level, BlockState state, Direction cullFace, BlockPos pos) {
 		return state;
+	}
+
+	@Override
+	public TextureFormat mojangDepthFormat(DepthBufferFormat depthFormat) {
+		return switch (depthFormat) {
+			case DEPTH -> TextureFormat.DEPTH32;
+			case DEPTH16 -> null;
+			case DEPTH24 -> null;
+			case DEPTH32 -> TextureFormat.DEPTH32;
+			case DEPTH32F -> null;
+			case DEPTH_STENCIL -> TextureFormat.DEPTH24_STENCIL8;
+			case DEPTH24_STENCIL8 -> TextureFormat.DEPTH24_STENCIL8;
+			case DEPTH32F_STENCIL8 -> TextureFormat.DEPTH32_STENCIL8;
+		};
 	}
 }

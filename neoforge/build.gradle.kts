@@ -1,6 +1,6 @@
 plugins {
     id("idea")
-    id("net.neoforged.moddev") version "2.0.36-beta"
+    id("net.neoforged.moddev") version "2.0.78"
     id("java-library")
 }
 
@@ -26,16 +26,17 @@ repositories {
             password = "ghp_" + "DEuGv0Z56vnSOYKLCXdsS9svK4nb9K39C1Hn"
         }
     }
-
-    maven("https://maven.su5ed.dev/releases")
-    maven("https://maven.neoforged.net/releases/")
-    maven("https://prmaven.neoforged.net/NeoForge/pr1590") {
-        name = "Maven for PR #1590" // https://github.com/neoforged/NeoForge/pull/1590
+    maven {
+        name = "Maven for PR #2039" // https://github.com/neoforged/NeoForge/pull/2039
+        url = uri("https://prmaven.neoforged.net/NeoForge/pr2039")
         content {
-            includeModule("net.neoforged", "testframework")
             includeModule("net.neoforged", "neoforge")
+            includeModule("net.neoforged", "testframework")
         }
     }
+    maven("https://maven.su5ed.dev/releases")
+    maven("https://maven.neoforged.net/releases/")
+
     maven("https://libraries.minecraft.net/")
     exclusiveContent {
         forRepository {
@@ -65,6 +66,8 @@ tasks.jar.get().destinationDirectory = rootDir.resolve("build").resolve("libs")
 
 neoForge {
     // Specify the version of NeoForge to use.
+    interfaceInjectionData.from(file("src/main/resources/interface_injections.json"))
+
     version = NEOFORGE_VERSION
 
     if (PARCHMENT_VERSION != null) {
@@ -77,7 +80,7 @@ neoForge {
     runs {
         create("client") {
             client()
-            environment("LD_PRELOAD", "/usr/lib/librenderdoc.so")
+            //environment("LD_PRELOAD", "/usr/lib/librenderdoc.so")
         }
     }
 
@@ -100,7 +103,9 @@ fun includeDep(dependency: String) {
 
 fun includeAdditional(dependency: String) {
     includeDep(dependency)
-    dependencies.additionalRuntimeClasspath(dependency)
+    dependencies {
+        "additionalRuntimeClasspath"(dependency)
+    }
 }
 
 tasks.named("compileTestJava").configure {
@@ -132,9 +137,9 @@ dependencies {
     compileOnly(project.project(":common").sourceSets.getByName("headers").output)
     compileOnly(project.project(":common").sourceSets.getByName("api").output)
     runtimeOnly("org.sinytra.forgified-fabric-api:fabric-api-base:0.4.42+d1308ded19")
-    runtimeOnly("org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:5.0.0+babc52e504")
     runtimeOnly("org.sinytra.forgified-fabric-api:fabric-rendering-data-attachment-v1:0.3.48+73761d2e19")
     runtimeOnly("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
+   // runtimeOnly(files("frapi-neo-1.21.5.jar"))
 
     implementation(SODIUM_DEPENDENCY_NEO)
     includeAdditional("io.github.douira:glsl-transformer:2.0.1")

@@ -9,6 +9,7 @@ import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.framebuffer.GlFramebuffer;
 import net.irisshaders.iris.gl.texture.DepthBufferFormat;
 import net.irisshaders.iris.gl.texture.DepthCopyStrategy;
+import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.PackRenderTargetDirectives;
 import org.joml.Vector2i;
@@ -64,8 +65,10 @@ public class RenderTargets {
 
 		this.depthSourceFb = createFramebufferWritingToMain(new int[]{0});
 
-		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", TextureFormat.DEPTH32, width, height, 1);
-		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", TextureFormat.DEPTH32, width, height, 1);
+		TextureFormat mojangDepthFormat = IrisPlatformHelpers.getInstance().mojangDepthFormat(depthFormat);
+
+		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", mojangDepthFormat, width, height, 1);
+		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", mojangDepthFormat, width, height, 1);
 
 		this.noTranslucentsDestFb = createFramebufferWritingToMain(new int[]{0});
 		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
