@@ -31,7 +31,7 @@ public class MixinAbstractBlockRenderContext {
 	protected BlockAndTintGetter level;
 
 	@Inject(method = "bufferDefaultModel", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/services/PlatformModelAccess;getQuads(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/client/renderer/block/model/BlockModelPart;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/RenderType;)Ljava/util/List;"))
-	private void checkDirectionNeo(BlockStateModel model, @Nullable BlockState state, Predicate<Direction> cullTest, CallbackInfo ci, @Local Direction cullFace, @Local BlockModelPart part) {
+	private void checkDirectionNeo(BlockModelPart part, Predicate<Direction> cullTest, CallbackInfo ci, @Local Direction cullFace) {
 		if ((Object) this instanceof BlockRenderer r && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null && cullFace != null) {
 			BlockState override = IrisModSupport.INSTANCE.getModelPartState(part);
 			if (override != null) {
@@ -41,7 +41,7 @@ public class MixinAbstractBlockRenderContext {
 	}
 
 	@Inject(method = "bufferDefaultModel", at = @At(value = "TAIL"))
-	private void checkDirectionNeo(BlockStateModel model, @Nullable BlockState state, Predicate<Direction> cullTest, CallbackInfo ci) {
+	private void checkDirectionNeo(BlockModelPart part, Predicate<Direction> cullTest, CallbackInfo ci) {
 		if ((Object) this instanceof BlockRenderer r && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null) {
 			((BlockSensitiveBufferBuilder) ((BlockRendererAccessor) r).getBuffers()).restoreBlock();
 		}

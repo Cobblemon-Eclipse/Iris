@@ -29,6 +29,7 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.TRANSLUCENT, p -> ShaderKey.TERRAIN_TRANSLUCENT);
 		assignToMain(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.MOVING_BLOCK);
 		assignToMain(RenderPipelines.TRIPWIRE, p -> ShaderKey.TERRAIN_TRANSLUCENT);
+		assignToMain(RenderPipelines.WORLD_BORDER, p -> ShaderKey.TEXTURED);
 		assignToMain(RenderPipelines.ENTITY_CUTOUT, p -> getCutout(p));
 		assignToMain(RenderPipelines.ENTITY_CUTOUT_NO_CULL, p -> getCutout(p));
 		assignToMain(RenderPipelines.ENTITY_CUTOUT_NO_CULL_Z_OFFSET, p -> getCutout(p));
