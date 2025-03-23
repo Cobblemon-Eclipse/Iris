@@ -3,14 +3,17 @@ package net.irisshaders.iris.pbr.texture;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsFrameInfoAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsTickerAccessor;
+import net.irisshaders.iris.pbr.TextureTracker;
 import net.irisshaders.iris.pbr.loader.AtlasPBRLoader.PBRTextureAtlasSprite;
 import net.irisshaders.iris.pbr.util.TextureManipulationUtil;
+import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
@@ -47,7 +50,6 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		this.atlasTexture = atlasTexture;
 		this.type = type;
 		id = ResourceLocation.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
-		setFilter(false, true);
 	}
 
 	public static void syncAnimation(SpriteContents.Ticker source, SpriteContents.Ticker target) {
@@ -124,8 +126,11 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 			this.texture.close();
 		}
 
-		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel);
+		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
+		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
+
 		TextureManipulationUtil.fillWithColor(texture.getGlId(), mipLevel, type.getDefaultValue());
+		TextureTracker.INSTANCE.trackTexture(this.texture.getGlId(), (AbstractTexture) (Object) this);
 		width = atlasWidth;
 		height = atlasHeight;
 		this.mipLevel = mipLevel;
@@ -159,6 +164,9 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 			upload(atlasWidth, atlasHeight, mipLevel);
 			return true;
 		} catch (Throwable t) {
+			if (IrisPlatformHelpers.getInstance().isDevelopmentEnvironment()) {
+				t.printStackTrace();
+			}
 			return false;
 		}
 	}
