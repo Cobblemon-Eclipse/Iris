@@ -2,6 +2,7 @@ package net.irisshaders.iris.shadows;
 
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -56,6 +57,8 @@ public class ShadowRenderTargets {
 		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", TextureFormat.DEPTH32, resolution, resolution, 1);
 		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", TextureFormat.DEPTH32, resolution, resolution, 1);
 
+		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
+		this.mainDepth.setTextureFilter(FilterMode.NEAREST, false);
 		this.ownedFramebuffers = new ArrayList<>();
 		this.resolution = resolution;
 

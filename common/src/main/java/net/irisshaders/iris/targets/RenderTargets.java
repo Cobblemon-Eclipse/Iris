@@ -3,6 +3,8 @@ package net.irisshaders.iris.targets;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.AddressMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -70,6 +72,10 @@ public class RenderTargets {
 		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", mojangDepthFormat, width, height, 1);
 		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", mojangDepthFormat, width, height, 1);
 
+		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
+		this.noHand.setTextureFilter(FilterMode.NEAREST, false);
+		this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
+		this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
 		this.noTranslucentsDestFb = createFramebufferWritingToMain(new int[]{0});
 		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
 
@@ -174,7 +180,10 @@ public class RenderTargets {
 
 			this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", TextureFormat.DEPTH32, newWidth, newHeight, 1);
 			this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", TextureFormat.DEPTH32, newWidth, newHeight, 1);
-
+			this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
+			this.noHand.setTextureFilter(FilterMode.NEAREST, false);
+			this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
+			this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
 			this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
 			this.noHandDestFb.addDepthAttachment(this.noHand);
 
