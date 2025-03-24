@@ -11,6 +11,7 @@ import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsFrameInfoAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsTickerAccessor;
 import net.irisshaders.iris.pbr.TextureTracker;
+import net.irisshaders.iris.pbr.format.TextureFormatLoader;
 import net.irisshaders.iris.pbr.loader.AtlasPBRLoader.PBRTextureAtlasSprite;
 import net.irisshaders.iris.pbr.util.TextureManipulationUtil;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
@@ -127,6 +128,9 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		}
 
 		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
+		if (!TextureFormatLoader.getFormat().canInterpolateValues(type)) {
+			texture.markMipmapNonLinear();
+		}
 		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
 
 		TextureManipulationUtil.fillWithColor(texture.getGlId(), mipLevel, type.getDefaultValue());

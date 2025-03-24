@@ -48,7 +48,7 @@ public interface TextureFormat {
 
 	default void setupTextureParameters(PBRType pbrType, AbstractTexture texture) {
 		if (!canInterpolateValues(pbrType)) {
-			texture.getTexture().setTextureFilter(FilterMode.NEAREST, texture.getTexture().getMipLevels() > 1);
+			texture.getTexture().markMipmapNonLinear();
 		}
 	}
 
