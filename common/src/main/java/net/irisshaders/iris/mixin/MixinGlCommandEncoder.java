@@ -51,6 +51,19 @@ public class MixinGlCommandEncoder {
 		}
 	}
 
+	@Redirect(method = {
+		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/nio/IntBuffer;Lcom/mojang/blaze3d/platform/NativeImage$Format;IIIII)V",
+		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;IIIIIII)V",
+		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;)V"
+	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z"))
+	private boolean ignore2(GlCommandEncoder instance) {
+		if (ImmediateState.temporarilyIgnorePass) {
+			return false;
+		} else {
+			return this.inRenderPass;
+		}
+	}
+
 	@Unique
 	private static GlRenderPass lastPass;
 
