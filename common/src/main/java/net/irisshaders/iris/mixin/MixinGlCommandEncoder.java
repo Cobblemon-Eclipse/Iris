@@ -32,6 +32,10 @@ public class MixinGlCommandEncoder {
 	@Shadow
 	private boolean inRenderPass;
 
+	@Shadow
+	@Nullable
+	private GlProgram lastProgram;
+
 	// Do not change the viewport in the shadow pass.
 	@Redirect(method = "createRenderPass(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
 	private void changeViewport(int i, int j, int k, int l) {
@@ -78,6 +82,8 @@ public class MixinGlCommandEncoder {
 		lastPass = glRenderPass;
 
 		if (glRenderPass.iris$getCustomPass() != null) {
+			this.lastProgram = null;
+
 			cir.setReturnValue(true);
 
 			glRenderPass.iris$getCustomPass().setupState();
