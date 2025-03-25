@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.blending.AlphaTest;
+import net.irisshaders.iris.gl.blending.AlphaTestFunction;
 import net.irisshaders.iris.gl.blending.AlphaTests;
 import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
@@ -164,9 +165,23 @@ public enum ShaderKey {
 	}
 
 	public static ShaderKey findBestMatch(RenderPipeline pipeline, ProgramId programId) {
+		boolean hasAlphaTest = false;
+		if (pipeline.getShaderDefines().values().containsKey("ALPHA_CUTOUT")) {
+			hasAlphaTest = true;
+		}
+
+		if (hasAlphaTest) {
+			for (ShaderKey key : ShaderKey.values()) {
+				if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat && key.alphaTest.reference() > 0.01f) {
+					Iris.logger.warn("Found perfect program match for " + pipeline.getLocation() + ": " + key);
+					return key;
+				}
+			}
+		}
+
 		for (ShaderKey key : ShaderKey.values()) {
 			if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat) {
-				Iris.logger.warn("Found perfect program match for " + pipeline.getLocation() + ": " + key);
+				Iris.logger.warn("Found okay program match for " + pipeline.getLocation() + ": " + key);
 				return key;
 			}
 		}
