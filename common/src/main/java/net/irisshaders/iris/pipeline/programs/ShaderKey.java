@@ -172,7 +172,7 @@ public enum ShaderKey {
 
 		if (hasAlphaTest) {
 			for (ShaderKey key : ShaderKey.values()) {
-				if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat && key.alphaTest.reference() > 0.01f) {
+				if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat && key.alphaTest.reference() > 0.01f && key.alphaTest.function() != AlphaTestFunction.NEVER) {
 					Iris.logger.warn("Found perfect program match for " + pipeline.getLocation() + ": " + key);
 					return key;
 				}
@@ -183,6 +183,15 @@ public enum ShaderKey {
 			if (programId == key.getProgram() && pipeline.getVertexFormat() == key.vertexFormat) {
 				Iris.logger.warn("Found okay program match for " + pipeline.getLocation() + ": " + key);
 				return key;
+			}
+		}
+
+		if (hasAlphaTest) {
+			for (ShaderKey key : ShaderKey.values()) {
+				if (programId == key.getProgram() && key.alphaTest.reference() > 0.01f && key.alphaTest.function() != AlphaTestFunction.NEVER) {
+					Iris.logger.warn("Found fine program match for " + pipeline.getLocation() + ": " + key);
+					return key;
+				}
 			}
 		}
 
