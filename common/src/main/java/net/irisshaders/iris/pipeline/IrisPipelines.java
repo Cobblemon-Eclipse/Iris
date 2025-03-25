@@ -215,4 +215,14 @@ public class IrisPipelines {
 			coreShaderMap.put(pipeline, p -> programId);
 		}
 	}
+
+	public static void copyPipeline(RenderPipeline pipelineToCopy, RenderPipeline returnValue) {
+		if (coreShaderMap.containsKey(pipelineToCopy)) {
+			coreShaderMap.put(returnValue, coreShaderMap.get(pipelineToCopy));
+		}
+
+		if (coreShaderMapShadow.containsKey(pipelineToCopy)) {
+			coreShaderMapShadow.put(returnValue, coreShaderMapShadow.get(pipelineToCopy));
+		}
+	}
 }

@@ -13,7 +13,9 @@
     "MixinParticleEngine",
     "MixinRenderSPS",
     "MixinShadowRenderer",
-    "MixinVBOIE"
+    "MixinVBOIE",
+    "PipelineMixin",
+    "PipelineBuilderMixin"
   ],
   "injectors": {
     "defaultRequire": 1,

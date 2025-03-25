@@ -5,9 +5,9 @@ plugins {
 }
 
 val MINECRAFT_VERSION by extra { "1.21.5-rc1" }
-val NEOFORGE_VERSION by extra { "21.5.0-alpha.1.21.5-rc1.20250321.225134" }
+val NEOFORGE_VERSION by extra { "21.5.0-alpha.1.21.5-rc1.20250325.145610" }
 val FABRIC_LOADER_VERSION by extra { "0.16.10" }
-val FABRIC_API_VERSION by extra { "0.118.6+1.21.5" }
+val FABRIC_API_VERSION by extra { "0.119.5+1.21.5" }
 
 val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.6.10-snapshot+mc1.21.5-rc1-local.jar"))}
 val SODIUM_DEPENDENCY_NEO by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-neoforge-0.6.10-snapshot+mc1.21.5-rc1-local.jar"))}
@@ -17,7 +17,7 @@ val SODIUM_DEPENDENCY_NEO by extra { files(rootDir.resolve("custom_sodium").reso
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "1.8.8" }
+val MOD_VERSION by extra { "1.8.9" }
 
 allprojects {
     apply(plugin = "java")
