@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
+import static net.irisshaders.iris.pipeline.CompositeRenderer.COMPOSITE_PIPELINE;
+
 public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 	private static final CustomPass EMPTY = new CustomPass() {
 		@Override
@@ -101,6 +103,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		VertexFormat.IndexType type = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type();
 
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty())) {
+			pass.setPipeline(COMPOSITE_PIPELINE);
 			pass.iris$setCustomPass(EMPTY);
 
 			program.use();
