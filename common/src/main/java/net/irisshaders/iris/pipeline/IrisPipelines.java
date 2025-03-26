@@ -69,13 +69,13 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.END_SKY, p -> ShaderKey.SKY_TEXTURED);
 		assignToMain(RenderPipelines.WEATHER_DEPTH_WRITE, p -> ShaderKey.WEATHER);
 		assignToMain(RenderPipelines.WEATHER_NO_DEPTH_WRITE, p -> ShaderKey.WEATHER);
-		assignToMain(RenderPipelines.TEXT, p -> ShaderKey.TEXT);
-		assignToMain(RenderPipelines.TEXT_POLYGON_OFFSET, p -> ShaderKey.TEXT);
-		assignToMain(RenderPipelines.TEXT_SEE_THROUGH, p -> ShaderKey.TEXT);
-		assignToMain(RenderPipelines.TEXT_INTENSITY_SEE_THROUGH, p -> ShaderKey.TEXT_INTENSITY);
+		assignToMain(RenderPipelines.TEXT, p -> getText(p));
+		assignToMain(RenderPipelines.TEXT_POLYGON_OFFSET, p -> getText(p));
+		assignToMain(RenderPipelines.TEXT_SEE_THROUGH, p -> getText(p));
+		assignToMain(RenderPipelines.TEXT_INTENSITY_SEE_THROUGH, p -> getTextIntensity(p));
 		assignToMain(RenderPipelines.TEXT_BACKGROUND, p -> ShaderKey.TEXT_BG);
 		assignToMain(RenderPipelines.TEXT_BACKGROUND_SEE_THROUGH, p -> ShaderKey.TEXT_BG);
-		assignToMain(RenderPipelines.TEXT_INTENSITY, p -> ShaderKey.TEXT_INTENSITY);
+		assignToMain(RenderPipelines.TEXT_INTENSITY, p -> getTextIntensity(p));
 		assignToMain(RenderPipelines.DRAGON_EXPLOSION_ALPHA, p -> ShaderKey.ENTITIES_ALPHA);
 		assignToMain(RenderPipelines.CRUMBLING, p -> ShaderKey.CRUMBLING);
 		assignToMain(RenderPipelines.LEASH, p -> ShaderKey.LEASH);
@@ -140,6 +140,26 @@ public class IrisPipelines {
 		//		Iris.logger.error("Shader program " + pipeline.getLocation() + " is not accounted for in the shadow list");
 		//	}
 		//}
+	}
+
+	private static ShaderKey getText(Object p) {
+		IrisRenderingPipeline pipeline = (IrisRenderingPipeline) p;
+
+		if (isBlockEntities(pipeline)) {
+			return (ShaderKey.TEXT_BE);
+		} else {
+			return (ShaderKey.TEXT);
+		}
+	}
+
+	private static ShaderKey getTextIntensity(Object p) {
+		IrisRenderingPipeline pipeline = (IrisRenderingPipeline) p;
+
+		if (isBlockEntities(pipeline)) {
+			return (ShaderKey.TEXT_INTENSITY_BE);
+		} else {
+			return (ShaderKey.TEXT_INTENSITY);
+		}
 	}
 
 	private static void assignToMain(RenderPipeline pipeline, Function<IrisRenderingPipeline, ShaderKey> o) {
