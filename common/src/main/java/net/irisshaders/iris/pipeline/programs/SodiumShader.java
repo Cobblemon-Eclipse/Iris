@@ -188,8 +188,8 @@ public class SodiumShader implements ChunkShaderInterface {
 	private void bindTextures() {
 		((GlTexture) RenderSystem.getShaderTexture(0)).flushModeChanges();
 		((GlTexture) RenderSystem.getShaderTexture(2)).flushModeChanges();
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0).getGlId());
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2).getGlId());
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0).iris$getGlId());
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2).iris$getGlId());
 		GlStateManager._activeTexture(GL20C.GL_TEXTURE0 + IrisSamplers.LIGHTMAP_TEXTURE_UNIT);
 	}
 

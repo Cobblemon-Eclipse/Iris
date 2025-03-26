@@ -227,11 +227,11 @@ public class RenderTargets {
 	public void copyPreTranslucentDepth() {
 		if (translucentDepthDirty) {
 			translucentDepthDirty = false;
-			GlStateManager._bindTexture(noTranslucents.getGlId());
+			GlStateManager._bindTexture(noTranslucents.iris$getGlId());
 			depthSourceFb.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, currentDepthFormat.getGlInternalFormat(), 0, 0, cachedWidth, cachedHeight, 0);
 		} else {
-			copyStrategy.copy(depthSourceFb, getDepthTexture().getGlId(), noTranslucentsDestFb, noTranslucents.getGlId(),
+			copyStrategy.copy(depthSourceFb, getDepthTexture().iris$getGlId(), noTranslucentsDestFb, noTranslucents.iris$getGlId(),
 				getCurrentWidth(), getCurrentHeight());
 		}
 	}
@@ -239,11 +239,11 @@ public class RenderTargets {
 	public void copyPreHandDepth() {
 		if (handDepthDirty) {
 			handDepthDirty = false;
-			GlStateManager._bindTexture(noHand.getGlId());
+			GlStateManager._bindTexture(noHand.iris$getGlId());
 			depthSourceFb.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, currentDepthFormat.getGlInternalFormat(), 0, 0, cachedWidth, cachedHeight, 0);
 		} else {
-			copyStrategy.copy(depthSourceFb, getDepthTexture().getGlId(), noHandDestFb, noHand.getGlId(),
+			copyStrategy.copy(depthSourceFb, getDepthTexture().iris$getGlId(), noHandDestFb, noHand.iris$getGlId(),
 				getCurrentWidth(), getCurrentHeight());
 		}
 	}

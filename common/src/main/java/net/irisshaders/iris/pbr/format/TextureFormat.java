@@ -1,13 +1,9 @@
 package net.irisshaders.iris.pbr.format;
 
-import com.mojang.blaze3d.textures.FilterMode;
-import net.irisshaders.iris.gl.IrisRenderSystem;
-import net.irisshaders.iris.mixinterface.AbstractTextureExtended;
 import net.irisshaders.iris.pbr.mipmap.CustomMipmapGenerator;
 import net.irisshaders.iris.pbr.texture.PBRType;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +44,7 @@ public interface TextureFormat {
 
 	default void setupTextureParameters(PBRType pbrType, AbstractTexture texture) {
 		if (!canInterpolateValues(pbrType)) {
-			texture.getTexture().markMipmapNonLinear();
+			texture.getTexture().iris$markMipmapNonLinear();
 		}
 	}
 

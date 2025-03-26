@@ -33,7 +33,7 @@ public class NativeImageBackedCustomTexture extends DynamicTexture implements Te
 	}
 
 	private int getId() {
-		return this.texture.getGlId();
+		return this.texture.iris$getGlId();
 	}
 
 	private static NativeImage create(byte[] content) throws IOException {

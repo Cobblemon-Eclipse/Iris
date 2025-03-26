@@ -30,13 +30,13 @@ public abstract class MixinGpuTexture implements GpuTextureInterface {
 	protected boolean modesDirty;
 
 	@Override
-	public int getGlId() {
+	public int iris$getGlId() {
 		this.flushModeChanges();
 		return this.glId();
 	}
 
 	@Override
-	public void markMipmapNonLinear() {
+	public void iris$markMipmapNonLinear() {
 		boolean wasNonLinear = this.mipmapNonLinear;
 		this.mipmapNonLinear = true;
 		this.modesDirty = modesDirty || !wasNonLinear;

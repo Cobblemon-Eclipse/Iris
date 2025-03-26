@@ -214,9 +214,9 @@ public class ShadowRenderer {
 
 		GlStateManager._activeTexture(GL20C.GL_TEXTURE4);
 
-		configureDepthSampler(targets.getDepthTexture().getGlId(), depthSamplingSettings.get(0));
+		configureDepthSampler(targets.getDepthTexture().iris$getGlId(), depthSamplingSettings.get(0));
 
-		configureDepthSampler(targets.getDepthTextureNoTranslucents().getGlId(), depthSamplingSettings.get(1));
+		configureDepthSampler(targets.getDepthTextureNoTranslucents().iris$getGlId(), depthSamplingSettings.get(1));
 
 		for (int i = 0; i < targets.getNumColorTextures(); i++) {
 			if (targets.get(i) != null) {

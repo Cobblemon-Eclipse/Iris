@@ -2,9 +2,7 @@ package net.irisshaders.iris.mixin;
 
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.opengl.GlProgram;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.mixinterface.ShaderInstanceInterface;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -15,12 +13,8 @@ import net.irisshaders.iris.pipeline.programs.FallbackShader;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.packs.resources.ResourceProvider;
-import org.lwjgl.opengl.KHRDebug;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -135,7 +129,7 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 				WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 				if (pipeline instanceof IrisRenderingPipeline) {
-					Minecraft.getInstance().getMainRenderTarget().bindFramebuffer();
+					Minecraft.getInstance().getMainRenderTarget().iris$bindFramebuffer();
 				}
 			}
 

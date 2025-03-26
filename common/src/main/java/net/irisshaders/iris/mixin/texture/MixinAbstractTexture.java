@@ -1,9 +1,5 @@
 package net.irisshaders.iris.mixin.texture;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
-import com.mojang.blaze3d.opengl.GlTexture;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixinterface.AbstractTextureExtended;
@@ -13,7 +9,6 @@ import net.minecraft.client.renderer.texture.ReloadableTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.util.TriState;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,7 +31,7 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 	private void iris$afterGenerateId(CallbackInfoReturnable<GpuTexture> cir) {
 		if (lastChecked != cir.getReturnValue()) {
 			lastChecked = cir.getReturnValue();
-			TextureTracker.INSTANCE.trackTexture(lastChecked.getGlId(), (AbstractTexture) (Object) this);
+			TextureTracker.INSTANCE.trackTexture(lastChecked.iris$getGlId(), (AbstractTexture) (Object) this);
 
 		}
 	}

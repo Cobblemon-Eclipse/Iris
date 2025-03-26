@@ -1,12 +1,10 @@
 package net.irisshaders.iris.pbr.texture;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsFrameInfoAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsTickerAccessor;
@@ -24,7 +22,6 @@ import net.minecraft.client.renderer.texture.SpriteContents.FrameInfo;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
@@ -129,12 +126,12 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 
 		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
 		if (!TextureFormatLoader.getFormat().canInterpolateValues(type)) {
-			texture.markMipmapNonLinear();
+			texture.iris$markMipmapNonLinear();
 		}
 		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
 
-		TextureManipulationUtil.fillWithColor(texture.getGlId(), mipLevel, type.getDefaultValue());
-		TextureTracker.INSTANCE.trackTexture(this.texture.getGlId(), (AbstractTexture) (Object) this);
+		TextureManipulationUtil.fillWithColor(texture.iris$getGlId(), mipLevel, type.getDefaultValue());
+		TextureTracker.INSTANCE.trackTexture(this.texture.iris$getGlId(), (AbstractTexture) (Object) this);
 		width = atlasWidth;
 		height = atlasHeight;
 		this.mipLevel = mipLevel;

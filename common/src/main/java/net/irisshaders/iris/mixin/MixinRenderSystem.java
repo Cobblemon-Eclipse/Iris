@@ -1,16 +1,13 @@
 package net.irisshaders.iris.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.shaders.ShaderType;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.pbr.TextureTracker;
 import net.irisshaders.iris.samplers.IrisSamplers;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,6 +32,6 @@ public class MixinRenderSystem {
 		if (gpuTexture != null) {
 			//gpuTexture.setTextureFilter(FilterMode.NEAREST, false);
 		}
-		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTexture == null ? 0 : gpuTexture.getGlId());
+		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTexture == null ? 0 : gpuTexture.iris$getGlId());
 	}
 }

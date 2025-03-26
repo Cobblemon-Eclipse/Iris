@@ -1,7 +1,6 @@
 package net.irisshaders.iris.compat.dh;
 
 import com.mojang.blaze3d.opengl.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiFramebuffer;
@@ -255,7 +254,7 @@ public class DHCompatInternal {
 	}
 
 	public int getStoredDepthTex() {
-		return storedDepthTex.getGlId();
+		return storedDepthTex.iris$getGlId();
 	}
 
 	public void copyTranslucents(int width, int height) {
@@ -265,7 +264,7 @@ public class DHCompatInternal {
 			dhTerrainFramebuffer.bindAsReadBuffer();
 			IrisRenderSystem.copyTexImage2D(GL20C.GL_TEXTURE_2D, 0, DepthBufferFormat.DEPTH32F.getGlInternalFormat(), 0, 0, width, height, 0);
 		} else {
-			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex.getGlId(), null, depthTexNoTranslucent.getTextureId(), width, height);
+			DepthCopyStrategy.fastest(false).copy(dhTerrainFramebuffer, storedDepthTex.iris$getGlId(), null, depthTexNoTranslucent.getTextureId(), width, height);
 		}
 	}
 

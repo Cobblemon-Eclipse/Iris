@@ -1,11 +1,11 @@
 package net.irisshaders.iris.mixinterface;
 
 public interface GpuTextureInterface {
-	default int getGlId() {
+	default int iris$getGlId() {
 		throw new AssertionError("Not accessible.");
 	}
 
-    default void markMipmapNonLinear() {
+    default void iris$markMipmapNonLinear() {
 		throw new AssertionError("Not accessible.");
 	}
 }

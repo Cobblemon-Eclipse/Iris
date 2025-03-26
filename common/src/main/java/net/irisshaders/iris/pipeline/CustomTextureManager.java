@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.texture.GlTexture;
 import net.irisshaders.iris.gl.texture.TextureAccess;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -103,7 +102,7 @@ public class CustomTextureManager {
 			// Special code path for the light texture. While shader packs hardcode the primary light texture, it's
 			// possible that a mod will create a different light texture, so this code path is robust to that.
 			return new TextureWrapper(() -> ((LightTextureAccessor) Minecraft.getInstance().gameRenderer.lightTexture())
-				.getLightTexture().getGlId(), TextureType.TEXTURE_2D);
+				.getLightTexture().iris$getGlId(), TextureType.TEXTURE_2D);
 		} else if (textureData instanceof CustomTextureData.RawData1D rawData1D) {
 			GlTexture texture = new GlTexture(TextureType.TEXTURE_1D, rawData1D.getSizeX(), 0, 0, rawData1D.getInternalFormat().getGlFormat(), rawData1D.getPixelFormat().getGlFormat(), rawData1D.getPixelType().getGlFormat(), rawData1D.getContent(), rawData1D.getFilteringData());
 			ownedRawTextures.add(texture);
@@ -156,7 +155,7 @@ public class CustomTextureManager {
 						GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
 						GlStateManager._bindTexture(binding);
 					}
-					return texture != null ? texture.getTexture().getGlId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().getGlId();
+					return texture != null ? texture.getTexture().iris$getGlId() : textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().iris$getGlId();
 				}, TextureType.TEXTURE_2D);
 			} else {
 				location = location.substring(0, extensionIndex - pbrType.getSuffix().length()) + location.substring(extensionIndex);
@@ -173,7 +172,7 @@ public class CustomTextureManager {
 							GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
 							GlStateManager._bindTexture(binding);
 						}
-						int id = texture.getTexture().getGlId();
+						int id = texture.getTexture().iris$getGlId();
 						PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
 						AbstractTexture pbrTexture = switch (pbrType) {
 							case NORMAL -> pbrHolder.normalTexture();
@@ -183,15 +182,15 @@ public class CustomTextureManager {
 						TextureFormat textureFormat = TextureFormatLoader.getFormat();
 						if (textureFormat != null) {
 							int previousBinding = GlStateManagerAccessor.getTEXTURES()[GlStateManagerAccessor.getActiveTexture()].binding;
-							GlStateManager._bindTexture(pbrTexture.getTexture().getGlId());
+							GlStateManager._bindTexture(pbrTexture.getTexture().iris$getGlId());
 							textureFormat.setupTextureParameters(pbrType, pbrTexture);
 							GlStateManager._bindTexture(previousBinding);
 						}
 
-						return pbrTexture.getTexture().getGlId();
+						return pbrTexture.getTexture().iris$getGlId();
 					}
 
-					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().getGlId();
+					return textureManager.getTexture(MissingTextureAtlasSprite.getLocation()).getTexture().iris$getGlId();
 				}, TextureType.TEXTURE_2D);
 			}
 		}
