@@ -1,6 +1,10 @@
 package net.irisshaders.iris.platform;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.nio.file.Path;
 import java.util.ServiceLoader;
@@ -27,4 +31,6 @@ public interface IrisPlatformHelpers {
 	KeyMapping registerKeyBinding(KeyMapping keyMapping);
 
 	boolean useELS();
+
+    BlockState getBlockAppearance(BlockAndTintGetter level, BlockState state, Direction cullFace, BlockPos pos);
 }

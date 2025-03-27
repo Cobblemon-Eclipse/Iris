@@ -13,10 +13,6 @@ Sometimes, we make beta builds available on the Discord server. These might not 
 
 Once you're confident that development builds are right for you, follow these steps to get a build:
 
-1. Download or check out a copy of the source code from GitHub, with the appropriate branch:
-    - `trunk`, for Minecraft 1.16.5
-    - `1.18.2`, for Minecraft 1.18.2
-    - `1.19`, for Minecraft 1.19
-    - a different development branch (usually for Minecraft 1.16.5)
-2. Execute a `java -jar brachyura-bootstrap-0.jar build` command in a terminal
+1. Download or check out a copy of the source code from GitHub, with the appropriate branch for your MC version.
+2. Execute a `gradlew build` command in a terminal (alternatively, to build one loader, `gradlew :fabric:build` or `gradlew :neoforge:build`)
 3. Done! Use the JAR file in `build/libs/` as a normal Fabric Mod.

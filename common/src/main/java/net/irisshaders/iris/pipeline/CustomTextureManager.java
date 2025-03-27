@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.texture.GlTexture;
 import net.irisshaders.iris.gl.texture.TextureAccess;
 import net.irisshaders.iris.gl.texture.TextureType;
@@ -30,6 +31,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.io.FilenameUtils;
+import org.lwjgl.opengl.GL46C;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -148,7 +150,11 @@ public class CustomTextureManager {
 				return new TextureWrapper(() -> {
 					AbstractTexture texture = textureManager.getTexture(textureLocation);
 					if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
+						int tex = GlStateManagerAccessor.getActiveTexture();
+						int binding = GlStateManagerAccessor.getTEXTURES()[tex].binding;
 						texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
+						GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
+						GlStateManager._bindTexture(binding);
 					}
 					return texture != null ? texture.getId() : MissingTextureAtlasSprite.getTexture().getId();
 				}, TextureType.TEXTURE_2D);
@@ -161,7 +167,11 @@ public class CustomTextureManager {
 
 					if (texture != null) {
 						if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
+							int tex = GlStateManagerAccessor.getActiveTexture();
+							int binding = GlStateManagerAccessor.getTEXTURES()[tex].binding;
 							texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
+							GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
+							GlStateManager._bindTexture(binding);
 						}
 						int id = texture.getId();
 						PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);

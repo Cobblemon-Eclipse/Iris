@@ -6,6 +6,7 @@ public class BlockContextHolder {
 	private byte renderType;
 	private int localPosX, localPosY, localPosZ;
 	private boolean ignoreMidBlock;
+	private int oldId = -1;
 
 	public int getBlockId() {
 		return blockId;
@@ -46,5 +47,21 @@ public class BlockContextHolder {
 
 	public void setIgnoreMidBlock(boolean ignoreMidBlock) {
 		this.ignoreMidBlock = ignoreMidBlock;
+	}
+
+	public void overrideBlock(int block) {
+		if (this.blockId == block) return;
+
+		if (this.oldId == -1) {
+			this.oldId = blockId;
+		}
+
+		this.blockId = block;
+	}
+
+	public void restoreBlock() {
+		if (this.oldId == -1) return;
+		this.blockId = oldId;
+		this.oldId = -1;
 	}
 }

@@ -2,6 +2,10 @@ package net.irisshaders.iris.platform;
 
 import net.irisshaders.iris.Iris;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.fml.loading.LoadingModList;
@@ -15,6 +19,8 @@ public class IrisForgeHelpers implements IrisPlatformHelpers {
 	public boolean isModLoaded(String modId) {
 		return LoadingModList.get().getModFileById(modId) != null;
 	}
+
+	boolean HAS_CAMO = isModLoaded("cable_facades");
 
 	@Override
 	public String getVersion() {
@@ -50,5 +56,11 @@ public class IrisForgeHelpers implements IrisPlatformHelpers {
 	@Override
 	public boolean useELS() {
 		return true;
+	}
+
+	// TODO find a way to do this without breaking Cable Facades...
+	@Override
+	public BlockState getBlockAppearance(BlockAndTintGetter level, BlockState state, Direction cullFace, BlockPos pos) {
+		return state;
 	}
 }

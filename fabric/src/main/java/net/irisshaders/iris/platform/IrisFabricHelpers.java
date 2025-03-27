@@ -6,6 +6,10 @@ import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.SemanticVersion;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -53,5 +57,10 @@ public class IrisFabricHelpers implements IrisPlatformHelpers {
 	@Override
 	public boolean useELS() {
 		return false;
+	}
+
+	@Override
+	public BlockState getBlockAppearance(BlockAndTintGetter level, BlockState state, Direction cullFace, BlockPos pos) {
+		return state;
 	}
 }

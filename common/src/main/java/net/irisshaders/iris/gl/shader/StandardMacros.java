@@ -66,6 +66,14 @@ public class StandardMacros {
 			define(standardDefines, "IRIS_HAS_CONNECTED_TEXTURES");
 		}
 
+		if (IrisPlatformHelpers.getInstance().isModLoaded("monocle")) {
+			define(standardDefines, "IS_MONOCLE");
+		}
+
+		if (Iris.getIrisConfig().shouldAllowUnknownShaders()) {
+			define(standardDefines, "ALLOWS_UNKNOWN_SHADERS");
+		}
+
 		define(standardDefines, "DH_BLOCK_UNKNOWN", String.valueOf(0));
 		define(standardDefines, "DH_BLOCK_LEAVES", String.valueOf(1));
 		define(standardDefines, "DH_BLOCK_STONE", String.valueOf(2));

@@ -16,6 +16,10 @@ public class BufferSourceWrapper implements MultiBufferSource, Groupable {
 		this.typeChanger = typeChanger;
 	}
 
+	public MultiBufferSource getOriginal() {
+		return bufferSource;
+	}
+
 	@Override
 	public void startGroup() {
 		if (bufferSource instanceof Groupable groupable) {

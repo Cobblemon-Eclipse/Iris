@@ -1,43 +1,53 @@
 package net.irisshaders.iris.compat.sodium.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import net.caffeinemc.mods.sodium.client.render.chunk.compile.buffers.BakedChunkModelBuilder;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
-import net.caffeinemc.mods.sodium.client.render.chunk.vertex.builder.ChunkMeshBufferBuilder;
-import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
 import net.irisshaders.iris.vertices.BlockSensitiveBufferBuilder;
-import net.irisshaders.iris.vertices.sodium.terrain.BlockContextHolder;
-import net.irisshaders.iris.vertices.sodium.terrain.VertexEncoderInterface;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(value = ChunkBuildBuffers.class, remap = false)
+@Mixin(ChunkBuildBuffers.class)
 public class MixinChunkBuildBuffers implements BlockSensitiveBufferBuilder {
-	@Unique
-	private final BlockContextHolder contextHolder = new BlockContextHolder();
 
-	@Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/objects/Reference2ReferenceOpenHashMap;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
-	private void setupContextHolder(ChunkVertexType vertexType, CallbackInfo ci, @Local TerrainRenderPass pass, @Local ChunkMeshBufferBuilder[] vertexBuffers) {
-		for (ChunkMeshBufferBuilder vertexBuffer : vertexBuffers) {
-			((VertexEncoderInterface) vertexBuffer).iris$setContextHolder(contextHolder);
+	@Shadow
+	@Final
+	private Reference2ReferenceOpenHashMap<TerrainRenderPass, BakedChunkModelBuilder> builders;
+
+	@Override
+	public void beginBlock(int block, byte renderType, byte blockEmission, int localPosX, int localPosY, int localPosZ) {
+		for (BakedChunkModelBuilder value : builders.values()) {
+			((BlockSensitiveBufferBuilder) value).beginBlock(block, renderType, blockEmission, localPosX, localPosY, localPosZ);
 		}
 	}
 
 	@Override
-	public void beginBlock(int block, byte renderType, byte blockEmission, int localPosX, int localPosY, int localPosZ) {
-		contextHolder.setBlockData(block, renderType, blockEmission, localPosX, localPosY, localPosZ);
+	public void overrideBlock(int block) {
+		for (BakedChunkModelBuilder value : builders.values()) {
+			((BlockSensitiveBufferBuilder) value).overrideBlock(block);
+		}
+	}
+
+	@Override
+	public void restoreBlock() {
+		for (BakedChunkModelBuilder value : builders.values()) {
+			((BlockSensitiveBufferBuilder) value).restoreBlock();
+		}
 	}
 
 	@Override
 	public void endBlock() {
-		contextHolder.setBlockData(0, (byte) 0, (byte) 0, 0, 0, 0);
+		for (BakedChunkModelBuilder value : builders.values()) {
+			((BlockSensitiveBufferBuilder) value).endBlock();
+		}
 	}
 
 	@Override
 	public void ignoreMidBlock(boolean b) {
-		contextHolder.setIgnoreMidBlock(b);
+		for (BakedChunkModelBuilder value : builders.values()) {
+			((BlockSensitiveBufferBuilder) value).ignoreMidBlock(b);
+		}
 	}
 }
