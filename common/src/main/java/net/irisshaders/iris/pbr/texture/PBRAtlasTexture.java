@@ -125,7 +125,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		}
 
 		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
-		if (!TextureFormatLoader.getFormat().canInterpolateValues(type)) {
+		if (TextureFormatLoader.getFormat() != null && !TextureFormatLoader.getFormat().canInterpolateValues(type)) {
 			texture.iris$markMipmapNonLinear();
 		}
 		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
