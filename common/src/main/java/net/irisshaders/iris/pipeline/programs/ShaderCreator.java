@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class ShaderCreator {
@@ -146,12 +147,12 @@ public class ShaderCreator {
 			}
 		});
 
-		int id = link(name, vertex, geometry, tessControl, tessEval, fragment, vertexFormat, false);
+		PartialShader id = link(name, vertex, geometry, tessControl, tessEval, fragment, vertexFormat, false);
 
 
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
-				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id.getFinally(), name, vertexFormat, tessControl != null || tessEval != null, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);
@@ -167,7 +168,7 @@ public class ShaderCreator {
 
 
 
-	public static int link(String name, String vertex, String geometry, String tessControl, String tessEval, String fragment, VertexFormat vertexFormat, boolean isFallback) throws ShaderCompileException {
+	public static PartialShader link(String name, String vertex, String geometry, String tessControl, String tessEval, String fragment, VertexFormat vertexFormat, boolean isFallback) throws ShaderCompileException {
 		int i = GlStateManager.glCreateProgram();
 		if (i <= 0) {
 			throw new RuntimeException("Could not create shader program (returned program ID " + i + ")");
@@ -188,13 +189,7 @@ public class ShaderCreator {
 
 			GlStateManager.glLinkProgram(i);
 
-				detachIfValid(i, vertexS);
-				detachIfValid(i, geometryS);
-				detachIfValid(i, tessContS);
-				detachIfValid(i, tessEvalS);
-				detachIfValid(i, fragS);
-
-				return i;
+			return new PartialShader(i, vertexS, fragS, geometryS, tessContS, tessEvalS);
 		}
 	}
 
@@ -250,14 +245,15 @@ public class ShaderCreator {
 			.print();
 
 
-		int id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
-		GLDebug.nameObject(KHRDebug.GL_PROGRAM, id, name + "_fallback");
+		PartialShader id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
 
 		// TODO 24w34a FALLBACK
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
+				GLDebug.nameObject(KHRDebug.GL_PROGRAM, id.program(), name + "_fallback");
+
 				// TODO 1.21.5 (oh no)
-				return new FallbackShader(id, RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, writingToBeforeTranslucent,
+				return new FallbackShader(id.getFinally(), RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, writingToBeforeTranslucent,
 					writingToAfterTranslucent, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -281,14 +277,14 @@ public class ShaderCreator {
 			.addSource(PatchShaderType.FRAGMENT, fragment)
 			.print();
 
-		int id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
+		PartialShader id = link(name, vertex, null, null, null, fragment, vertexFormat, true);
 
 		// TODO 24w34a FALLBACK
 		return new ShaderSupplier(shaderKey, id, () -> {
 			try {
 				// TODO: Fix
 				GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), new int[]{0});
-				return new FallbackShader(id, RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
+				return new FallbackShader(id.getFinally(), RenderPipelines.ENTITY_CUTOUT, name, vertexFormat, framebuffer, framebuffer, blendModeOverride, alpha.reference(), parent);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -328,13 +324,13 @@ public class ShaderCreator {
 			}
 		});
 
-		int id = link(name, vertex, geometry, tessControl, tessEval, fragment, vertexFormat, false);
+		PartialShader id = link(name, vertex, geometry, tessControl, tessEval, fragment, vertexFormat, false);
 
 
 		return new ShaderSupplier(shaderKey, id, () -> {
 			GlFramebuffer framebuffer = shadowSupplier.get().createShadowFramebuffer(ImmutableSet.of(), source.getDirectives().hasUnknownDrawBuffers() ? new int[]{0, 1} : source.getDirectives().getDrawBuffers());
 			try {
-				return new ExtendedShader(id, name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
+				return new ExtendedShader(id.getFinally(), name, vertexFormat, tessControl != null || tessEval != null, framebuffer, framebuffer, blendModeOverride, alpha, uniforms -> {
 					CommonUniforms.addDynamicUniforms(uniforms, FogMode.PER_VERTEX);
 					customUniforms.assignTo(uniforms);
 					BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);

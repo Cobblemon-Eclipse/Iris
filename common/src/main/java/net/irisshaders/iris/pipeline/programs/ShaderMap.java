@@ -25,7 +25,7 @@ public class ShaderMap {
 		loadingMap.forAllShaders((key, shader) -> {
 			if (shader != null) {
 				if (deletionFunction.apply(shader)) {
-					GlStateManager.glDeleteProgram(shader.id());
+					GlStateManager.glDeleteProgram(shader.id().program());
 					return;
 				}
 
@@ -38,7 +38,7 @@ public class ShaderMap {
 	}
 
 	private void checkLinkingState(ShaderKey key, ShaderSupplier shader) {
-		int i = shader.id();
+		int i = shader.id().program();
 
 		int j = GlStateManager.glGetProgrami(i, 35714);
 		if (j == GL46C.GL_FALSE) {

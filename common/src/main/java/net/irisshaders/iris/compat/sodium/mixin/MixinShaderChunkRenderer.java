@@ -1,6 +1,11 @@
 package net.irisshaders.iris.compat.sodium.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -28,8 +33,11 @@ public abstract class MixinShaderChunkRenderer {
 		BlendModeOverride.restore();
 	}
 
+	@Redirect(method = "begin", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
+	private void bindFramebufferLater(int p_412624_, int p_412635_) {}
+
 	@Redirect(method = "begin", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/ShaderChunkRenderer;compileProgram(Lnet/caffeinemc/mods/sodium/client/render/chunk/shader/ChunkShaderOptions;)Lnet/caffeinemc/mods/sodium/client/gl/shader/GlProgram;"))
-	private GlProgram<ChunkShaderInterface> redirectIrisProgram(ShaderChunkRenderer instance, ChunkShaderOptions options, TerrainRenderPass pass) {
+	private GlProgram<ChunkShaderInterface> redirectIrisProgram(ShaderChunkRenderer instance, ChunkShaderOptions options, TerrainRenderPass pass, @Local RenderTarget target) {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		GlProgram<ChunkShaderInterface> program = null;
@@ -40,6 +48,7 @@ public abstract class MixinShaderChunkRenderer {
 		}
 
 		if (program == null) {
+			GlStateManager._glBindFramebuffer(36160, ((GlTexture)target.getColorTexture()).getFbo(((GlDevice) RenderSystem.getDevice()).directStateAccess(), target.getDepthTexture()));
 			return this.compileProgram(options);
 		}
 

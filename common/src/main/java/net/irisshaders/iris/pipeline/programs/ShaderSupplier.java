@@ -4,5 +4,5 @@ import com.mojang.blaze3d.opengl.GlProgram;
 
 import java.util.function.Supplier;
 
-public record ShaderSupplier(ShaderKey key, int id, Supplier<GlProgram> shader) {
+public record ShaderSupplier(ShaderKey key, PartialShader id, Supplier<GlProgram> shader) {
 }

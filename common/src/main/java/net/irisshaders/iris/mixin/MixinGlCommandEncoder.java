@@ -12,9 +12,11 @@ import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.textures.FilterMode;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
+import net.irisshaders.iris.pipeline.programs.ExtendedShader;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL46C;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,6 +38,9 @@ public class MixinGlCommandEncoder {
 	@Nullable
 	private GlProgram lastProgram;
 
+	@Unique
+	private int tempFBO;
+
 	// Do not change the viewport in the shadow pass.
 	@Redirect(method = "createRenderPass(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
 	private void changeViewport(int i, int j, int k, int l) {
@@ -43,6 +48,24 @@ public class MixinGlCommandEncoder {
 			return;
 		} else {
 			GlStateManager._viewport(i, j, k, l);
+		}
+	}
+
+	// Do not change the viewport in the shadow pass.
+	@Redirect(method = "createRenderPass(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
+	private void changeFramebuffer(int i, int j) {
+		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered() || ImmediateState.safeToMultiply) {
+			this.tempFBO = j;
+			return;
+		} else {
+			GlStateManager._glBindFramebuffer(i, j);
+		}
+	}
+
+	@Redirect(method = "finishRenderPass", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
+	private void finishFramebuffer(int i, int j) {
+		if (!ImmediateState.safeToMultiply) {
+			GlStateManager._glBindFramebuffer(i, j);
 		}
 	}
 
@@ -75,8 +98,13 @@ public class MixinGlCommandEncoder {
 	private void iris$bypassSetup(GlRenderPass glRenderPass, CallbackInfoReturnable<Boolean> cir) {
 		DepthColorStorage.unlockDepthColor();
 
-		if (lastPass == glRenderPass && false) {
+		if (lastPass == glRenderPass && ImmediateState.safeToMultiply) {
 			cir.cancel();
+			return;
+		}
+
+		if (ImmediateState.safeToMultiply && !(glRenderPass.pipeline.program() instanceof ExtendedShader)) {
+			GlStateManager._glBindFramebuffer(GL46C.GL_FRAMEBUFFER, tempFBO);
 		}
 
 		lastPass = glRenderPass;

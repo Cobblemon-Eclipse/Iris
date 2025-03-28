@@ -1,5 +1,7 @@
 package net.irisshaders.batchedentityrendering.impl;
 
+import com.mojang.blaze3d.opengl.GlConst;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -197,6 +199,7 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 		profiler.push("iris draw partial");
 
 		List<RenderType> types = new ArrayList<>();
+		ImmediateState.safeToMultiply = true;
 
 		for (RenderType type : renderOrder) {
 			if (((BlendingStateHolder) type).getTransparencyType() != transparencyType) {
@@ -240,6 +243,8 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 		profiler.popPush("reset type " + transparencyType);
 
 		renderOrder.removeAll(types);
+		ImmediateState.safeToMultiply = false;
+		GlStateManager._glBindFramebuffer(GlConst.GL_FRAMEBUFFER, 0);
 
 		profiler.pop();
 	}
