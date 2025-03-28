@@ -98,11 +98,6 @@ public class MixinGlCommandEncoder {
 	private void iris$bypassSetup(GlRenderPass glRenderPass, CallbackInfoReturnable<Boolean> cir) {
 		DepthColorStorage.unlockDepthColor();
 
-		if (lastPass == glRenderPass && ImmediateState.safeToMultiply) {
-			cir.cancel();
-			return;
-		}
-
 		if (ImmediateState.safeToMultiply && !(glRenderPass.pipeline.program() instanceof ExtendedShader)) {
 			GlStateManager._glBindFramebuffer(GL46C.GL_FRAMEBUFFER, tempFBO);
 		}
