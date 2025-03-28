@@ -242,6 +242,11 @@ public class ExtendedShader extends GlProgram {
 	}
 
 	@Override
+	public List<Uniform> getUniforms() {
+		return super.getUniforms();
+	}
+
+	@Override
 	public void setupUniforms(List<RenderPipeline.UniformDescription> list, List<String> list2) {
 		RenderSystem.assertOnRenderThread();
 
@@ -265,26 +270,7 @@ public class ExtendedShader extends GlProgram {
 				this.samplerLocations.add(j);
 			}
 		}
-
-		int k = GlStateManager.glGetProgrami(this.getProgramId(), 35718);
-
-		try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-			IntBuffer intBuffer = memoryStack.mallocInt(1);
-			IntBuffer intBuffer2 = memoryStack.mallocInt(1);
-
-			for (int l = 0; l < k; l++) {
-				String string3 = GL20.glGetActiveUniform(this.getProgramId(), l, intBuffer, intBuffer2);
-				UniformType uniformType = getTypeFromGl(intBuffer2.get(0));
-				if (!this.uniformsByName.containsKey(string3) && !list2.contains(string3)) {
-					if (uniformType != null) {
-						Uniform uniform2 = new Uniform(string3, uniformType);
-						uniform2.setLocation(l);
-						super.uniforms.add(uniform2);
-						this.uniformsByName.put(string3, uniform2);
-					}
-				}
-			}
-		}
+		
 
 		this.MODEL_VIEW_MATRIX = super.getUniform("iris_ModelViewMat");
 		this.PROJECTION_MATRIX = super.getUniform("iris_ProjMat");
