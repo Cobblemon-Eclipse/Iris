@@ -98,12 +98,6 @@ public class MixinGlCommandEncoder {
 	private void iris$bypassSetup(GlRenderPass glRenderPass, CallbackInfoReturnable<Boolean> cir) {
 		DepthColorStorage.unlockDepthColor();
 
-		if (ImmediateState.safeToMultiply && !(glRenderPass.pipeline.program() instanceof ExtendedShader)) {
-			GlStateManager._glBindFramebuffer(GL46C.GL_FRAMEBUFFER, tempFBO);
-		}
-
-		lastPass = glRenderPass;
-
 		if (glRenderPass.iris$getCustomPass() != null) {
 			this.lastProgram = null;
 
@@ -156,6 +150,12 @@ public class MixinGlCommandEncoder {
 						GlStateManager._logicOp(5387);
 				}
 			}
+		} else {
+			if (lastPass != glRenderPass && ImmediateState.safeToMultiply && !(glRenderPass.pipeline.program() instanceof ExtendedShader)) {
+				GlStateManager._glBindFramebuffer(GL46C.GL_FRAMEBUFFER, tempFBO);
+			}
+
+			lastPass = glRenderPass;
 		}
 	}
 }
