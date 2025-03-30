@@ -104,7 +104,7 @@ public class LodRendererEvents {
 				var getResult = DhApi.Delayed.renderProxy.getDhDepthTextureId();
 				if (getResult.success) {
 					int depthTextureId = getResult.payload;
-					getInstance().reconnectDHTextures(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+					getInstance().reconnectDHTextures(depthTextureId);
 				}
 			}
 		};
