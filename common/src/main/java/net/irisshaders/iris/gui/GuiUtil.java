@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -66,13 +67,13 @@ public final class GuiUtil {
 		GlStateManager._enableBlend();
 
 		// Top left section
-		guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, IRIS_WIDGETS_TEX, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
 		// Top right section
-		guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x + halfWidth, y, 200 - (width - halfWidth), vOffset, width - halfWidth, halfHeight, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, IRIS_WIDGETS_TEX, x + halfWidth, y, 200 - (width - halfWidth), vOffset, width - halfWidth, halfHeight, 256, 256);
 		// Bottom left section
-		guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x, y + halfHeight, 0, vOffset + (20 - (height - halfHeight)), halfWidth, height - halfHeight, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, IRIS_WIDGETS_TEX, x, y + halfHeight, 0, vOffset + (20 - (height - halfHeight)), halfWidth, height - halfHeight, 256, 256);
 		// Bottom right section
-		guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x + halfWidth, y + halfHeight, 200 - (width - halfWidth), vOffset + (20 - (height - halfHeight)), width - halfWidth, height - halfHeight, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, IRIS_WIDGETS_TEX, x + halfWidth, y + halfHeight, 200 - (width - halfWidth), vOffset + (20 - (height - halfHeight)), width - halfWidth, height - halfHeight, 256, 256);
 	}
 
 	/**
@@ -89,15 +90,15 @@ public final class GuiUtil {
 		int innerColor = 0xDE000000;
 
 		// Top border section
-		guiGraphics.fill(RenderType.guiOverlay(), x, y, x + width, y + 1, borderColor);
+		guiGraphics.fill(RenderPipelines.GUI, x, y, x + width, y + 1, borderColor);
 		// Bottom border section
-		guiGraphics.fill(RenderType.guiOverlay(), x, (y + height) - 1, x + width, y + height, borderColor);
+		guiGraphics.fill(RenderPipelines.GUI, x, (y + height) - 1, x + width, y + height, borderColor);
 		// Left border section
-		guiGraphics.fill(RenderType.guiOverlay(), x, y + 1, x + 1, (y + height) - 1, borderColor);
+		guiGraphics.fill(RenderPipelines.GUI, x, y + 1, x + 1, (y + height) - 1, borderColor);
 		// Right border section
-		guiGraphics.fill(RenderType.guiOverlay(), (x + width) - 1, y + 1, x + width, (y + height) - 1, borderColor);
+		guiGraphics.fill(RenderPipelines.GUI, (x + width) - 1, y + 1, x + width, (y + height) - 1, borderColor);
 		// Inner section
-		guiGraphics.fill(RenderType.guiOverlay(), x + 1, y + 1, (x + width) - 1, (y + height) - 1, innerColor);
+		guiGraphics.fill(RenderPipelines.GUI, x + 1, y + 1, (x + width) - 1, (y + height) - 1, innerColor);
 	}
 
 	/**
@@ -194,7 +195,7 @@ public final class GuiUtil {
 			GlStateManager._enableBlend();
 
 			// Draw the texture to the screen
-			guiGraphics.blit(RenderType::guiTextured, IRIS_WIDGETS_TEX, x, y, u, v, width, height, 256, 256);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, IRIS_WIDGETS_TEX, x, y, u, v, width, height, 256, 256);
 		}
 
 		public int getWidth() {

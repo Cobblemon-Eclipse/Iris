@@ -27,17 +27,17 @@ public class IrisButton extends Button {
 	@Override
 	protected void renderWidget(GuiGraphics guiGraphics, int pInt1, int pInt2, float pFloat3) {
 		Minecraft lvMinecraft5 = Minecraft.getInstance();
-		guiGraphics.flush();
+		//guiGraphics.flush();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.isHoveredOrFocused() ? this.alphaSupplier.getAsFloat() * 1.8f : this.alphaSupplier.getAsFloat());
 		GlStateManager._enableBlend();
 		GlStateManager._enableDepthTest();
 		GuiUtil.bindIrisWidgetsTexture();
 		GuiUtil.drawButton(guiGraphics, this.getX(), this.getY(), this.getWidth(), this.getHeight(), this.isHoveredOrFocused(), !this.isActive());
-		guiGraphics.flush();
+		//guiGraphics.flush();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alphaSupplier.getAsFloat());
 		int lvInt6 = this.active ? 16777215 : 10526880;
 		this.renderString(guiGraphics, lvMinecraft5.font, lvInt6 | Mth.ceil(this.alphaSupplier.getAsFloat() * 255.0F) << 24);
-		guiGraphics.flush();
+		//guiGraphics.flush();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
 	}

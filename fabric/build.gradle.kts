@@ -62,10 +62,10 @@ dependencies {
     addRuntimeFabricModule("fabric-block-view-api-v2")
     addRuntimeFabricModule("fabric-rendering-data-attachment-v1")
     addRuntimeFabricModule("fabric-rendering-fluids-v1")
-    addRuntimeFabricModule("fabric-resource-loader-v0")
-    addRuntimeFabricModule("fabric-renderer-api-v1")
+    //addRuntimeFabricModule("fabric-resource-loader-v0")
+    //addRuntimeFabricModule("fabric-renderer-api-v1")
 
-    modImplementation(SODIUM_DEPENDENCY_FABRIC)
+    modCompileOnly(SODIUM_DEPENDENCY_FABRIC)
     implementAndInclude("org.antlr:antlr4-runtime:4.13.1")
     implementAndInclude("io.github.douira:glsl-transformer:2.0.1")
     implementAndInclude("org.anarres:jcpp:1.4.14")

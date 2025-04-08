@@ -22,8 +22,6 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 	@Shadow
 	@Nullable
 	protected GpuTexture texture;
-	@Shadow
-	protected boolean defaultBlur;
 	@Unique
 	private GpuTexture lastChecked;
 
@@ -57,8 +55,4 @@ public abstract class MixinAbstractTexture implements AbstractTextureExtended {
 		}
 	}
 
-	//@Inject(method = "setFilter(Lnet/minecraft/util/TriState;Z)V", at = @At("HEAD"))
-	private void iris$setFilter2(TriState triState, boolean bl, CallbackInfo ci) {
-		this.onSet(triState.toBoolean(this.defaultBlur), bl);
-	}
 }

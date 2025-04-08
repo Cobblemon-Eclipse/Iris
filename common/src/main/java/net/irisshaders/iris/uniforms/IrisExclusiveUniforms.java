@@ -182,7 +182,7 @@ public class IrisExclusiveUniforms {
 			});
 			uniforms.uniform1f(UniformUpdateFrequency.PER_FRAME, "cloudHeight", () -> {
 				if (level != null) {
-					return level.effects().getCloudHeight();
+					return level.dimensionType().cloudHeight().orElse(-1);
 				} else {
 					return 192.0;
 				}

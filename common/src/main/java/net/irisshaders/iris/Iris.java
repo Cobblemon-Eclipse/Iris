@@ -713,7 +713,7 @@ public class Iris {
 	public static String getReleaseTarget() {
 		// If this is a snapshot, you must change backupVersionNumber!
 		SharedConstants.tryDetectVersion();
-		return SharedConstants.getCurrentVersion().isStable() ? SharedConstants.getCurrentVersion().getName() : backupVersionNumber;
+		return SharedConstants.getCurrentVersion().stable() ? SharedConstants.getCurrentVersion().name() : backupVersionNumber;
 	}
 
 	public static String getBackupVersionNumber() {

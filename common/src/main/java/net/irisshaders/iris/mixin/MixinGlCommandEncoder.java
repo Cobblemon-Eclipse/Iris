@@ -113,9 +113,9 @@ public class MixinGlCommandEncoder {
 
 			RenderPipeline renderPipeline = glRenderPass.pipeline.info();
 
-			if (glRenderPass.scissorState.isEnabled()) {
+			if (glRenderPass.isScissorEnabled()) {
 				GlStateManager._enableScissorTest();
-				GlStateManager._scissorBox(glRenderPass.scissorState.getX(), glRenderPass.scissorState.getY(), glRenderPass.scissorState.getWidth(), glRenderPass.scissorState.getHeight());
+				GlStateManager._scissorBox(glRenderPass.getScissorX(), glRenderPass.getScissorY(), glRenderPass.getScissorWidth(), glRenderPass.getScissorHeight());
 			} else {
 				GlStateManager._disableScissorTest();
 			}

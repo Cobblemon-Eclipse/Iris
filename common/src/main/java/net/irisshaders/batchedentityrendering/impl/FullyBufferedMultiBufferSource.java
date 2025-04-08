@@ -154,12 +154,10 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			drawCalls += segments.length;
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(type.getRenderTarget().getColorTexture(), OptionalInt.empty(), type.getRenderTarget().getDepthTexture(), OptionalDouble.empty())) {
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(RenderSystem.outputColorTextureOverride == null ? type.getRenderTarget().getColorTexture()
+				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.getRenderTarget().getDepthTexture()
+				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
 				pass.setPipeline(type.getRenderPipeline());
-
-				if (RenderSystem.SCISSOR_STATE.isEnabled()) {
-					pass.enableScissor(RenderSystem.SCISSOR_STATE);
-				}
 
 				for(int i = 0; i < 12; ++i) {
 					GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);
@@ -215,12 +213,10 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			drawCalls += segments.length;
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(type.getRenderTarget().getColorTexture(), OptionalInt.empty(), type.getRenderTarget().getDepthTexture(), OptionalDouble.empty())) {
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(RenderSystem.outputColorTextureOverride == null ? type.getRenderTarget().getColorTexture()
+				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.getRenderTarget().getDepthTexture()
+				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
 				pass.setPipeline(type.getRenderPipeline());
-
-				if (RenderSystem.SCISSOR_STATE.isEnabled()) {
-					pass.enableScissor(RenderSystem.SCISSOR_STATE);
-				}
 
 				for(int i = 0; i < 12; ++i) {
 					GpuTexture gpuTexture = RenderSystem.getShaderTexture(i);

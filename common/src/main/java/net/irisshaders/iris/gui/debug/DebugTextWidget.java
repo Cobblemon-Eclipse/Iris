@@ -78,10 +78,10 @@ public class DebugTextWidget
 	protected void renderContents(GuiGraphics arg, int i, int j, float f) {
 		int k = this.getY() + this.innerPadding();
 		int l = this.getX() + this.innerPadding();
-		arg.pose().pushPose();
-		arg.pose().translate(l, k, 0.0);
+		arg.pose().pushMatrix();
+		arg.pose().translate(l, k);
 		this.content.container().visitWidgets(element -> element.render(arg, i, j, f));
-		arg.pose().popPose();
+		arg.pose().popMatrix();
 	}
 
 	@Override

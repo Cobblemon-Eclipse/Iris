@@ -23,6 +23,7 @@ import net.minecraft.client.gui.navigation.ScreenDirection;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -81,11 +82,11 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		float transition = screen.listTransition.getAsFloat();
 		//RenderSystem.enableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
-		pAbstractSelectionList0.blit(RenderType::guiTextured,
+		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED,
 			MENU_LIST_BACKGROUND,
 			this.getX(), this.getY(), (float)this.getRight(), (float)(this.getBottom() + (int)this.scrollAmount()), this.getWidth(), this.getHeight(), 32, 32
 		);
-		if (transition < 0.99f) pAbstractSelectionList0.flush();
+		//if (transition < 0.99f) pAbstractSelectionList0.flush();
 
 		//RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -95,12 +96,12 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 	protected void renderListSeparators(GuiGraphics pAbstractSelectionList0) {
 		float transition = screen.listTransition.getAsFloat();
 		if (transition < 0.02f) return;
-		if (transition < 0.99f) pAbstractSelectionList0.flush();
+		//if (transition < 0.99f) pAbstractSelectionList0.flush();
 		//RenderSystem.enableBlend();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
-		pAbstractSelectionList0.blit(RenderType::guiTextured, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
-		pAbstractSelectionList0.blit(RenderType::guiTextured, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
-		if (transition < 0.99f) pAbstractSelectionList0.flush();
+		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
+		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
+		//if (transition < 0.99f) pAbstractSelectionList0.flush();
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		//RenderSystem.disableBlend();
 	}

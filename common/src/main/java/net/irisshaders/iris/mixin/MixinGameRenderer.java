@@ -37,9 +37,6 @@ import java.util.ArrayList;
 
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer {
-	@Shadow
-	private boolean renderHand;
-
 	@Inject(method = "render", at = @At("HEAD"))
 	private void iris$startFrame(DeltaTracker deltaTracker, boolean bl, CallbackInfo ci) {
 		// This allows certain functions like float smoothing to function outside a world.
@@ -49,7 +46,7 @@ public class MixinGameRenderer {
 	}
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void iris$logSystem(Minecraft arg, ItemInHandRenderer arg2, ResourceManager arg3, RenderBuffers arg4, CallbackInfo ci) {
+	private void iris$logSystem(Minecraft minecraft, ItemInHandRenderer itemInHandRenderer, RenderBuffers renderBuffers, CallbackInfo ci) {
 		Iris.logger.info("Hardware information:");
 		Iris.logger.info("CPU: " + GLX._getCpuInfo());
 		Iris.logger.info("GPU: " + RenderSystem.getDevice().getRenderer() + " (Supports OpenGL " + RenderSystem.getDevice().getVersion() + ")");
