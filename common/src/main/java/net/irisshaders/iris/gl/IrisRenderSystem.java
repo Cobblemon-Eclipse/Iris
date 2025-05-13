@@ -1,6 +1,7 @@
 package net.irisshaders.iris.gl;
 
 import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexSorting;
@@ -12,6 +13,7 @@ import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3i;
@@ -39,7 +41,8 @@ import java.nio.IntBuffer;
  */
 public class IrisRenderSystem {
 	private static final int[] emptyArray = new int[SamplerLimits.get().getMaxTextureUnits()];
-	private static Matrix4f backupProjection;
+	private static GpuBufferSlice backupProjection;
+	private static PerspectiveProjectionMatrixBuffer perspectiveProjectionMatrixBuffer;
 	private static ProjectionType backupProjectionType;
 	private static DSAAccess dsaState;
 	private static boolean hasMultibind;
@@ -63,6 +66,7 @@ public class IrisRenderSystem {
 		}
 
 		hasMultibind = GL.getCapabilities().OpenGL45 || GL.getCapabilities().GL_ARB_multi_bind;
+		perspectiveProjectionMatrixBuffer = new PerspectiveProjectionMatrixBuffer("Iris shadow map projection");
 
 		supportsCompute = GL.getCapabilities().glDispatchCompute != MemoryUtil.NULL;
 		supportsTesselation = GL.getCapabilities().GL_ARB_tessellation_shader || GL.getCapabilities().OpenGL40;
@@ -348,9 +352,9 @@ public class IrisRenderSystem {
 	}
 
 	public static void setShadowProjection(Matrix4f shadowProjection) {
-		backupProjection = RenderSystem.getProjectionMatrix();
+		backupProjection = RenderSystem.getProjectionMatrixBuffer();
 		backupProjectionType = RenderSystem.getProjectionType();
-		RenderSystem.setProjectionMatrix(shadowProjection, ProjectionType.ORTHOGRAPHIC);
+		RenderSystem.setProjectionMatrix(perspectiveProjectionMatrixBuffer.getBuffer(shadowProjection), ProjectionType.ORTHOGRAPHIC);
 	}
 
 	public static void restorePlayerProjection() {

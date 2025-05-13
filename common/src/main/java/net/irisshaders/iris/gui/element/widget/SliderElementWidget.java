@@ -84,7 +84,7 @@ public class SliderElementWidget extends StringElementWidget {
 
 		// Draw value label
 		Font font = Minecraft.getInstance().font;
-		guiGraphics.drawString(font, this.valueLabel, bounds.getCenterInAxis(ScreenAxis.HORIZONTAL) - (int) (font.width(this.valueLabel) * 0.5), bounds.position().y() + 7, 0xFFFFFF);
+		guiGraphics.drawString(font, this.valueLabel, bounds.getCenterInAxis(ScreenAxis.HORIZONTAL) - (int) (font.width(this.valueLabel) * 0.5), bounds.position().y() + 7, 0xFFFFFFFF);
 	}
 
 	private void whileDragging(int mouseX) {

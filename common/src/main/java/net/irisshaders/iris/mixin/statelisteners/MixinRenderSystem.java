@@ -1,8 +1,8 @@
 package net.irisshaders.iris.mixin.statelisteners;
 
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.gl.state.StateUpdateNotifiers;
-import net.minecraft.client.renderer.FogParameters;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,7 +22,7 @@ public class MixinRenderSystem {
 	}
 
 	@Inject(method = "setShaderFog", at = @At(value = "HEAD"))
-	private static void iris$onFogStart(FogParameters fogParameters, CallbackInfo ci) {
+	private static void iris$onFogStart(GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
 		if (fogStartListener != null) {
 			fogStartListener.run();
 		}

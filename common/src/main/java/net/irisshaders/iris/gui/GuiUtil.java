@@ -39,7 +39,7 @@ public final class GuiUtil {
 	 * used for succeeding draw calls.
 	 */
 	public static void bindIrisWidgetsTexture() {
-		RenderSystem.setShaderTexture(0, Minecraft.getInstance().getTextureManager().getTexture(IRIS_WIDGETS_TEX).getTexture());
+		RenderSystem.setShaderTexture(0, Minecraft.getInstance().getTextureManager().getTexture(IRIS_WIDGETS_TEX).getTextureView());
 	}
 
 	/**
@@ -110,7 +110,7 @@ public final class GuiUtil {
 	 */
 	public static void drawTextPanel(Font font, GuiGraphics guiGraphics, Component text, int x, int y) {
 		drawPanel(guiGraphics, x, y, font.width(text) + 8, 16);
-		guiGraphics.drawString(font, text, x + 4, y + 4, 0xFFFFFF);
+		guiGraphics.drawString(font, text, x + 4, y + 4, 0xFFFFFFFF);
 	}
 
 	/**

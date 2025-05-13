@@ -3,6 +3,7 @@ package net.irisshaders.iris.pbr.texture;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
@@ -124,7 +125,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 			this.texture.close();
 		}
 
-		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), TextureFormat.RGBA8, atlasWidth, atlasHeight, mipLevel + 1);
+		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.RGBA8, atlasWidth, atlasHeight, 1, mipLevel + 1);
 		if (TextureFormatLoader.getFormat() != null && !TextureFormatLoader.getFormat().canInterpolateValues(type)) {
 			texture.iris$markMipmapNonLinear();
 		}

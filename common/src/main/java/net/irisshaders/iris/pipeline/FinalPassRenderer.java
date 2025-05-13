@@ -254,7 +254,7 @@ public class FinalPassRenderer {
 			GpuBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6);
 			VertexFormat.IndexType type = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type();
 
-			try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty())) {
+			try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Final pass", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty())) {
 				renderPass.setPipeline(CompositeRenderer.COMPOSITE_PIPELINE);
 				renderPass.setIndexBuffer(indices, type);
 				renderPass.setVertexBuffer(0, FullScreenQuadRenderer.INSTANCE.getQuad());
@@ -269,7 +269,7 @@ public class FinalPassRenderer {
 				// program is the identifier for final :shrug:
 				this.customUniforms.push(finalPass.program);
 
-				renderPass.drawIndexed(0, 6);
+				renderPass.drawIndexed(0, 0, 6, 1);
 			}
 			GLDebug.popGroup();
 		} else {

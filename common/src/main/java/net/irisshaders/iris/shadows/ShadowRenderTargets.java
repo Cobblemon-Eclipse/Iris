@@ -52,8 +52,8 @@ public class ShadowRenderTargets {
 		linearFiltered = new boolean[size];
 		buffersToBeCleared = new IntArrayList();
 
-		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", TextureFormat.DEPTH32, resolution, resolution, 1);
-		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", TextureFormat.DEPTH32, resolution, resolution, 1);
+		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, 1);
+		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, 1);
 
 		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 		this.mainDepth.setTextureFilter(FilterMode.NEAREST, false);

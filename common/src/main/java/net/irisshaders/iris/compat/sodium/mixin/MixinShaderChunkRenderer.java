@@ -11,6 +11,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderOptions;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
+import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
@@ -29,7 +30,7 @@ public abstract class MixinShaderChunkRenderer {
 	protected abstract GlProgram<ChunkShaderInterface> compileProgram(ChunkShaderOptions options);
 
 	@Inject(method = "begin", at = @At("HEAD"))
-	private void iris$resetState(TerrainRenderPass pass, CallbackInfo ci) {
+	private void iris$resetState(TerrainRenderPass pass, FogParameters parameters, CallbackInfo ci) {
 		BlendModeOverride.restore();
 	}
 

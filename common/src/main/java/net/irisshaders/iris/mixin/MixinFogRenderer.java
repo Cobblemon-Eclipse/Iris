@@ -2,10 +2,10 @@ package net.irisshaders.iris.mixin;
 
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.FogParameters;
-import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer {
 	@Inject(method = "setupFog", at = @At("HEAD"))
-	private static void iris$setupLegacyWaterFog(Camera camera, FogRenderer.FogMode fogMode, Vector4f vector4f, float f, boolean bl, float g, CallbackInfoReturnable<FogParameters> cir) {
+	private void iris$setupLegacyWaterFog(Camera camera, int i, boolean bl, DeltaTracker deltaTracker, float f, ClientLevel clientLevel, CallbackInfoReturnable<Vector4f> cir) {
 		if (camera.getFluidInCamera() == FogType.WATER) {
 			Entity entity = camera.getEntity();
 
@@ -43,8 +43,8 @@ public class MixinFogRenderer {
 		}
 	}
 
-	@Inject(method = "setupFog", at = @At("HEAD"))
-	private static void render(Camera camera, FogRenderer.FogMode fogMode, Vector4f vector4f, float f, boolean bl, float g, CallbackInfoReturnable<FogParameters> cir) {
-		CapturedRenderingState.INSTANCE.setFogColor(vector4f.x, vector4f.y, vector4f.z);
+	@Inject(method = "setupFog", at = @At("RETURN"))
+	private void render(Camera camera, int i, boolean bl, DeltaTracker deltaTracker, float f, ClientLevel clientLevel, CallbackInfoReturnable<Vector4f> cir) {
+		CapturedRenderingState.INSTANCE.setFogColor(cir.getReturnValue().x, cir.getReturnValue().y, cir.getReturnValue().z);
 	}
 }

@@ -20,7 +20,7 @@ public abstract class MixinGpuTexture implements GpuTextureInterface {
 	public abstract int glId();
 
 	@Shadow
-	public abstract void flushModeChanges();
+	public abstract void flushModeChanges(int i);
 
 	@Shadow
 	@Final
@@ -31,7 +31,7 @@ public abstract class MixinGpuTexture implements GpuTextureInterface {
 
 	@Override
 	public int iris$getGlId() {
-		this.flushModeChanges();
+		this.flushModeChanges(GL46C.GL_TEXTURE_2D);
 		return this.glId();
 	}
 

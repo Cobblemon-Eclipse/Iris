@@ -27,6 +27,8 @@ import net.irisshaders.iris.gl.uniform.DynamicLocationalUniformHolder;
 import net.irisshaders.iris.mixinterface.ShaderInstanceInterface;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
+import net.irisshaders.iris.shadows.ShadowRenderer;
+import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.ImmediateState;
@@ -35,20 +37,19 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.ARBTextureSwizzle;
-import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GL43C;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.opengl.GL46C;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class ExtendedShader extends GlProgram {
+public class ExtendedShader extends GlProgram implements IrisProgram {
 	private static final Matrix4f identity;
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static ExtendedShader lastApplied;
@@ -61,8 +62,8 @@ public class ExtendedShader extends GlProgram {
 	private final boolean intensitySwizzle;
 	private final List<BufferBlendOverride> bufferBlendOverrides;
 	private final boolean hasOverrides;
-	private final Uniform modelViewInverse;
-	private final Uniform projectionInverse;
+	private final int modelViewInverse;
+	private final int projectionInverse;
 	private final Matrix3f normalMatrix = new Matrix3f();
 	private final CustomUniforms customUniforms;
 	private final IrisRenderingPipeline parent;
@@ -80,6 +81,7 @@ public class ExtendedShader extends GlProgram {
 	private final float[] tempFloats2 = new float[9];
 	private final int normalMat;
 	private int textureToUnswizzle;
+	private boolean isSetup;
 
 	public ExtendedShader(int programId, String string, VertexFormat vertexFormat, boolean usesTessellation,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
@@ -94,17 +96,10 @@ public class ExtendedShader extends GlProgram {
 
 		List<RenderPipeline.UniformDescription> uniformList = new ArrayList<>();
 		List<String> samplerList = new ArrayList<>();
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMat", UniformType.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelViewMatInverse", UniformType.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMat", UniformType.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ProjMatInverse", UniformType.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_TextureMat", UniformType.MATRIX4X4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ColorModulator", UniformType.VEC4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogColor", UniformType.VEC4));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogStart", UniformType.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_FogEnd", UniformType.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_GlintAlpha", UniformType.FLOAT));
-		uniformList.add(new RenderPipeline.UniformDescription("iris_ModelOffset", UniformType.VEC3));
+		uniformList.add(new RenderPipeline.UniformDescription("DynamicTransforms", UniformType.UNIFORM_BUFFER));
+		uniformList.add(new RenderPipeline.UniformDescription("Projection", UniformType.UNIFORM_BUFFER));
+		uniformList.add(new RenderPipeline.UniformDescription("Fog", UniformType.UNIFORM_BUFFER));
+		uniformList.add(new RenderPipeline.UniformDescription("Globals", UniformType.UNIFORM_BUFFER));
 
 		if (vertexFormat.contains(VertexFormatElement.UV)) {
 			samplerList.add("Sampler0");
@@ -117,7 +112,8 @@ public class ExtendedShader extends GlProgram {
 		if (vertexFormat.contains(VertexFormatElement.UV2)) {
 			samplerList.add("Sampler2");
 		}
-		setupUniforms(uniformList, samplerList);
+
+		super.setupUniforms(uniformList, samplerList);
 
 		ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder(string, programId);
 		ProgramSamplers.Builder samplerBuilder = ProgramSamplers.builder(programId, IrisSamplers.WORLD_RESERVED_TEXTURE_UNITS);
@@ -140,8 +136,8 @@ public class ExtendedShader extends GlProgram {
 		this.alphaTest = alphaTest.reference();
 		this.parent = parent;
 
-		this.modelViewInverse = this.getUniform("ModelViewMatInverse");
-		this.projectionInverse = this.getUniform("ProjMatInverse");
+		this.modelViewInverse = GlStateManager._glGetUniformLocation(programId, "iris_ModelViewMatInverse");
+		this.projectionInverse = GlStateManager._glGetUniformLocation(programId, "iris_ProjMatInverse");
 
 		this.intensitySwizzle = isIntensity;
 	}
@@ -151,7 +147,7 @@ public class ExtendedShader extends GlProgram {
 	}
 
 	@Override
-	public void clear() {
+	public void iris$clearState() {
 		ProgramUniforms.clearActiveUniforms();
 		ProgramSamplers.clearActiveSamplers();
 
@@ -159,52 +155,45 @@ public class ExtendedShader extends GlProgram {
 			BlendModeOverride.restore();
 		}
 
-		super.clear();
+		isSetup = false;
 	}
 
 	private float[] tempF = new float[9];
 
 	@Override
-	public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f modelView, Matrix4f projection, float width, float height) {
+	public void iris$setupState() {
+		isSetup = true;
 		DepthColorStorage.unlockDepthColor();
 
 		CapturedRenderingState.INSTANCE.setCurrentAlphaTest(alphaTest);
 		GlStateManager._glUseProgram(getProgramId());
 
-		super.setDefaultUniforms(mode, modelView, projection, width, height);
-		if (modelViewInverse != null) {
-			modelViewInverse.set(modelView.invert(tempMatrix4f));
+		if (modelViewInverse > -1) {
+			IrisRenderSystem.uniformMatrix4fv(modelViewInverse, false, RenderSystem.getModelViewMatrix().invert(tempMatrix4f).get(tempFloats));
 		}
 
 
 		if (normalMat > -1) {
-			tempF = modelView.invert(tempMatrix4f).transpose3x3(normalMatrix).get(tempF);
+			tempF = RenderSystem.getModelViewMatrix().invert(tempMatrix4f).transpose3x3(normalMatrix).get(tempF);
 
 			IrisRenderSystem.uniformMatrix3fv(normalMat, false, tempF);
 		}
 
-		if (projectionInverse != null) {
-			projectionInverse.set(projection.invert(tempMatrix4f));
+		if (projectionInverse > -1) {
+			// TODO: This is wrong. (1.21.6)
+			IrisRenderSystem.uniformMatrix4fv(projectionInverse, false, (ShadowRenderingState.areShadowsCurrentlyBeingRendered() ? ShadowRenderer.PROJECTION : CapturedRenderingState.INSTANCE.getGbufferProjection()).invert(tempMatrix4f).get(tempFloats));
 		}
 
 		if (intensitySwizzle) {
-			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).iris$getGlId());
-			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
+			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).texture().iris$getGlId());
+			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).texture().iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
 				new int[]{GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED});
 		}
 
 		ImmediateState.usingTessellation = usesTessellation;
 
-		uploadIfNotNull(projectionInverse);
-		uploadIfNotNull(modelViewInverse);
-
 		samplers.update();
 		uniforms.update();
-
-		List<Uniform> uniformList = super.uniforms;
-		for (Uniform uniform : uniformList) {
-			uploadIfNotNull(uniform);
-		}
 
 		customUniforms.push(this);
 
@@ -228,74 +217,22 @@ public class ExtendedShader extends GlProgram {
 		}
 	}
 
-	@Nullable
 	@Override
-	public Uniform getUniform(@NotNull String name) {
-		// Prefix all uniforms with Iris to help avoid conflicts with existing names within the shader.
-		Uniform uniform = super.getUniform("iris_" + name);
-
-		if (uniform == null && (name.equalsIgnoreCase("OverlayUV") || name.equalsIgnoreCase("LightUV"))) {
-			return null;
-		} else {
-			return uniform;
-		}
-	}
-
-	@Override
-	public List<Uniform> getUniforms() {
+	public Map<String, Uniform> getUniforms() {
 		return super.getUniforms();
-	}
-
-	@Override
-	public void setupUniforms(List<RenderPipeline.UniformDescription> list, List<String> list2) {
-		RenderSystem.assertOnRenderThread();
-
-		for (RenderPipeline.UniformDescription uniformDescription : list) {
-			String string = uniformDescription.name();
-			int i = Uniform.glGetUniformLocation(this.getProgramId(), string);
-			if (i != -1) {
-				Uniform uniform = this.createUniform(uniformDescription);
-				uniform.setLocation(i);
-				super.uniforms.add(uniform);
-				this.uniformsByName.put(string, uniform);
-			}
-		}
-
-		for (String string2 : list2) {
-			int j = Uniform.glGetUniformLocation(this.getProgramId(), string2);
-			if (j == -1) {
-				//LOGGER.warn("{} shader program does not use sampler {} defined in the pipeline. This might be a bug.", this.getDebugLabel(), string2);
-			} else {
-				super.samplers.add(string2);
-				this.samplerLocations.add(j);
-			}
-		}
-		
-
-		this.MODEL_VIEW_MATRIX = super.getUniform("iris_ModelViewMat");
-		this.PROJECTION_MATRIX = super.getUniform("iris_ProjMat");
-		this.TEXTURE_MATRIX = super.getUniform("iris_TextureMat");
-		this.SCREEN_SIZE = super.getUniform("iris_ScreenSize");
-		this.COLOR_MODULATOR = super.getUniform("iris_ColorModulator");
-		this.LIGHT0_DIRECTION = super.getUniform("iris_Light0_Direction");
-		this.LIGHT1_DIRECTION = super.getUniform("iris_Light1_Direction");
-		this.GLINT_ALPHA = super.getUniform("iris_GlintAlpha");
-		this.FOG_START = super.getUniform("iris_FogStart");
-		this.FOG_END = super.getUniform("iris_FogEnd");
-		this.FOG_COLOR = super.getUniform("iris_FogColor");
-		this.FOG_SHAPE = super.getUniform("iris_FogShape");
-		this.LINE_WIDTH = super.getUniform("iris_LineWidth");
-		this.GAME_TIME = super.getUniform("iris_GameTime");
-		this.MODEL_OFFSET = super.getUniform("iris_ModelOffset");
-	}
-
-	private void uploadIfNotNull(Uniform uniform) {
-		if (uniform != null) {
-			uniform.upload();
-		}
 	}
 
 	public boolean hasActiveImages() {
 		return images.getActiveImages() > 0;
+	}
+
+	@Override
+	public int iris$getBlockIndex(int program, CharSequence uniformBlockName) {
+		return GL46C.glGetUniformBlockIndex(program, "iris_" + uniformBlockName);
+	}
+
+	@Override
+	public boolean iris$isSetUp() {
+		return isSetup;
 	}
 }

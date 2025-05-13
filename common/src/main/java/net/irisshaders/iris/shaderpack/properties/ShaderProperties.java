@@ -629,19 +629,19 @@ public class ShaderProperties {
 		}
 	}
 
-	private static void handleBooleanDirective(String key, String value, String expectedKey, Consumer<OptionalBoolean> handler) {
-		if (!expectedKey.equals(key)) {
-			return;
-		}
+		private static void handleBooleanDirective(String key, String value, String expectedKey, Consumer<OptionalBoolean> handler) {
+			if (!expectedKey.equals(key)) {
+				return;
+			}
 
-		if ("true".equals(value) || "1".equals(value)) {
-			handler.accept(OptionalBoolean.TRUE);
-		} else if ("false".equals(value) || "0".equals(value)) {
-			handler.accept(OptionalBoolean.FALSE);
-		} else {
-			Iris.logger.warn("Unexpected value for boolean key " + key + " in shaders.properties: got " + value + ", but expected either true or false");
+			if ("true".equals(value) || "1".equals(value)) {
+				handler.accept(OptionalBoolean.TRUE);
+			} else if ("false".equals(value) || "0".equals(value)) {
+				handler.accept(OptionalBoolean.FALSE);
+			} else {
+				Iris.logger.warn("Unexpected value for boolean key " + key + " in shaders.properties: got " + value + ", but expected either true or false");
+			}
 		}
-	}
 
 	private static boolean handleIntDirective(String key, String value, String expectedKey, Consumer<Integer> handler) {
 		if (!expectedKey.equals(key)) {

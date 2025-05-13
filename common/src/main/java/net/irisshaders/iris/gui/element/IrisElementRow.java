@@ -271,7 +271,7 @@ public class IrisElementRow {
 			int textX = x + (int) ((width - this.font.width(this.text)) * 0.5);
 			int textY = y + (int) ((height - 8) * 0.5);
 
-			guiGraphics.drawString(this.font, this.text, textX, textY, 0xFFFFFF);
+			guiGraphics.drawString(this.font, this.text, textX, textY, 0xFFFFFFFF);
 		}
 	}
 }

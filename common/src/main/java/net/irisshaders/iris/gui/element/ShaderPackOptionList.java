@@ -81,7 +81,8 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 	protected void renderListBackground(GuiGraphics pAbstractSelectionList0) {
 		float transition = screen.listTransition.getAsFloat();
 		//RenderSystem.enableBlend();
-		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
+		// TODO 1.21.6
+		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
 		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED,
 			MENU_LIST_BACKGROUND,
 			this.getX(), this.getY(), (float)this.getRight(), (float)(this.getBottom() + (int)this.scrollAmount()), this.getWidth(), this.getHeight(), 32, 32
@@ -89,7 +90,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		//if (transition < 0.99f) pAbstractSelectionList0.flush();
 
 		//RenderSystem.disableBlend();
-		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
 	@Override
@@ -97,12 +98,13 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		float transition = screen.listTransition.getAsFloat();
 		if (transition < 0.02f) return;
 		//if (transition < 0.99f) pAbstractSelectionList0.flush();
+		// TODO 1.21.6
 		//RenderSystem.enableBlend();
-		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
+		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
 		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
 		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
 		//if (transition < 0.99f) pAbstractSelectionList0.flush();
-		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		//RenderSystem.disableBlend();
 	}
 
@@ -217,9 +219,9 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		public static final MutableComponent RESET_HOLD_SHIFT_TOOLTIP = Component.translatable("options.iris.reset.tooltip.holdShift").withStyle(ChatFormatting.GOLD);
 		public static final MutableComponent RESET_TOOLTIP = Component.translatable("options.iris.reset.tooltip").withStyle(ChatFormatting.RED);
 		public static final MutableComponent IMPORT_TOOLTIP = Component.translatable("options.iris.importSettings.tooltip")
-			.withStyle(style -> style.withColor(TextColor.fromRgb(0x4da6ff)));
+			.withStyle(style -> style.withColor(TextColor.fromRgb(0xFF4da6ff)));
 		public static final MutableComponent EXPORT_TOOLTIP = Component.translatable("options.iris.exportSettings.tooltip")
-			.withStyle(style -> style.withColor(TextColor.fromRgb(0xfc7d3d)));
+			.withStyle(style -> style.withColor(TextColor.fromRgb(0xFFfc7d3d)));
 
 		private static final int MIN_SIDE_BUTTON_WIDTH = 42;
 		private static final int BUTTON_HEIGHT = 16;
@@ -268,7 +270,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 			Font font = Minecraft.getInstance().font;
 
 			// Draw header text
-			renderScrollingString(guiGraphics, font, text, x + (int) (entryWidth * 0.5), x + 5, y + 5, ((x + entryWidth) - 10) - utilityButtons.getWidth(), y + 15, 0xFFFFFF);
+			renderScrollingString(guiGraphics, font, text, x + (int) (entryWidth * 0.5), x + 5, y + 5, ((x + entryWidth) - 10) - utilityButtons.getWidth(), y + 15, 0xFFFFFFFF);
 
 			GuiUtil.bindIrisWidgetsTexture();
 

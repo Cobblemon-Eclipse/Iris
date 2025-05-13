@@ -9,7 +9,6 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SkyRenderer;
 import org.joml.Matrix4f;
@@ -60,7 +59,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderStars", at = @At(value = "HEAD"))
-	private void iris$setStarRenderStage(FogParameters fogParameters, float f, PoseStack poseStack, CallbackInfo ci) {
+	private void iris$setStarRenderStage(float f, PoseStack poseStack, CallbackInfo ci) {
 		setPhase(WorldRenderingPhase.STARS);
 	}
 
@@ -70,7 +69,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 1))
-	private void iris$renderSky$tiltSun(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float f, int i, float g, float h, FogParameters fogParameters, CallbackInfo ci) {
+	private void iris$renderSky$tiltSun(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float f, int i, float g, float h, CallbackInfo ci) {
 		poseStack.mulPose(Axis.ZP.rotationDegrees(getSunPathRotation()));
 	}
 

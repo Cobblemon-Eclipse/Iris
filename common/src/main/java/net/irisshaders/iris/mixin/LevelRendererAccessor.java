@@ -1,5 +1,6 @@
 package net.irisshaders.iris.mixin;
 
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.client.Camera;
@@ -25,7 +26,7 @@ public interface LevelRendererAccessor {
 	EntityRenderDispatcher getEntityRenderDispatcher();
 
 	@Invoker("renderSectionLayer")
-	void invokeRenderSectionLayer(RenderType terrainLayer, double cameraX, double cameraY, double cameraZ, Matrix4f modelView, Matrix4f projectionMatrix);
+	void invokeRenderSectionLayer(RenderType terrainLayer, GpuBufferSlice[] slices);
 
 	@Invoker("setupRender")
 	void invokeSetupRender(Camera camera, Frustum frustum, boolean hasForcedFrustum, boolean spectator);

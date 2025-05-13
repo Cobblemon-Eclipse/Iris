@@ -12,8 +12,10 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.world.InteractionHand;
@@ -30,6 +32,7 @@ public class HandRenderer {
 	public static final HandRenderer INSTANCE = new HandRenderer();
 	public static final float DEPTH = 0.125F;
 	private final FullyBufferedMultiBufferSource bufferSource = new FullyBufferedMultiBufferSource();
+	private final PerspectiveProjectionMatrixBuffer cachedProjectionMatrixBuffer = new PerspectiveProjectionMatrixBuffer("hand (Iris)");
 	private boolean ACTIVE;
 	private boolean renderingSolid;
 
@@ -39,7 +42,7 @@ public class HandRenderer {
 		// We need to scale the matrix by 0.125 so the hand doesn't clip through blocks.
 		Matrix4f scaleMatrix = new Matrix4f().scale(1F, 1F, DEPTH);
 		scaleMatrix.mul(gameRenderer.getProjectionMatrix(((GameRendererAccessor) gameRenderer).invokeGetFov(camera, tickDelta, false)));
-		RenderSystem.setProjectionMatrix(scaleMatrix, ProjectionType.PERSPECTIVE);
+		RenderSystem.setProjectionMatrix(cachedProjectionMatrixBuffer.getBuffer(scaleMatrix), ProjectionType.PERSPECTIVE);
 
 		poseStack.setIdentity();
 
@@ -80,6 +83,8 @@ public class HandRenderer {
 			return;
 		}
 
+		RenderSystem.backupProjectionMatrix();
+
 		ACTIVE = true;
 
 		PoseStack poseStack = setupGlState(gameRenderer, camera, modelMatrix, tickDelta);
@@ -102,7 +107,7 @@ public class HandRenderer {
 		bufferSource.readyUp();
 		bufferSource.endBatch();
 
-		RenderSystem.setProjectionMatrix(new Matrix4f(CapturedRenderingState.INSTANCE.getGbufferProjection()), ProjectionType.PERSPECTIVE);
+		RenderSystem.restoreProjectionMatrix();
 
 		poseStack.popPose();
 		RenderSystem.getModelViewStack().popMatrix();
@@ -118,6 +123,8 @@ public class HandRenderer {
 		if (!canRender(camera, gameRenderer) || !isAnyHandTranslucent() || !Iris.isPackInUseQuick()) {
 			return;
 		}
+
+		RenderSystem.backupProjectionMatrix();
 
 		ACTIVE = true;
 
@@ -138,7 +145,7 @@ public class HandRenderer {
 
 		Profiler.get().pop();
 
-		RenderSystem.setProjectionMatrix(new Matrix4f(CapturedRenderingState.INSTANCE.getGbufferProjection()), ProjectionType.PERSPECTIVE);
+		RenderSystem.restoreProjectionMatrix();
 
 		bufferSource.endBatch();
 		RenderSystem.getModelViewStack().popMatrix();

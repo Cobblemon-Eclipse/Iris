@@ -177,15 +177,15 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		}
 
 		if (!this.guiHidden) {
-			guiGraphics.drawCenteredString(this.font, this.title, (int) (this.width * 0.5), 8, 0xFFFFFF);
+			guiGraphics.drawCenteredString(this.font, this.title, (int) (this.width * 0.5), 8, 0xFFFFFFFF);
 
 			if (notificationDialog != null && notificationDialogTimer > 0) {
-				guiGraphics.drawCenteredString(this.font, notificationDialog, (int) (this.width * 0.5), 21, 0xFFFFFF);
+				guiGraphics.drawCenteredString(this.font, notificationDialog, (int) (this.width * 0.5), 21, 0xFFFFFFFF);
 			} else {
 				if (optionMenuOpen) {
-					guiGraphics.drawCenteredString(this.font, CONFIGURE_TITLE, (int) (this.width * 0.5), 21, 0xFFFFFF);
+					guiGraphics.drawCenteredString(this.font, CONFIGURE_TITLE, (int) (this.width * 0.5), 21, 0xFFFFFFFF);
 				} else {
-					guiGraphics.drawCenteredString(this.font, SELECT_TITLE, (int) (this.width * 0.5), 21, 0xFFFFFF);
+					guiGraphics.drawCenteredString(this.font, SELECT_TITLE, (int) (this.width * 0.5), 21, 0xFFFFFFFF);
 				}
 			}
 
@@ -198,9 +198,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				// Draw panel
 				GuiUtil.drawPanel(guiGraphics, x, y, COMMENT_PANEL_WIDTH, panelHeight);
 				// Draw text
-				guiGraphics.drawString(font, this.hoveredElementCommentTitle.orElse(Component.empty()), x + 4, y + 4, 0xFFFFFF);
+				guiGraphics.drawString(font, this.hoveredElementCommentTitle.orElse(Component.empty()), x + 4, y + 4, 0xFFFFFFFF);
 				for (int i = 0; i < this.hoveredElementCommentBody.size(); i++) {
-					guiGraphics.drawString(font, this.hoveredElementCommentBody.get(i), x + 4, (y + 16) + (i * 10), 0xFFFFFF);
+					guiGraphics.drawString(font, this.hoveredElementCommentBody.get(i), x + 4, (y + 16) + (i * 10), 0xFFFFFFFF);
 				}
 			}
 		}
@@ -212,13 +212,13 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		TOP_LAYER_RENDER_QUEUE.clear();
 
 		if (this.developmentComponent != null) {
-			guiGraphics.drawString(font, developmentComponent, 2, this.height - 10, 0xFFFFFF);
-			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 20, 0xFFFFFF);
+			guiGraphics.drawString(font, developmentComponent, 2, this.height - 10, 0xFFFFFFFF);
+			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 20, 0xFFFFFFFF);
 		} else if (this.updateComponent != null) {
-			guiGraphics.drawString(font, updateComponent, 2, this.height - 10, 0xFFFFFF);
-			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 20, 0xFFFFFF);
+			guiGraphics.drawString(font, updateComponent, 2, this.height - 10, 0xFFFFFFFF);
+			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 20, 0xFFFFFFFF);
 		} else {
-			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 10, 0xFFFFFF);
+			guiGraphics.drawString(font, irisTextComponent, 2, this.height - 10, 0xFFFFFFFF);
 		}
 	}
 
@@ -369,22 +369,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		}
 	}
 	private static final ResourceLocation BLUR_POST_CHAIN_ID = ResourceLocation.withDefaultNamespace("blur");
-
-	private void processFixedBlur() {
-		float f = Math.min(this.minecraft.options.getMenuBackgroundBlurriness(), this.blurTransition.getAsFloat());
-		if (!(f < 1.0F)) {
-			PostChain postChain = this.minecraft.getShaderManager().getPostChain(BLUR_POST_CHAIN_ID, LevelTargetBundle.MAIN_TARGETS);
-			if (postChain != null) {
-				postChain.process(this.minecraft.getMainRenderTarget(), ((GameRendererAccessor) this.minecraft.gameRenderer).getResourcePool(), renderPass -> renderPass.setUniform("Radius", f));
-			}
-
-		}
-	}
-
-	@Override
-	protected void renderBlurredBackground() {
-		processFixedBlur();
-	}
 
 	@Override
 	public void tick() {

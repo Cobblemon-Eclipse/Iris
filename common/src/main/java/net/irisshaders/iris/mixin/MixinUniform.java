@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>
  * Located in {@link Uniform} to avoid a conflict with a Sodium mixin to ShaderInstance.
  */
-@Mixin(Uniform.class)
+@Mixin(GlStateManager.class)
 public class MixinUniform {
-	@Inject(method = "glGetUniformLocation", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "_glGetUniformLocation", at = @At("RETURN"), cancellable = true)
 	private static void iris$glGetUniformLocation(int programId, CharSequence name,
 												  CallbackInfoReturnable<Integer> cir) {
 		int location = cir.getReturnValue();

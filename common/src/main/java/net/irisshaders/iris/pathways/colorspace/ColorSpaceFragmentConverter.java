@@ -102,7 +102,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 		GpuBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6);
 		VertexFormat.IndexType type = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type();
 
-		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty())) {
+		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Color space", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty())) {
 			pass.setPipeline(COMPOSITE_PIPELINE);
 			pass.iris$setCustomPass(EMPTY);
 
@@ -112,7 +112,7 @@ public class ColorSpaceFragmentConverter implements ColorSpaceConverter {
 			pass.setIndexBuffer(indices, type);
 			pass.setVertexBuffer(0, FullScreenQuadRenderer.INSTANCE.getQuad());
 
-			pass.drawIndexed(0, 6);
+			pass.drawIndexed(0, 0, 6, 1);
 		}
 		Program.unbind();
 		framebuffer.bindAsReadBuffer();

@@ -69,8 +69,8 @@ public class RenderTargets {
 
 		TextureFormat mojangDepthFormat = IrisPlatformHelpers.getInstance().mojangDepthFormat(depthFormat);
 
-		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", mojangDepthFormat, width, height, 1);
-		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", mojangDepthFormat, width, height, 1);
+		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, mojangDepthFormat, width, height, 1, 1);
+		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, mojangDepthFormat, width, height, 1, 1);
 
 		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 		this.noHand.setTextureFilter(FilterMode.NEAREST, false);
@@ -178,8 +178,8 @@ public class RenderTargets {
 			noTranslucents.close();
 			noHand.close();
 
-			this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", TextureFormat.DEPTH32, newWidth, newHeight, 1);
-			this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", TextureFormat.DEPTH32, newWidth, newHeight, 1);
+			this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, newDepthTextureId.getFormat(), newWidth, newHeight, 1, 1);
+			this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, newDepthTextureId.getFormat(), newWidth, newHeight, 1, 1);
 			this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
 			this.noHand.setTextureFilter(FilterMode.NEAREST, false);
 			this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);

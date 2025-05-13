@@ -192,7 +192,7 @@ public class ShadowCompositeRenderer {
 		GpuBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6);
 		VertexFormat.IndexType type = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type();
 
-		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty())) {
+		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Shadow composites", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty())) {
 			pass.setPipeline(CompositeRenderer.COMPOSITE_PIPELINE);
 			pass.setVertexBuffer(0, FullScreenQuadRenderer.INSTANCE.getQuad());
 			pass.setIndexBuffer(indices, type);
@@ -240,7 +240,7 @@ public class ShadowCompositeRenderer {
 
 				this.customUniforms.push(renderPass.program);
 
-				pass.drawIndexed(0, 6);
+				pass.drawIndexed(0, 0, 6, 1);
 			}
 		}
 

@@ -11,6 +11,7 @@ import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
+import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -33,6 +34,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.lwjgl.opengl.GL20C;
+import org.lwjgl.opengl.GL46C;
 
 import java.util.List;
 import java.util.Locale;
@@ -149,7 +151,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
-	public void setupState() {
+	public void setupState(FogParameters fogParameters) {
 		DepthColorStorage.unlockDepthColor();
 
 		applyBlendModes();
@@ -186,10 +188,10 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	private void bindTextures() {
-		((GlTexture) RenderSystem.getShaderTexture(0)).flushModeChanges();
-		((GlTexture) RenderSystem.getShaderTexture(2)).flushModeChanges();
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0).iris$getGlId());
-		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2).iris$getGlId());
+		((GlTexture) RenderSystem.getShaderTexture(0).texture()).flushModeChanges(GL46C.GL_TEXTURE_2D);
+		((GlTexture) RenderSystem.getShaderTexture(2).texture()).flushModeChanges(GL46C.GL_TEXTURE_2D);
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 0, RenderSystem.getShaderTexture(0).texture().iris$getGlId());
+		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, RenderSystem.getShaderTexture(2).texture().iris$getGlId());
 		GlStateManager._activeTexture(GL20C.GL_TEXTURE0 + IrisSamplers.LIGHTMAP_TEXTURE_UNIT);
 	}
 

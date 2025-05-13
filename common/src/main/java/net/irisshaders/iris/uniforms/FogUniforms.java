@@ -1,11 +1,12 @@
 package net.irisshaders.iris.uniforms;
 
-import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.caffeinemc.mods.sodium.client.util.FogAccessor;
 import net.irisshaders.iris.gl.state.FogMode;
 import net.irisshaders.iris.gl.state.StateUpdateNotifiers;
 import net.irisshaders.iris.gl.uniform.DynamicUniformHolder;
 import net.irisshaders.iris.gl.uniform.UniformUpdateFrequency;
+import net.minecraft.client.Minecraft;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 
@@ -33,7 +34,7 @@ public class FogUniforms {
 			});
 
 			// To keep a stable interface, 0 is defined as spherical while 1 is defined as cylindrical, even if Mojang's index changes.
-			uniforms.uniform1i(PER_FRAME, "fogShape", () -> RenderSystem.getShaderFog().shape() == FogShape.CYLINDER ? 1 : 0);
+			uniforms.uniform1i(PER_FRAME, "fogShape", () -> 1);
 		}
 
 		uniforms.uniform1f("fogDensity", () -> {
@@ -42,9 +43,9 @@ public class FogUniforms {
 		}, notifier -> {
 		});
 
-		uniforms.uniform1f("fogStart", () -> RenderSystem.getShaderFog().start(), listener -> StateUpdateNotifiers.fogStartNotifier.setListener(listener));
+		uniforms.uniform1f("fogStart", () -> ((FogAccessor) Minecraft.getInstance().levelRenderer).sodium$getFogParameters().envStart(), listener -> StateUpdateNotifiers.fogStartNotifier.setListener(listener));
 
-		uniforms.uniform1f("fogEnd", () -> RenderSystem.getShaderFog().end(), listener -> StateUpdateNotifiers.fogEndNotifier.setListener(listener));
+		uniforms.uniform1f("fogEnd", () -> ((FogAccessor) Minecraft.getInstance().levelRenderer).sodium$getFogParameters().envEnd(), listener -> StateUpdateNotifiers.fogEndNotifier.setListener(listener));
 
 		uniforms
 			// TODO: Update frequency of continuous?

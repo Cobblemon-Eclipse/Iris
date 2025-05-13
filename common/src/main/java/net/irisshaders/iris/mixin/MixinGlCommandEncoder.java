@@ -13,6 +13,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
+import net.irisshaders.iris.pipeline.programs.IrisProgram;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Mixin(GlCommandEncoder.class)
 public class MixinGlCommandEncoder {
@@ -41,8 +47,11 @@ public class MixinGlCommandEncoder {
 	@Unique
 	private int tempFBO;
 
+	@Unique
+	private List<IrisProgram> programsToClear = new ArrayList<>();
+
 	// Do not change the viewport in the shadow pass.
-	@Redirect(method = "createRenderPass(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
+	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
 	private void changeViewport(int i, int j, int k, int l) {
 		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
 			return;
@@ -52,7 +61,7 @@ public class MixinGlCommandEncoder {
 	}
 
 	// Do not change the viewport in the shadow pass.
-	@Redirect(method = "createRenderPass(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
+	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
 	private void changeFramebuffer(int i, int j) {
 		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered() || ImmediateState.safeToMultiply) {
 			this.tempFBO = j;
@@ -79,8 +88,8 @@ public class MixinGlCommandEncoder {
 	}
 
 	@Redirect(method = {
-		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/nio/IntBuffer;Lcom/mojang/blaze3d/platform/NativeImage$Format;IIIII)V",
-		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;IIIIIII)V",
+		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/nio/IntBuffer;Lcom/mojang/blaze3d/platform/NativeImage$Format;IIIIII)V",
+		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;IIIIIIII)V",
 		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;)V"
 	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z"))
 	private boolean ignore2(GlCommandEncoder instance) {
@@ -95,7 +104,7 @@ public class MixinGlCommandEncoder {
 	private static GlRenderPass lastPass;
 
 	@Inject(method = "trySetup", at = @At("HEAD"), cancellable = true)
-	private void iris$bypassSetup(GlRenderPass glRenderPass, CallbackInfoReturnable<Boolean> cir) {
+	private void iris$bypassSetup(GlRenderPass glRenderPass, Collection<String> collection, CallbackInfoReturnable<Boolean> cir) {
 		DepthColorStorage.unlockDepthColor();
 
 		if (ImmediateState.safeToMultiply && !(glRenderPass.pipeline.program() instanceof ExtendedShader)) {
@@ -157,5 +166,19 @@ public class MixinGlCommandEncoder {
 				}
 			}
 		}
+	}
+
+	@Inject(method = "trySetup", at = @At("RETURN"))
+	private void iris$setupState(GlRenderPass glRenderPass, Collection<String> collection, CallbackInfoReturnable<Boolean> cir) {
+		if (glRenderPass.pipeline.program() instanceof IrisProgram is && !is.iris$isSetUp()) {
+			is.iris$setupState();
+			programsToClear.add(is);
+		}
+	}
+
+	@Inject(method = "finishRenderPass", at = @At("HEAD"))
+	private void iris$clearState(CallbackInfo ci) {
+		programsToClear.forEach(IrisProgram::iris$clearState);
+		programsToClear.clear();
 	}
 }

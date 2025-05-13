@@ -100,9 +100,9 @@ public abstract class BaseOptionElementWidget<T extends OptionMenuElement> exten
 		Font font = Minecraft.getInstance().font;
 
 		// Draw the label
-		guiGraphics.drawString(font, this.trimmedLabel, bounds.position().x() + 6, bounds.position().y() + 7, 0xFFFFFF);
+		guiGraphics.drawString(font, this.trimmedLabel, bounds.position().x() + 6, bounds.position().y() + 7, 0xFFFFFFFF);
 		// Draw the value label
-		guiGraphics.drawString(font, this.valueLabel, (bounds.getBoundInDirection(ScreenDirection.RIGHT) - 2) - (int) (this.valueSectionWidth * 0.5) - (int) (font.width(this.valueLabel) * 0.5), bounds.position().y() + 7, 0xFFFFFF);
+		guiGraphics.drawString(font, this.valueLabel, (bounds.getBoundInDirection(ScreenDirection.RIGHT) - 2) - (int) (this.valueSectionWidth * 0.5) - (int) (font.width(this.valueLabel) * 0.5), bounds.position().y() + 7, 0xFFFFFFFF);
 	}
 
 	protected final void renderOptionWithValue(GuiGraphics guiGraphics, boolean hovered) {
@@ -135,7 +135,7 @@ public abstract class BaseOptionElementWidget<T extends OptionMenuElement> exten
 			this.maxLabelWidth);
 
 		if (this.isValueModified()) {
-			label = label.withStyle(style -> style.withColor(TextColor.fromRgb(0xffc94a)));
+			label = label.withStyle(style -> style.withColor(TextColor.fromRgb(0xFFffc94a)));
 		}
 
 		return label;

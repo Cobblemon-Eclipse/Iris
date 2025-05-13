@@ -280,7 +280,7 @@ public class CompositeRenderer {
 		GpuBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).getBuffer(6);
 		VertexFormat.IndexType type = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS).type();
 
-		try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(Minecraft.getInstance().getMainRenderTarget().getColorTexture(), OptionalInt.empty())) {
+		try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Composites", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty())) {
 			renderPass.setPipeline(COMPOSITE_PIPELINE);
 			renderPass.setIndexBuffer(indices, type);
 			renderPass.setVertexBuffer(0, FullScreenQuadRenderer.INSTANCE.getQuad());
@@ -330,7 +330,7 @@ public class CompositeRenderer {
 				// program is the identifier for composite :shrug:
 				this.customUniforms.push(compositePass.program);
 
-				renderPass.drawIndexed(0, 6);
+				renderPass.drawIndexed(0, 0, 6, 1);
 
 				BlendModeOverride.restore();
 				GLDebug.popGroup();

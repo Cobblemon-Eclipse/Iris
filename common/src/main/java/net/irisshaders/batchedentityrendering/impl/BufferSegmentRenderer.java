@@ -32,7 +32,7 @@ public class BufferSegmentRenderer {
 
 		pass.setVertexBuffer(0, vertexBuffer);
 		pass.setIndexBuffer(indexBuffer, indexType);
-		pass.drawIndexed(0, segment.meshData().drawState().indexCount());
+		pass.drawIndexed(0, 0, segment.meshData().drawState().indexCount(), 1);
 
 		ImmediateState.temporarilyIgnorePass = false;
 

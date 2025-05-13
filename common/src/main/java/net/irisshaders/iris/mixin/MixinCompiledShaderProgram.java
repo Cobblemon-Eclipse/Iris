@@ -10,9 +10,11 @@ import net.irisshaders.iris.pipeline.ShaderRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
 import net.irisshaders.iris.pipeline.programs.FallbackShader;
+import net.irisshaders.iris.pipeline.programs.IrisProgram;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.opengl.GL31C;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -47,13 +49,6 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 	private void iris$silence(Logger instance, String s, Object o, Object o1) {
 		if (!isKnownShader()) {
 			instance.warn(s, o, o1);
-		}
-	}
-
-	@Redirect(method = "setupUniforms", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V"))
-	private void iris$silence2(Logger logger, String s, Object o, Object o1) {
-		if (!isKnownShader()) {
-			logger.info(s, o, o1);
 		}
 	}
 
@@ -93,7 +88,17 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 		}
 	}
 
-	@Inject(method = "setDefaultUniforms", at = @At("TAIL"))
+	@Redirect(method = "setupUniforms", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL31;glGetUniformBlockIndex(ILjava/lang/CharSequence;)I"))
+	private int iris$changeIndex(int program, CharSequence uniformBlockName) {
+		if (this instanceof IrisProgram is) {
+			return is.iris$getBlockIndex(program, uniformBlockName);
+		} else {
+			return GL31C.glGetUniformBlockIndex(program, uniformBlockName);
+		}
+	}
+
+	// TODO 1.21.6
+	//@Inject(method = "setDefaultUniforms", at = @At("TAIL"))
 	private void onTail(CallbackInfo ci) {
 		if (!iris$shouldSkipThis()) {
 			if (!isKnownShader() && shouldOverrideShaders()) {
@@ -122,7 +127,8 @@ public abstract class MixinCompiledShaderProgram implements ShaderInstanceInterf
 		return ((Object) this) instanceof ExtendedShader || ((Object) this) instanceof FallbackShader;
 	}
 
-	@Inject(method = "clear", at = @At("HEAD"))
+	// TODO 1.21.6
+	//@Inject(method = "clear", at = @At("HEAD"))
 	private void iris$unlockDepthColorState(CallbackInfo ci) {
 		if (!iris$shouldSkipThis()) {
 			if (!isKnownShader() && shouldOverrideShaders()) {

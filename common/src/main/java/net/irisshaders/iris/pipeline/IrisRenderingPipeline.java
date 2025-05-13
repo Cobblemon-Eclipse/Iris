@@ -1161,7 +1161,6 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	private void destroyShaders() {
 		// NB: If you forget this, shader reloads won't work!
 		loadedShaders.forEach(shader -> {
-			shader.clear();
 			shader.close();
 		});
 	}
@@ -1282,11 +1281,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 			//     will give you pink reflections and other weirdness if this is zero.
 			Vector4f fogColor = new Vector4f((float) fogColor3.x, (float) fogColor3.y, (float) fogColor3.z, 1.0F);
 
-			RenderSystem.setShaderColor(fogColor.x, fogColor.y, fogColor.z, fogColor.w);
-
-			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection());
-
-			RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection(), fogColor);
 		}
 	}
 

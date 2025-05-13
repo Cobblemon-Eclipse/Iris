@@ -3,6 +3,7 @@ package net.irisshaders.iris.mixin;
 import com.mojang.blaze3d.shaders.ShaderType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -28,10 +29,10 @@ public class MixinRenderSystem {
 	}
 
 	@Inject(method = "setShaderTexture", at = @At(value = "RETURN"))
-	private static void _setShaderTexture(int i, GpuTexture gpuTexture, CallbackInfo ci) {
-		if (gpuTexture != null) {
+	private static void _setShaderTexture(int i, GpuTextureView gpuTextureView, CallbackInfo ci) {
+		if (gpuTextureView != null) {
 			//gpuTexture.setTextureFilter(FilterMode.NEAREST, false);
 		}
-		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTexture == null ? 0 : gpuTexture.iris$getGlId());
+		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTextureView == null || gpuTextureView.texture() == null ? 0 : gpuTextureView.texture().iris$getGlId());
 	}
 }
