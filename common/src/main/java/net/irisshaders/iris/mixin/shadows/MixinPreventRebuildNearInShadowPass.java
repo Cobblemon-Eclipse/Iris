@@ -35,7 +35,7 @@ public abstract class MixinPreventRebuildNearInShadowPass {
 	private void iris$preventRebuildNearInShadowPass(Camera camera, Frustum frustum, boolean bl, boolean bl2, CallbackInfo ci) {
 		if (ShadowRenderer.ACTIVE) {
 			for (SectionRenderDispatcher.RenderSection chunk : this.visibleSections) {
-				ShadowRenderer.visibleBlockEntities.addAll(chunk.getCompiled().getRenderableBlockEntities());
+				ShadowRenderer.visibleBlockEntities.addAll(chunk.getSectionMesh().getRenderableBlockEntities());
 			}
 		}
 	}

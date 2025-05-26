@@ -2,6 +2,7 @@ package net.irisshaders.iris.targets.backed;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import net.irisshaders.iris.gl.texture.TextureAccess;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -13,6 +14,7 @@ import java.util.function.IntSupplier;
 public class NativeImageBackedNoiseTexture extends DynamicTexture implements TextureAccess {
 	public NativeImageBackedNoiseTexture(int size) {
 		super(() -> "Noise / " + size, create(size));
+		this.texture.setTextureFilter(FilterMode.LINEAR, false);
 	}
 
 	private static NativeImage create(int size) {

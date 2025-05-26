@@ -158,10 +158,10 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.getRenderTarget().getColorTextureView()
-				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.getRenderTarget().getDepthTextureView()
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
+				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
 				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
-				pass.setPipeline(type.getRenderPipeline());
+				pass.setPipeline(type.iris$getPipeline());
 
 				for(int i = 0; i < 12; ++i) {
 					GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
@@ -174,7 +174,7 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 				pass.setUniform("DynamicTransforms", gpuBufferSlice);
 
 				for (BufferSegment segment : segments) {
-					segmentRenderer.drawInner(type.getRenderPipeline(), pass, segment);
+					segmentRenderer.drawInner(type.iris$getPipeline(), pass, segment);
 					segment.close();
 				}
 			}
@@ -222,10 +222,10 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 			GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.getRenderTarget().getColorTextureView()
-				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.getRenderTarget().getDepthTextureView()
+			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
+				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
 				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
-				pass.setPipeline(type.getRenderPipeline());
+				pass.setPipeline(type.iris$getPipeline());
 
 				for(int i = 0; i < 12; ++i) {
 					GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
@@ -238,7 +238,7 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 				pass.setUniform("DynamicTransforms", gpuBufferSlice);
 
 				for (BufferSegment segment : segments) {
-					segmentRenderer.drawInner(type.getRenderPipeline(), pass, segment);
+					segmentRenderer.drawInner(type.iris$getPipeline(), pass, segment);
 					segment.close();
 				}
 			}

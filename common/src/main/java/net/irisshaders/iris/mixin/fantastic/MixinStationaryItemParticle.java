@@ -6,6 +6,7 @@ import net.minecraft.client.particle.BlockMarker;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,9 +22,9 @@ public class MixinStationaryItemParticle {
 
 	@Inject(method = "<init>", at = @At("RETURN"))
 	private void iris$resolveTranslucency(ClientLevel clientLevel, double d, double e, double f, BlockState blockState, CallbackInfo ci) {
-		RenderType type = ItemBlockRenderTypes.getChunkRenderType(blockState);
+		ChunkSectionLayer type = ItemBlockRenderTypes.getChunkRenderType(blockState);
 
-		if (type == RenderType.solid() || type == RenderType.cutout() || type == RenderType.cutoutMipped()) {
+		if (type == ChunkSectionLayer.SOLID || type == ChunkSectionLayer.CUTOUT || type == ChunkSectionLayer.CUTOUT_MIPPED) {
 			isOpaque = true;
 		}
 	}

@@ -1,5 +1,6 @@
 package net.irisshaders.iris.pipeline;
 
+import com.mojang.blaze3d.textures.GpuTextureView;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.features.FeatureFlags;
@@ -37,7 +38,7 @@ public interface WorldRenderingPipeline {
 
 	int getCurrentSpecularTexture();
 
-	void onSetShaderTexture(int id);
+	void onSetShaderTexture(GpuTextureView id);
 
 	void beginHand();
 

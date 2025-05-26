@@ -1,6 +1,7 @@
 package net.irisshaders.iris.pipeline;
 
 import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkMeshFormats;
@@ -84,7 +85,7 @@ public class VanillaRenderingPipeline implements WorldRenderingPipeline {
 	}
 
 	@Override
-	public void onSetShaderTexture(int id) {
+	public void onSetShaderTexture(GpuTextureView id) {
 
 	}
 

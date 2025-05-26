@@ -37,6 +37,7 @@ import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.profiling.Profiler;
@@ -199,12 +200,12 @@ public class MixinLevelRenderer {
 
 
 	@Inject(method = "renderSectionLayer", at = @At("HEAD"))
-	private void iris$beginTerrainLayer(RenderType renderType, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
-		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(renderType));
+	private void iris$beginTerrainLayer(ChunkSectionLayer chunkSectionLayer, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
+		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(chunkSectionLayer));
 	}
 
 	@Inject(method = "renderSectionLayer", at = @At("RETURN"))
-	private void iris$endTerrainLayer(RenderType renderType, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
+	private void iris$endTerrainLayer(ChunkSectionLayer chunkSectionLayer, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 

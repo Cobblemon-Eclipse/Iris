@@ -81,7 +81,7 @@ public class VanillaCoreTransformer {
 		root.rename("gl_ProjectionMatrixInverse", "iris_ProjMatInverse");
 		root.replaceReferenceExpressions(t, "textureMatrix", "iris_transforms.TextureMat");
 
-		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix0, "iris_TextureMat");
+		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix0, "iris_transforms.TextureMat");
 		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix1,
 			"mat4(vec4(0.00390625, 0.0, 0.0, 0.0), vec4(0.0, 0.00390625, 0.0, 0.0), vec4(0.0, 0.0, 0.00390625, 0.0), vec4(0.03125, 0.03125, 0.03125, 1.0))");
 		root.replaceExpressionMatches(t, CommonTransformer.glTextureMatrix2,

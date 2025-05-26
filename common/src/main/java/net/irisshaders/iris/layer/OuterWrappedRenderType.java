@@ -74,13 +74,33 @@ public class OuterWrappedRenderType extends RenderType implements WrappableRende
 	}
 
 	@Override
-	public RenderTarget getRenderTarget() {
-		return wrapped.getRenderTarget();
+	public boolean sortOnUpload() {
+		return wrapped.sortOnUpload();
 	}
 
 	@Override
-	public RenderPipeline getRenderPipeline() {
-		return wrapped.getRenderPipeline();
+	public RenderPipeline iris$getPipeline() {
+		return wrapped.iris$getPipeline();
+	}
+
+	@Override
+	public RenderTarget iris$getRenderTarget() {
+		return wrapped.iris$getRenderTarget();
+	}
+
+	@Override
+	public boolean canConsolidateConsecutiveGeometry() {
+		return wrapped.canConsolidateConsecutiveGeometry();
+	}
+
+	@Override
+	public boolean affectsCrumbling() {
+		return wrapped.affectsCrumbling();
+	}
+
+	@Override
+	public int bufferSize() {
+		return wrapped.bufferSize();
 	}
 
 	@Override

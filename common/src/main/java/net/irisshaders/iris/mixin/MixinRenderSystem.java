@@ -33,6 +33,6 @@ public class MixinRenderSystem {
 		if (gpuTextureView != null) {
 			//gpuTexture.setTextureFilter(FilterMode.NEAREST, false);
 		}
-		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTextureView == null || gpuTextureView.texture() == null ? 0 : gpuTextureView.texture().iris$getGlId());
+		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTextureView);
 	}
 }

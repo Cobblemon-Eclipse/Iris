@@ -41,16 +41,6 @@ public class TaggingRenderTypeWrapper extends RenderType implements WrappableRen
 	}
 
 	@Override
-	public RenderTarget getRenderTarget() {
-		return wrapped.getRenderTarget();
-	}
-
-	@Override
-	public RenderPipeline getRenderPipeline() {
-		return wrapped.getRenderPipeline();
-	}
-
-	@Override
 	public VertexFormat format() {
 		return wrapped.format();
 	}
@@ -68,6 +58,46 @@ public class TaggingRenderTypeWrapper extends RenderType implements WrappableRen
 	@Override
 	public boolean isOutline() {
 		return this.wrapped.isOutline();
+	}
+
+	@Override
+	public void clearRenderState() {
+		wrapped.clearRenderState();
+	}
+
+	@Override
+	public void setupRenderState() {
+		wrapped.setupRenderState();
+	}
+
+	@Override
+	public boolean sortOnUpload() {
+		return wrapped.sortOnUpload();
+	}
+
+	@Override
+	public boolean canConsolidateConsecutiveGeometry() {
+		return wrapped.canConsolidateConsecutiveGeometry();
+	}
+
+	@Override
+	public int bufferSize() {
+		return wrapped.bufferSize();
+	}
+
+	@Override
+	public boolean affectsCrumbling() {
+		return wrapped.affectsCrumbling();
+	}
+
+	@Override
+	public RenderTarget iris$getRenderTarget() {
+		return wrapped.iris$getRenderTarget();
+	}
+
+	@Override
+	public RenderPipeline iris$getPipeline() {
+		return wrapped.iris$getPipeline();
 	}
 
 	@Override

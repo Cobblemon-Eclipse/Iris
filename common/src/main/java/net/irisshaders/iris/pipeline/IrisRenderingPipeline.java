@@ -9,6 +9,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
@@ -821,9 +822,11 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	}
 
 	@Override
-	public void onSetShaderTexture(int id) {
-		if (shouldBindPBR && isRenderingWorld) {
-			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
+	public void onSetShaderTexture(GpuTextureView id) {
+		if (shouldBindPBR && isRenderingWorld && id != null) {
+			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id.texture().iris$getGlId());
+			id.texture().iris$copyStateTo(pbrHolder.normalTexture().getTexture());
+			id.texture().iris$copyStateTo(pbrHolder.specularTexture().getTexture());
 			currentNormalTexture = pbrHolder.normalTexture().getTexture().iris$getGlId();
 			currentSpecularTexture = pbrHolder.specularTexture().getTexture().iris$getGlId();
 

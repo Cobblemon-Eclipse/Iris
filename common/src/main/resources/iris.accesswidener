@@ -27,3 +27,5 @@ mutable field net/minecraft/client/renderer/LevelRenderer renderBuffers Lnet/min
 accessible class net/minecraft/client/gui/components/AbstractSelectionList$Entry
 accessible field com/mojang/blaze3d/opengl/GlStateManager$BooleanState enabled Z
 accessible field com/mojang/blaze3d/vertex/PoseStack$Pose trustedNormals Z
+accessible field net/minecraft/client/renderer/RenderType$CompositeState outputState Lnet/minecraft/client/renderer/RenderStateShard$OutputStateShard;
+accessible class net/minecraft/client/renderer/RenderStateShard$OutputStateShard

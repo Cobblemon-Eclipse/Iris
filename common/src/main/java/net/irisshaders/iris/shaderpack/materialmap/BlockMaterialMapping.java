@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -118,16 +119,16 @@ public class BlockMaterialMapping {
 		return blockTypeIds;
 	}
 
-	public static RenderType convertBlockToRenderType(BlockRenderType type) {
+	public static ChunkSectionLayer convertBlockToRenderType(BlockRenderType type) {
 		if (type == null) {
 			return null;
 		}
 
 		return switch (type) {
-			case SOLID -> RenderType.solid();
-			case CUTOUT -> RenderType.cutout();
-			case CUTOUT_MIPPED -> RenderType.cutoutMipped();
-			case TRANSLUCENT -> RenderType.translucent();
+			case SOLID -> ChunkSectionLayer.SOLID;
+			case CUTOUT -> ChunkSectionLayer.CUTOUT;
+			case CUTOUT_MIPPED -> ChunkSectionLayer.CUTOUT_MIPPED;
+			case TRANSLUCENT -> ChunkSectionLayer.TRANSLUCENT;
 		};
 	}
 

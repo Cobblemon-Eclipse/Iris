@@ -1,6 +1,7 @@
 package net.irisshaders.iris.pipeline;
 
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 
 public enum WorldRenderingPhase {
 	NONE,
@@ -28,16 +29,16 @@ public enum WorldRenderingPhase {
 	WORLD_BORDER,
 	HAND_TRANSLUCENT;
 
-	public static WorldRenderingPhase fromTerrainRenderType(RenderType renderType) {
-		if (renderType == RenderType.solid()) {
+	public static WorldRenderingPhase fromTerrainRenderType(ChunkSectionLayer renderType) {
+		if (renderType == ChunkSectionLayer.SOLID) {
 			return WorldRenderingPhase.TERRAIN_SOLID;
-		} else if (renderType == RenderType.cutout()) {
+		} else if (renderType == ChunkSectionLayer.CUTOUT) {
 			return WorldRenderingPhase.TERRAIN_CUTOUT;
-		} else if (renderType == RenderType.cutoutMipped()) {
+		} else if (renderType == ChunkSectionLayer.CUTOUT_MIPPED) {
 			return WorldRenderingPhase.TERRAIN_CUTOUT_MIPPED;
-		} else if (renderType == RenderType.translucent()) {
+		} else if (renderType == ChunkSectionLayer.TRANSLUCENT) {
 			return WorldRenderingPhase.TERRAIN_TRANSLUCENT;
-		} else if (renderType == RenderType.tripwire()) {
+		} else if (renderType == ChunkSectionLayer.TRIPWIRE) {
 			return WorldRenderingPhase.TRIPWIRE;
 		} else {
 			throw new IllegalStateException("Illegal render type!");

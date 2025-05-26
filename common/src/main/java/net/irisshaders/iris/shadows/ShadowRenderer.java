@@ -39,6 +39,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.BlockPos;
@@ -471,9 +472,9 @@ public class ShadowRenderer {
 
 		// Render all opaque terrain unless pack requests not to
 		if (shouldRenderTerrain) {
-			levelRenderer.invokeRenderSectionLayer(RenderType.solid(), null);
-			levelRenderer.invokeRenderSectionLayer(RenderType.cutout(), null);
-			levelRenderer.invokeRenderSectionLayer(RenderType.cutoutMipped(), null);
+			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.SOLID, null);
+			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.CUTOUT, null);
+			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.CUTOUT_MIPPED, null);
 		}
 
 		// Reset our viewport in case Sodium overrode it
@@ -549,7 +550,7 @@ public class ShadowRenderer {
 		// It doesn't matter a ton, since this just means that they won't be sorted in the normal rendering pass.
 		// Just something to watch out for, however...
 		if (shouldRenderTranslucent) {
-			levelRenderer.invokeRenderSectionLayer(RenderType.translucent(), null);
+			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.TRANSLUCENT, null);
 		}
 
 		// Note: Apparently tripwire isn't rendered in the shadow pass.

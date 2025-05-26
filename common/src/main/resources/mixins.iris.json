@@ -59,6 +59,7 @@
     "MixinRenderSystem",
     "MixinRenderTarget",
     "MixinRenderType",
+    "MixinRenderType2",
     "MixinScreenEffectRenderer",
     "MixinCompiledShaderProgram",
     "MixinSystemReport",
@@ -109,6 +110,7 @@
     "texture.SpriteContentsTickerAccessor",
     "texture.TextureAtlasAccessor",
     "texture.pbr.MixinDirectoryLister",
+    "texture.pbr.MixinReloadableTexture",
     "texture.pbr.MixinSpriteContents",
     "texture.pbr.MixinTextureAtlas"
   ],

@@ -4,12 +4,12 @@ plugins {
     id("fabric-loom") version("1.10.1") apply(false)
 }
 
-val MINECRAFT_VERSION by extra { "25w20a" }
+val MINECRAFT_VERSION by extra { "25w21a" }
 val NEOFORGE_VERSION by extra { "21.5.0-beta" }
 val FABRIC_LOADER_VERSION by extra { "0.16.14" }
 val FABRIC_API_VERSION by extra { "0.119.5+1.21.5" }
 
-val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.6.13-snapshot+mc25w19a-local.jar"))}
+val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.6.13-snapshot+mc25w21a-local.jar"))}
 val SODIUM_DEPENDENCY_NEO by extra { "maven.modrinth:sodium:jv9JbDp8"}
 
 // This value can be set to null to disable Parchment.

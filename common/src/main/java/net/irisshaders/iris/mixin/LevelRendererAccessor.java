@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.server.level.BlockDestructionProgress;
@@ -26,7 +27,7 @@ public interface LevelRendererAccessor {
 	EntityRenderDispatcher getEntityRenderDispatcher();
 
 	@Invoker("renderSectionLayer")
-	void invokeRenderSectionLayer(RenderType terrainLayer, GpuBufferSlice[] slices);
+	void invokeRenderSectionLayer(ChunkSectionLayer terrainLayer, GpuBufferSlice[] slices);
 
 	@Invoker("setupRender")
 	void invokeSetupRender(Camera camera, Frustum frustum, boolean hasForcedFrustum, boolean spectator);
