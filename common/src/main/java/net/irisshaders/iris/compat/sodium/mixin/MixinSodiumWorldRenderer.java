@@ -61,13 +61,6 @@ public class MixinSodiumWorldRenderer {
 		}
 	}
 
-	@ModifyArg(method = "drawChunkLayer", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager;renderLayer(Lnet/caffeinemc/mods/sodium/client/render/chunk/ChunkRenderMatrices;Lnet/caffeinemc/mods/sodium/client/render/chunk/terrain/TerrainRenderPass;DDDLnet/caffeinemc/mods/sodium/client/util/FogParameters;)V"), index = 0)
-	private ChunkRenderMatrices iris$editMatrices(ChunkRenderMatrices matrices) {
-		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
-			return new ChunkRenderMatrices(ShadowRenderer.PROJECTION, ShadowRenderer.MODELVIEW);
-		}
-		return matrices;
-	}
 
 	@Redirect(method = "setupTerrain", remap = false,
 		at = @At(value = "INVOKE",

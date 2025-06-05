@@ -8,10 +8,10 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ByteBufferBuilder.class)
 public abstract class MixinByteBufferBuilder implements MemoryTrackingBuffer {
 	@Shadow
-	private int capacity;
+	private long capacity;
 
 	@Shadow
-	private int writeOffset;
+	private long writeOffset;
 
 	@Shadow
 	public abstract void close();

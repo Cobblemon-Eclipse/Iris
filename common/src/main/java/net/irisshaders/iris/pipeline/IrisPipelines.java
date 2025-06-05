@@ -81,6 +81,8 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.LEASH, p -> ShaderKey.LEASH);
 		assignToMain(CloudRenderer.CLOUDS_FLAT, p -> ShaderKey.CLOUDS_SODIUM);
 		assignToMain(CloudRenderer.CLOUDS_FULL, p -> ShaderKey.CLOUDS_SODIUM);
+		assignToMain(RenderPipelines.CLOUDS, p -> ShaderKey.CLOUDS);
+		assignToMain(RenderPipelines.FLAT_CLOUDS, p -> ShaderKey.CLOUDS);
 		assignToMain(RenderPipelines.DEBUG_LINE_STRIP, p -> ShaderKey.BASIC_COLOR);
 
 		assignToShadow(RenderPipelines.SOLID, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);

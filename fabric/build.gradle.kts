@@ -60,7 +60,6 @@ dependencies {
     addEmbeddedFabricModule("fabric-api-base")
     addEmbeddedFabricModule("fabric-key-binding-api-v1")
     addRuntimeFabricModule("fabric-block-view-api-v2")
-    addRuntimeFabricModule("fabric-rendering-data-attachment-v1")
     addRuntimeFabricModule("fabric-rendering-fluids-v1")
     //addRuntimeFabricModule("fabric-resource-loader-v0")
     //addRuntimeFabricModule("fabric-renderer-api-v1")

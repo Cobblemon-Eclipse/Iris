@@ -9,7 +9,9 @@ import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.opengl.Uniform;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
@@ -171,6 +173,10 @@ public class MixinGlCommandEncoder {
 	@Inject(method = "trySetup", at = @At("RETURN"))
 	private void iris$setupState(GlRenderPass glRenderPass, Collection<String> collection, CallbackInfoReturnable<Boolean> cir) {
 		if (glRenderPass.pipeline.program() instanceof IrisProgram is && !is.iris$isSetUp()) {
+			GpuTextureView sam = glRenderPass.samplers.get("Sampler0");
+			if (sam != null) {
+				RenderSystem.setShaderTexture(0, sam);
+			}
 			is.iris$setupState();
 			programsToClear.add(is);
 		}

@@ -77,7 +77,7 @@ public class ShaderCreator {
 			source.getTessControlSource().orElse(null),
 			source.getTessEvalSource().orElse(null),
 			source.getFragmentSource().orElseThrow(RuntimeException::new),
-			alpha, isLines, true, inputs, pipeline.getTextureMap());
+			alpha, isLines, shaderKey == ShaderKey.CLOUDS, true, inputs, pipeline.getTextureMap());
 		String vertex = transformed.get(PatchShaderType.VERTEX);
 		String geometry = transformed.get(PatchShaderType.GEOMETRY);
 		String tessControl = transformed.get(PatchShaderType.TESS_CONTROL);
@@ -305,7 +305,7 @@ public class ShaderCreator {
 			source.getTessControlSource().orElse(null),
 			source.getTessEvalSource().orElse(null),
 			source.getFragmentSource().orElseThrow(RuntimeException::new),
-			alpha, isLines, true, inputs, pipeline.getTextureMap());
+			alpha, isLines, shaderKey == ShaderKey.CLOUDS, true, inputs, pipeline.getTextureMap());
 		String vertex = transformed.get(PatchShaderType.VERTEX);
 		String geometry = transformed.get(PatchShaderType.GEOMETRY);
 		String tessControl = transformed.get(PatchShaderType.TESS_CONTROL);

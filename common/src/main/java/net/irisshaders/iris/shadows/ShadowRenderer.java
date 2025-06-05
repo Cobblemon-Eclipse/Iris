@@ -5,6 +5,9 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.caffeinemc.mods.sodium.client.render.chunk.ChunkRenderMatrices;
+import net.caffeinemc.mods.sodium.client.util.SodiumChunkSection;
+import net.caffeinemc.mods.sodium.client.world.LevelRendererExtension;
 import net.irisshaders.batchedentityrendering.impl.BatchingDebugMessageHelper;
 import net.irisshaders.batchedentityrendering.impl.DrawCallTrackingRenderBuffers;
 import net.irisshaders.batchedentityrendering.impl.FullyBufferedMultiBufferSource;
@@ -17,6 +20,7 @@ import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gui.option.IrisVideoSettings;
 import net.irisshaders.iris.mixin.LevelRendererAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.WorldRenderingPhase;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shaderpack.properties.PackShadowDirectives;
@@ -40,6 +44,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.BlockPos;
@@ -441,6 +447,9 @@ public class ShadowRenderer {
 		boolean wasChunkCullingEnabled = client.smartCull;
 		client.smartCull = false;
 
+		ChunkRenderMatrices playerMatrices = ((LevelRendererExtension) levelRenderer).sodium$getMatrices();
+		((LevelRendererExtension) levelRenderer).sodium$setMatrices(new ChunkRenderMatrices(shadowProjection, MODELVIEW));
+
 		// Always schedule a terrain update
 		// TODO: Only schedule a terrain update if the sun / moon is moving, or the shadow map camera moved.
 		// We have to ensure that we don't regenerate clouds every frame, since that's what needsUpdate ends up doing.
@@ -470,12 +479,17 @@ public class ShadowRenderer {
 		// TODO: Better way of preventing light from leaking into places where it shouldn't
 		GlStateManager._disableCull();
 
+		ChunkSectionsToRender sections = new ChunkSectionsToRender(null, 0, null);
+		((SodiumChunkSection) (Object) sections).sodium$setRendering(((LevelRendererExtension) levelRenderer).sodium$getWorldRenderer(),
+			((LevelRendererExtension) levelRenderer).sodium$getMatrices(), cameraX, cameraY, cameraZ);
+
 		// Render all opaque terrain unless pack requests not to
 		if (shouldRenderTerrain) {
-			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.SOLID, null);
-			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.CUTOUT, null);
-			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.CUTOUT_MIPPED, null);
+			pipeline.setPhase(WorldRenderingPhase.TERRAIN_SOLID);
+			sections.renderGroup(ChunkSectionLayerGroup.OPAQUE);
+			pipeline.setPhase(WorldRenderingPhase.NONE);
 		}
+		pipeline.setPhase(WorldRenderingPhase.ENTITIES);
 
 		// Reset our viewport in case Sodium overrode it
 		GlStateManager._viewport(0, 0, resolution, resolution);
@@ -545,12 +559,15 @@ public class ShadowRenderer {
 		RenderSystem.getModelViewStack().set(MODELVIEW);
 
 		profiler.popPush("translucent terrain");
+		pipeline.setPhase(WorldRenderingPhase.NONE);
 
 		// TODO: Prevent these calls from scheduling translucent sorting...
 		// It doesn't matter a ton, since this just means that they won't be sorted in the normal rendering pass.
 		// Just something to watch out for, however...
 		if (shouldRenderTranslucent) {
-			levelRenderer.invokeRenderSectionLayer(ChunkSectionLayer.TRANSLUCENT, null);
+			pipeline.setPhase(WorldRenderingPhase.TERRAIN_TRANSLUCENT);
+			sections.renderGroup(ChunkSectionLayerGroup.TRANSLUCENT);
+			pipeline.setPhase(WorldRenderingPhase.NONE);
 		}
 
 		// Note: Apparently tripwire isn't rendered in the shadow pass.
@@ -572,6 +589,7 @@ public class ShadowRenderer {
 
 		// Restore backface culling
 		GlStateManager._enableCull();
+		((LevelRendererExtension) levelRenderer).sodium$setMatrices(playerMatrices);
 
 		// Restore the old viewport
 		GlStateManager._viewport(0, 0, client.getMainRenderTarget().width, client.getMainRenderTarget().height);

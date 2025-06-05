@@ -102,7 +102,7 @@ public class MixinLevelRenderer {
 	}
 
 
-	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayer;[Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V", ordinal = 3))
+	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;)V", ordinal = 2))
 	private void batchedentityrendering$endTranslucents(CallbackInfo ci) {
 		if (WorldRenderingSettings.INSTANCE.shouldSeparateEntityDraws()) {
 			this.renderBuffers.bufferSource().endBatch();

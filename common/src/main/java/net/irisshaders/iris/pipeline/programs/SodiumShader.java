@@ -11,6 +11,7 @@ import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat3v;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
+import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -153,10 +154,11 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
-	public void setupState(FogParameters fogParameters, GpuTextureView atlas) {
+	public void setupState(TerrainRenderPass pass, FogParameters fogParameters) {
 		DepthColorStorage.unlockDepthColor();
 
 		applyBlendModes();
+		RenderSystem.setShaderTexture(0, pass.getAtlas());
 		updateUniforms();
 		images.update();
 
@@ -182,7 +184,7 @@ public class SodiumShader implements ChunkShaderInterface {
 				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetHeight()) / subTexelPrecision)))
 			);
 		}
-		bindTextures(atlas);
+		bindTextures(pass.getAtlas());
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;

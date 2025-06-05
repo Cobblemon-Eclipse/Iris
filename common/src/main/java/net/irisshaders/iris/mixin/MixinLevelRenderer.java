@@ -1,5 +1,7 @@
 package net.irisshaders.iris.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
@@ -9,7 +11,6 @@ import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.caffeinemc.mods.sodium.client.util.FogAccessor;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.NeoLambdas;
@@ -38,6 +39,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.profiling.Profiler;
@@ -199,13 +202,10 @@ public class MixinLevelRenderer {
 	}
 
 
-	@Inject(method = "renderSectionLayer", at = @At("HEAD"))
-	private void iris$beginTerrainLayer(ChunkSectionLayer chunkSectionLayer, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
-		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(chunkSectionLayer));
-	}
-
-	@Inject(method = "renderSectionLayer", at = @At("RETURN"))
-	private void iris$endTerrainLayer(ChunkSectionLayer chunkSectionLayer, GpuBufferSlice[] gpuBufferSlices, CallbackInfo ci) {
+	@WrapOperation(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;)V"))
+	private void iris$beginTerrainLayer(ChunkSectionsToRender instance, ChunkSectionLayerGroup chunkSectionLayerGroup, Operation<Void> original) {
+		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(chunkSectionLayerGroup));
+		original.call(instance, chunkSectionLayerGroup);
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 

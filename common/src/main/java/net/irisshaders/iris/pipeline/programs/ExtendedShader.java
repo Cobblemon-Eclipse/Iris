@@ -97,6 +97,7 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 		List<RenderPipeline.UniformDescription> uniformList = new ArrayList<>();
 		List<String> samplerList = new ArrayList<>();
 		uniformList.add(new RenderPipeline.UniformDescription("DynamicTransforms", UniformType.UNIFORM_BUFFER));
+		uniformList.add(new RenderPipeline.UniformDescription("CloudInfo", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("Projection", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("Fog", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("Globals", UniformType.UNIFORM_BUFFER));

@@ -51,6 +51,7 @@ public class FallbackShader extends GlProgram implements IrisProgram {
 		List<RenderPipeline.UniformDescription> uniforms = new ArrayList<>(pipeline.getUniforms());
 
 		uniforms.add(new RenderPipeline.UniformDescription("DynamicTransforms", UniformType.UNIFORM_BUFFER));
+		uniforms.add(new RenderPipeline.UniformDescription("CloudInfo", UniformType.UNIFORM_BUFFER));
 		uniforms.add(new RenderPipeline.UniformDescription("Projection", UniformType.UNIFORM_BUFFER));
 		uniforms.add(new RenderPipeline.UniformDescription("Fog", UniformType.UNIFORM_BUFFER));
 		uniforms.add(new RenderPipeline.UniformDescription("Globals", UniformType.UNIFORM_BUFFER));

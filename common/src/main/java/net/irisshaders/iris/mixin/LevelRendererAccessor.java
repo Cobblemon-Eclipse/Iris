@@ -26,9 +26,6 @@ public interface LevelRendererAccessor {
 	@Accessor("entityRenderDispatcher")
 	EntityRenderDispatcher getEntityRenderDispatcher();
 
-	@Invoker("renderSectionLayer")
-	void invokeRenderSectionLayer(ChunkSectionLayer terrainLayer, GpuBufferSlice[] slices);
-
 	@Invoker("setupRender")
 	void invokeSetupRender(Camera camera, Frustum frustum, boolean hasForcedFrustum, boolean spectator);
 

@@ -74,7 +74,7 @@ public class VanillaTransformer {
 			// See https://github.com/IrisShaders/Iris/issues/1149
 			root.rename("gl_MultiTexCoord2", "gl_MultiTexCoord1");
 
-			if (parameters.inputs.hasTex()) {
+			if (parameters.inputs.hasTex() && !parameters.isClouds()) {
 				root.replaceReferenceExpressions(t, "gl_MultiTexCoord0",
 					"vec4(iris_UV0, 0.0, 1.0)");
 				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
@@ -114,6 +114,8 @@ public class VanillaTransformer {
 			if (parameters.alpha.reference() == Float.MAX_VALUE) {
 				root.replaceReferenceExpressions(t, "gl_Color",
 					"vec4((iris_Color * iris_transforms.ColorModulator).rgb, iris_transforms.ColorModulator.a)");
+			} else if (parameters.isClouds()) {
+				root.replaceReferenceExpressions(t, "gl_Color", "CloudColor");
 			} else {
 				root.replaceReferenceExpressions(t, "gl_Color",
 					"(iris_Color * iris_transforms.ColorModulator)");
@@ -212,6 +214,77 @@ public class VanillaTransformer {
 						"irisMain();" +
 						"vec4 linePosStart = gl_Position;" +
 						"iris_widen_lines(linePosStart, linePosEnd);}");
+			} else if (parameters.isClouds()) {
+				tree.parseAndInjectNodes(t, ASTInjectionPoint.BEFORE_DECLARATIONS, """
+					layout(std140) uniform iris_CloudInfo {
+					    vec4 CloudColor;
+					    vec3 CloudOffset;
+					    vec3 CellSize;
+					};
+					""",
+					"""
+						const vec3[] iris_cloudVertices = vec3[](
+						    // Bottom face
+						    vec3(1, 0, 0),
+						    vec3(1, 0, 1),
+						    vec3(0, 0, 1),
+						    vec3(0, 0, 0),
+						    // Top face
+						    vec3(0, 1, 0),
+						    vec3(0, 1, 1),
+						    vec3(1, 1, 1),
+						    vec3(1, 1, 0),
+						    // North face
+						    vec3(0, 0, 0),
+						    vec3(0, 1, 0),
+						    vec3(1, 1, 0),
+						    vec3(1, 0, 0),
+						    // South face
+						    vec3(1, 0, 1),
+						    vec3(1, 1, 1),
+						    vec3(0, 1, 1),
+						    vec3(0, 0, 1),
+						    // West face
+						    vec3(0, 0, 1),
+						    vec3(0, 1, 1),
+						    vec3(0, 1, 0),
+						    vec3(0, 0, 0),
+						    // East face
+						    vec3(1, 0, 0),
+						    vec3(1, 1, 0),
+						    vec3(1, 1, 1),
+						    vec3(1, 0, 1)
+						);
+						""",
+					"""
+						vec3 iris_cloudPos;
+						""",
+
+					"const int FLAG_MASK_DIR = 7;",
+					"const int FLAG_INSIDE_FACE = 1 << 4;",
+					"const int FLAG_USE_TOP_COLOR = 1 << 5;",
+					"const int FLAG_EXTRA_Z = 1 << 6;",
+					"const int FLAG_EXTRA_X = 1 << 7;",
+					"uniform isamplerBuffer CloudFaces;",
+					"""
+					void iris_cloudsMain() {
+					    int quadVertex = gl_VertexID % 4;
+					    int index = (gl_VertexID / 4) * 3;
+
+					    int cellX = texelFetch(CloudFaces, index).r;
+					    int cellZ = texelFetch(CloudFaces, index + 1).r;
+					    int dirAndFlags = texelFetch(CloudFaces, index + 2).r;
+					    int direction = dirAndFlags & FLAG_MASK_DIR;
+					    bool isInsideFace = (dirAndFlags & FLAG_INSIDE_FACE) == FLAG_INSIDE_FACE;
+					    bool useTopColor = (dirAndFlags & FLAG_USE_TOP_COLOR) == FLAG_USE_TOP_COLOR;
+					    cellX = (cellX << 1) | ((dirAndFlags & FLAG_EXTRA_X) >> 7);
+					    cellZ = (cellZ << 1) | ((dirAndFlags & FLAG_EXTRA_Z) >> 6);
+					    vec3 faceVertex = iris_cloudVertices[(direction * 4) + (isInsideFace ? 3 - quadVertex : quadVertex)];
+					    iris_cloudPos = (faceVertex * CellSize) + (vec3(cellX, 0, cellZ) * CellSize) + CloudOffset;
+					    }
+					""");
+				tree.prependMainFunctionBody(t, "iris_cloudsMain();");
+				root.replaceReferenceExpressions(t, "gl_Vertex", "vec4(iris_cloudPos, 1.0)");
 			} else {
 				root.replaceReferenceExpressions(t, "gl_Vertex", "vec4(iris_Position, 1.0)");
 			}
