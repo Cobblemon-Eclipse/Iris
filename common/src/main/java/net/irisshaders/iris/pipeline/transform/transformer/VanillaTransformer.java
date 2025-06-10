@@ -115,7 +115,7 @@ public class VanillaTransformer {
 				root.replaceReferenceExpressions(t, "gl_Color",
 					"vec4((iris_Color * iris_transforms.ColorModulator).rgb, iris_transforms.ColorModulator.a)");
 			} else if (parameters.isClouds()) {
-				root.replaceReferenceExpressions(t, "gl_Color", "CloudColor");
+				root.replaceReferenceExpressions(t, "gl_Color", "iris_cloudCol");
 			} else {
 				root.replaceReferenceExpressions(t, "gl_Color",
 					"(iris_Color * iris_transforms.ColorModulator)");
@@ -257,7 +257,25 @@ public class VanillaTransformer {
 						);
 						""",
 					"""
-						vec3 iris_cloudPos;
+						const vec4[] iris_faceColors = vec4[](
+						    // Bottom face
+						    vec4(0.7, 0.7, 0.7, 0.8),
+						    // Top face
+						    vec4(1.0, 1.0, 1.0, 0.8),
+						    // North face
+						    vec4(0.8, 0.8, 0.8, 0.8),
+						    // South face
+						    vec4(0.8, 0.8, 0.8, 0.8),
+						    // West face
+						    vec4(0.9, 0.9, 0.9, 0.8),
+						    // East face
+						    vec4(0.9, 0.9, 0.9, 0.8)
+						);
+						""",
+					"""
+						vec3 iris_cloudPos;""",
+						"""
+						vec4 iris_cloudCol;
 						""",
 
 					"const int FLAG_MASK_DIR = 7;",
@@ -281,6 +299,7 @@ public class VanillaTransformer {
 					    cellZ = (cellZ << 1) | ((dirAndFlags & FLAG_EXTRA_Z) >> 6);
 					    vec3 faceVertex = iris_cloudVertices[(direction * 4) + (isInsideFace ? 3 - quadVertex : quadVertex)];
 					    iris_cloudPos = (faceVertex * CellSize) + (vec3(cellX, 0, cellZ) * CellSize) + CloudOffset;
+					    iris_cloudCol = (useTopColor ? iris_faceColors[1] : iris_faceColors[direction]) * CloudColor;
 					    }
 					""");
 				tree.prependMainFunctionBody(t, "iris_cloudsMain();");

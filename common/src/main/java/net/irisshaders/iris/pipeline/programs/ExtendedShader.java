@@ -6,6 +6,7 @@ import com.mojang.blaze3d.opengl.Uniform;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.logging.LogUtils;
@@ -80,8 +81,10 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 	private final float[] tempFloats = new float[16];
 	private final float[] tempFloats2 = new float[9];
 	private final int normalMat;
+	private boolean hasUV;
 	private int textureToUnswizzle;
 	private boolean isSetup;
+	private final IrisRenderingPipeline pipeline;
 
 	public ExtendedShader(int programId, String string, VertexFormat vertexFormat, boolean usesTessellation,
 						  GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
@@ -89,6 +92,8 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 						  Consumer<DynamicLocationalUniformHolder> uniformCreator, BiConsumer<SamplerHolder, ImageHolder> samplerCreator, boolean isIntensity,
 						  IrisRenderingPipeline parent, @Nullable List<BufferBlendOverride> bufferBlendOverrides, CustomUniforms customUniforms) throws IOException {
 		super(programId, string);
+
+		this.pipeline = parent;
 
 		GLDebug.nameObject(GL43C.GL_PROGRAM, programId, string);
 
@@ -98,11 +103,13 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 		List<String> samplerList = new ArrayList<>();
 		uniformList.add(new RenderPipeline.UniformDescription("DynamicTransforms", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("CloudInfo", UniformType.UNIFORM_BUFFER));
+		uniformList.add(new RenderPipeline.UniformDescription("CloudFaces", UniformType.TEXEL_BUFFER, TextureFormat.RED8I));
 		uniformList.add(new RenderPipeline.UniformDescription("Projection", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("Fog", UniformType.UNIFORM_BUFFER));
 		uniformList.add(new RenderPipeline.UniformDescription("Globals", UniformType.UNIFORM_BUFFER));
 
 		if (vertexFormat.contains(VertexFormatElement.UV)) {
+			this.hasUV = true;
 			samplerList.add("Sampler0");
 		}
 
@@ -165,6 +172,10 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 	public void iris$setupState() {
 		isSetup = true;
 		DepthColorStorage.unlockDepthColor();
+
+		if (!hasUV) {
+			IrisRenderSystem.bindTextureToUnit(GL46C.GL_TEXTURE_2D, 0, pipeline.getWhitePixel().getTexture().iris$getGlId());
+		}
 
 		CapturedRenderingState.INSTANCE.setCurrentAlphaTest(alphaTest);
 		GlStateManager._glUseProgram(getProgramId());

@@ -1258,7 +1258,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		return dhCompat;
 	}
 
-	protected AbstractTexture getWhitePixel() {
+	public AbstractTexture getWhitePixel() {
 		return whitePixel;
 	}
 

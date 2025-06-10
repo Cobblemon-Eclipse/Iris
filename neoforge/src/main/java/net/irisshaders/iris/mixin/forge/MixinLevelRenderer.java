@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  */
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRenderer {
-	@WrapOperation(method = "lambda$addMainPass$2", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/function/Predicate;)V"))
+	@WrapOperation(method = "lambda$addMainPass$3", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/function/Predicate;)V"))
 	private void redirectSolidParticles(ParticleEngine instance, Camera camera, float v, MultiBufferSource.BufferSource bufferSource, Frustum frustum, Predicate<ParticleRenderType> predicate, Operation<Void> original) {
 		ParticleRenderingSettings settings = getRenderingSettings();
 
@@ -38,7 +38,7 @@ public abstract class MixinLevelRenderer {
 		original.call(instance, camera, v, bufferSource, frustum, newPredicate);
 	}
 
-	@WrapOperation(method = "lambda$addParticlesPass$5", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/function/Predicate;)V"))
+	@WrapOperation(method = "lambda$addParticlesPass$6", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/function/Predicate;)V"))
 	private void redirectTransParticles(ParticleEngine instance, Camera camera, float v, MultiBufferSource.BufferSource bufferSource, Frustum frustum, Predicate<ParticleRenderType> predicate, Operation<Void> original) {
 		ParticleRenderingSettings settings = getRenderingSettings();
 
