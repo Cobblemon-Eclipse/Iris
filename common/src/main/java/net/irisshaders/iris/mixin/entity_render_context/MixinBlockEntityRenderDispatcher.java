@@ -58,7 +58,7 @@ public class MixinBlockEntityRenderDispatcher {
 	}
 
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;setupAndRender(Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;Lnet/minecraft/world/level/block/entity/BlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/phys/Vec3;)V", shift = At.Shift.AFTER))
+	@Inject(method = "render", at = @At(value = "RETURN"))
 	private void iris$afterRender(BlockEntity blockEntity, float tickDelta, PoseStack matrix,
 								  MultiBufferSource bufferSource, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);
