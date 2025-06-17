@@ -6,6 +6,7 @@ import net.irisshaders.iris.gui.option.IrisVideoSettings;
 import net.irisshaders.iris.helpers.JomlConversions;
 import net.irisshaders.iris.mixin.GameRendererAccessor;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -37,6 +38,7 @@ public class IrisExclusiveUniforms {
 		//All Iris-exclusive uniforms (uniforms which do not exist in either OptiFine or ShadersMod) should be registered here.
 		uniforms.uniform1f(UniformUpdateFrequency.PER_FRAME, "thunderStrength", IrisExclusiveUniforms::getThunderStrength);
 		uniforms.uniform1f(UniformUpdateFrequency.PER_TICK, "currentPlayerHealth", IrisExclusiveUniforms::getCurrentHealth);
+		uniforms.uniform1b(UniformUpdateFrequency.PER_TICK, "heavyFog", IrisExclusiveUniforms::isHeavyFog);
 		uniforms.uniform1f(UniformUpdateFrequency.PER_TICK, "maxPlayerHealth", IrisExclusiveUniforms::getMaxHealth);
 		uniforms.uniform1f(UniformUpdateFrequency.PER_TICK, "currentPlayerHunger", IrisExclusiveUniforms::getCurrentHunger);
 		uniforms.uniform1f(UniformUpdateFrequency.PER_TICK, "maxPlayerHunger", () -> 20);
@@ -71,6 +73,16 @@ public class IrisExclusiveUniforms {
 				return zero;
 			}
 		});
+	}
+
+	private static boolean isHeavyFog() {
+		if (Minecraft.getInstance().level != null) {
+			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+			return Minecraft.getInstance().level.effects().isFoggyAt(camera.getBlockPosition().getX(), camera.getBlockPosition().getZ())
+				|| Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
+		}
+
+		return false;
 	}
 
 	private static int getCurrentSelectedBlockId() {

@@ -4,8 +4,8 @@ plugins {
     id("fabric-loom") version("1.10.1") apply(false)
 }
 
-val MINECRAFT_VERSION by extra { "1.21.6-pre4" }
-val NEOFORGE_VERSION by extra { "21.5.0-alpha.1.21.6-pre3.20250607.164841" }
+val MINECRAFT_VERSION by extra { "1.21.6" }
+val NEOFORGE_VERSION by extra { "21.5.0-alpha.1.21.6-rc1.20250614.225553" }
 val FABRIC_LOADER_VERSION by extra { "0.16.14" }
 val FABRIC_API_VERSION by extra { "0.126.1+1.21.6" }
 
@@ -17,7 +17,7 @@ val SODIUM_DEPENDENCY_NEO by extra { files(rootDir.resolve("custom_sodium").reso
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "1.8.11" }
+val MOD_VERSION by extra { "1.9.0" }
 
 allprojects {
     apply(plugin = "java")

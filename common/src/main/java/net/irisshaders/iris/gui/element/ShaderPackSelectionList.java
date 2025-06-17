@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -133,12 +134,15 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		float transition = screen.listTransition.getAsFloat();
 		if (transition < 0.02f) return;
 		//if (transition < 0.99f) pAbstractSelectionList0.flush();
+		// TODO 1.21.6
+		//RenderSystem.enableBlend();
 		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, Math.max(screen.listTransition.getAsFloat(), 0.01f));
-		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
-		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2);
+		int col = ARGB.colorFromFloat(transition, 1.0f, 1.0f, 1.0f);
+		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.HEADER_SEPARATOR, this.getX(), this.getY() - 2, 0.0F, 0.0F, this.getWidth(), 2, 32, 2, col);
+		pAbstractSelectionList0.blit(RenderPipelines.GUI_TEXTURED, CreateWorldScreen.FOOTER_SEPARATOR, this.getX(), this.getBottom(), 0.0F, 0.0F, this.getWidth(), 2, 32, 2, col);
 		//if (transition < 0.99f) pAbstractSelectionList0.flush();
-
 		//RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+		//RenderSystem.disableBlend();
 	}
 
 	@Override

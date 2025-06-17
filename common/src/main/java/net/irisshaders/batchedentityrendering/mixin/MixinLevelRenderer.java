@@ -109,7 +109,7 @@ public class MixinLevelRenderer {
 		}
 	}
 
-	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At("RETURN"))
+	@Inject(method = { "renderLevel", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At("RETURN"))
 	private void batchedentityrendering$endLevelRender(CallbackInfo ci) {
 		((RenderBuffersExt) renderBuffers).endLevelRendering();
 		groupable = null;
