@@ -20,6 +20,8 @@
     "MixinDefaultFluidRenderer",
     "MixinGlRenderDevice",
     "MixinRenderRegionArenas",
+    "MixinRenderRegionManager",
+    "MixinRenderRegion",
     "MixinRenderSectionManager",
     "MixinRenderSectionManagerShadow",
     "MixinShaderChunkRenderer",

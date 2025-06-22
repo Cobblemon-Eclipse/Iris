@@ -138,7 +138,7 @@ dependencies {
     compileOnly(project.project(":common").sourceSets.getByName("api").output)
     runtimeOnly("org.sinytra.forgified-fabric-api:fabric-api-base:0.4.42+d1308ded19")
    /// runtimeOnly("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
-   // runtimeOnly("net.caffeinemc:fabric-renderer-api-v1:6.0.0")
+    runtimeOnly("net.caffeinemc:fabric-renderer-api-v1:7.0.0")
 
     implementation(SODIUM_DEPENDENCY_NEO)
     includeAdditional("io.github.douira:glsl-transformer:2.0.1")
