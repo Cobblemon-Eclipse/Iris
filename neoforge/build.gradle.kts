@@ -80,6 +80,7 @@ neoForge {
     runs {
         create("client") {
             client()
+            jvmArgument("-Dneoforge.disableGlValidation=true")
             //environment("LD_PRELOAD", "/usr/lib/librenderdoc.so")
         }
     }
