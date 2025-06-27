@@ -52,11 +52,7 @@ public class ShadowRenderTargets {
 		linearFiltered = new boolean[size];
 		buffersToBeCleared = new IntArrayList();
 
-		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, 1);
-		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, 1);
 
-		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
-		this.mainDepth.setTextureFilter(FilterMode.NEAREST, false);
 		this.ownedFramebuffers = new ArrayList<>();
 		this.resolution = resolution;
 
@@ -65,6 +61,12 @@ public class ShadowRenderTargets {
 			this.mipped[i] = shadowDirectives.getDepthSamplingSettings().get(i).getMipmap();
 			this.linearFiltered[i] = !shadowDirectives.getDepthSamplingSettings().get(i).getNearest();
 		}
+
+		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, this.mipped[0] ? log2(resolution) : 1);
+		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, this.mipped[1] ? log2(resolution) : 1);
+
+		this.noTranslucents.setTextureFilter(linearFiltered[1] ? FilterMode.LINEAR : FilterMode.NEAREST, this.mipped[1]);
+		this.mainDepth.setTextureFilter(linearFiltered[0] ? FilterMode.LINEAR : FilterMode.NEAREST, this.mipped[0]);
 
 		// NB: Make sure all buffers are cleared so that they don't contain undefined
 		// data. Otherwise very weird things can happen.
@@ -77,6 +79,12 @@ public class ShadowRenderTargets {
 
 		this.translucentDepthDirty = true;
 		boolean shouldRefresh = false;
+	}
+
+	private static final double LN_OF_2 = Math.log(2.0);
+
+	public static int log2(int val) {
+		return (int) Math.floor(Math.log(val) / LN_OF_2);
 	}
 
 	// TODO: Actually flip. This is required for shadow composites!
