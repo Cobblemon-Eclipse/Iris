@@ -11,11 +11,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 public class MixinRenderType2 implements RenderTypeInterface {
 	@Override
 	public RenderTarget iris$getRenderTarget() {
-		throw new AssertionError("Can't.");
+		return null;
 	}
 
 	@Override
 	public RenderPipeline iris$getPipeline() {
-		throw new AssertionError("Can't.");
+		return null;
 	}
 }

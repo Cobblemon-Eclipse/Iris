@@ -3,6 +3,7 @@ package net.irisshaders.batchedentityrendering.impl;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.opengl.GlConst;
 import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -150,36 +151,48 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 		for (RenderType type : renderOrder) {
 			if (!typeToSegment.containsKey(type)) continue;
 
-			type.setupRenderState();
+			RenderPipeline pipeline = type.iris$getPipeline();
 			renderTypes += 1;
 
-			BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
-			drawCalls += segments.length;
-			GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
+			if (pipeline == null) {
+				BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+				drawCalls += segments.length;
+
+				for (BufferSegment segment : segments) {
+					type.draw(segment.meshData());
+					segment.close();
+				}
+			} else {
+				type.setupRenderState();
+
+				BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+				drawCalls += segments.length;
+				GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
-				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
-				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
-				pass.setPipeline(type.iris$getPipeline());
+				try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
+					: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
+					: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
+					pass.setPipeline(pipeline);
 
-				for(int i = 0; i < 12; ++i) {
-					GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
-					if (gpuTexture != null) {
-						pass.bindSampler("Sampler" + i, gpuTexture);
+					for (int i = 0; i < 12; ++i) {
+						GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
+						if (gpuTexture != null) {
+							pass.bindSampler("Sampler" + i, gpuTexture);
+						}
+					}
+
+					RenderSystem.bindDefaultUniforms(pass);
+					pass.setUniform("DynamicTransforms", gpuBufferSlice);
+
+					for (BufferSegment segment : segments) {
+						segmentRenderer.drawInner(pipeline, pass, segment);
+						segment.close();
 					}
 				}
 
-				RenderSystem.bindDefaultUniforms(pass);
-				pass.setUniform("DynamicTransforms", gpuBufferSlice);
-
-				for (BufferSegment segment : segments) {
-					segmentRenderer.drawInner(type.iris$getPipeline(), pass, segment);
-					segment.close();
-				}
+				type.clearRenderState();
 			}
-
-			type.clearRenderState();
 		}
 
 		int targetClearTime = getTargetClearTime();
@@ -213,39 +226,51 @@ public class FullyBufferedMultiBufferSource extends MultiBufferSource.BufferSour
 
 			types.add(type);
 
-			type.setupRenderState();
+			RenderPipeline pipeline = type.iris$getPipeline();
 			renderTypes += 1;
 
-			BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
-			drawCalls += segments.length;
+			if (pipeline == null) {
+				BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+				drawCalls += segments.length;
 
-			GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
+				for (BufferSegment segment : segments) {
+					type.draw(segment.meshData());
+					segment.close();
+				}
+			} else {
+				type.setupRenderState();
+
+				BufferSegment[] segments = typeToSegment.getOrDefault(type, Collections.emptyList()).toArray(BufferSegment[]::new);
+				drawCalls += segments.length;
+
+				GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), RenderSystem.getModelOffset(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
 
 
-			try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
-				: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
-				: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
-				pass.setPipeline(type.iris$getPipeline());
+				try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Unknown", RenderSystem.outputColorTextureOverride == null ? type.iris$getRenderTarget().getColorTextureView()
+					: RenderSystem.outputColorTextureOverride, OptionalInt.empty(), RenderSystem.outputDepthTextureOverride == null ? type.iris$getRenderTarget().getDepthTextureView()
+					: RenderSystem.outputDepthTextureOverride, OptionalDouble.empty())) {
+					pass.setPipeline(pipeline);
 
-				for(int i = 0; i < 12; ++i) {
-					GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
-					if (gpuTexture != null) {
-						pass.bindSampler("Sampler" + i, gpuTexture);
+					for (int i = 0; i < 12; ++i) {
+						GpuTextureView gpuTexture = RenderSystem.getShaderTexture(i);
+						if (gpuTexture != null) {
+							pass.bindSampler("Sampler" + i, gpuTexture);
+						}
+					}
+
+					RenderSystem.bindDefaultUniforms(pass);
+					pass.setUniform("DynamicTransforms", gpuBufferSlice);
+
+					for (BufferSegment segment : segments) {
+						segmentRenderer.drawInner(pipeline, pass, segment);
+						segment.close();
 					}
 				}
 
-				RenderSystem.bindDefaultUniforms(pass);
-				pass.setUniform("DynamicTransforms", gpuBufferSlice);
+				typeToSegment.remove(type);
 
-				for (BufferSegment segment : segments) {
-					segmentRenderer.drawInner(type.iris$getPipeline(), pass, segment);
-					segment.close();
-				}
+				type.clearRenderState();
 			}
-
-			typeToSegment.remove(type);
-
-			type.clearRenderState();
 		}
 
 		profiler.popPush("reset type " + transparencyType);
