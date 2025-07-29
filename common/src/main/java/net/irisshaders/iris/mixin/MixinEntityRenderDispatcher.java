@@ -1,5 +1,6 @@
 package net.irisshaders.iris.mixin;
 
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2IntFunction;
@@ -9,6 +10,7 @@ import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.core.BlockPos;
@@ -22,6 +24,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
 
 @Mixin(EntityRenderDispatcher.class)
 public class MixinEntityRenderDispatcher {
@@ -41,70 +45,19 @@ public class MixinEntityRenderDispatcher {
 	@Unique
 	private static int cachedId;
 
-	@Inject(method = "renderShadow", at = @At("HEAD"), cancellable = true)
-	private static void iris$maybeSuppressEntityShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, LevelReader levelReader, float g, CallbackInfo ci) {
-		if (!iris$maybeSuppressShadow(ci)) {
-			Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
-
-			if (entityIds == null) {
-				return;
-			}
-
-			cachedId = CapturedRenderingState.INSTANCE.getCurrentRenderedEntity();
-			CapturedRenderingState.INSTANCE.setCurrentEntity(entityIds.getInt(shadowId));
-		}
-	}
-
-	@Inject(method = "renderShadow", at = @At("RETURN"))
-	private static void restoreShadow(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, float f, LevelReader levelReader, float g, CallbackInfo ci) {
-		CapturedRenderingState.INSTANCE.setCurrentEntity(cachedId);
-		cachedId = 0;
-	}
-
-	// The underlying method called by renderShadow.
-	@Inject(method = "renderBlockShadow", at = @At("HEAD"), cancellable = true)
-	private static void renderBlockShadow(PoseStack.Pose pPoseStack$Pose0, VertexConsumer pVertexConsumer1, ChunkAccess pChunkAccess2, LevelReader pLevelReader3, BlockPos pBlockPos4, double pDouble5, double pDouble6, double pDouble7, float pFloat8, float pFloat9, CallbackInfo ci) {
-		iris$maybeSuppressShadow(ci);
-	}
-
-	// First Person Model by tr7zw compatibility, this is a method added by First Person Model:
-	// https://github.com/tr7zw/FirstPersonModel/blob/172ab05368832df82e34ca9f9b06814672f69f59/FPShared/src/main/java/dev/tr7zw/firstperson/mixins/RenderDispatcherMixin.java#L68
-	// The renderBlockShadow injection will handle this, but it's easier to suppress it before all of the other calculations.
-	@SuppressWarnings("all")
-	@Inject(method = "renderOffsetShadow", at = @At("HEAD"), cancellable = true, require = 0, remap = false, expect = 0)
-	private static void iris$maybeSuppressEntityShadow(PoseStack poseStack, MultiBufferSource bufferSource,
-													   Entity entity, float opacity, float tickDelta, LevelReader level,
-													   float radius, Vec3 offset, CallbackInfo ci) {
-		iris$maybeSuppressShadow(ci);
+	@WrapWithCondition(method = "submit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitShadow(Lcom/mojang/blaze3d/vertex/PoseStack;FLjava/util/List;)V"))
+	private static boolean iris$maybeSuppressEntityShadow(SubmitNodeCollector instance, PoseStack poseStack, float v, List<EntityRenderState.ShadowPiece> shadowPieces) {
+		return !iris$maybeSuppressShadow();
 	}
 
 	@Unique
-	private static boolean iris$maybeSuppressShadow(CallbackInfo ci) {
+	private static boolean iris$maybeSuppressShadow() {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		if (pipeline != null && pipeline.shouldDisableVanillaEntityShadows()) {
-			ci.cancel();
 			return true;
 		}
 
 		return false;
-	}
-
-	@Inject(method = "renderFlame", at = @At("HEAD"))
-	private void iris$setFlameId(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, Quaternionf quaternionf, CallbackInfo ci) {
-		Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
-
-		if (entityIds == null) {
-			return;
-		}
-
-		cachedId = CapturedRenderingState.INSTANCE.getCurrentRenderedEntity();
-		CapturedRenderingState.INSTANCE.setCurrentEntity(entityIds.getInt(flameId));
-	}
-
-	@Inject(method = "renderFlame", at = @At("RETURN"))
-	private void restoreFlameId(PoseStack poseStack, MultiBufferSource multiBufferSource, EntityRenderState entityRenderState, Quaternionf quaternionf, CallbackInfo ci) {
-		CapturedRenderingState.INSTANCE.setCurrentEntity(cachedId);
-		cachedId = 0;
 	}
 }

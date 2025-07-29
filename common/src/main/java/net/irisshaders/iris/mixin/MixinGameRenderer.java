@@ -24,6 +24,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,7 +55,7 @@ public class MixinGameRenderer {
 	}
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void iris$logSystem(Minecraft minecraft, ItemInHandRenderer itemInHandRenderer, RenderBuffers renderBuffers, CallbackInfo ci) {
+	private void iris$logSystem(Minecraft minecraft, ItemInHandRenderer itemInHandRenderer, RenderBuffers renderBuffers, BlockRenderDispatcher blockRenderDispatcher, CallbackInfo ci) {
 		Iris.logger.info("Hardware information:");
 		Iris.logger.info("CPU: " + GLX._getCpuInfo());
 		Iris.logger.info("GPU: " + RenderSystem.getDevice().getRenderer() + " (Supports OpenGL " + RenderSystem.getDevice().getVersion() + ")");

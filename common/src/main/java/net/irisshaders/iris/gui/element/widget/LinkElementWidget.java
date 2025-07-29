@@ -68,14 +68,14 @@ public class LinkElementWidget extends CommentedElementWidget<OptionMenuLinkElem
 	}
 
 	@Override
-	public boolean mouseClicked(double mx, double my, int button) {
+	public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
 		if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
 			this.navigation.open(targetScreenId);
 			GuiUtil.playButtonClickSound();
 
 			return true;
 		}
-		return super.mouseClicked(mx, my, button);
+		return super.mouseClicked(mx, my, button, bl2);
 	}
 
 	@Override

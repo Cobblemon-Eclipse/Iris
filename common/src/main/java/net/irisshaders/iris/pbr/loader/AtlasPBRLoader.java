@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 
 public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
@@ -176,7 +177,7 @@ public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
 		protected final PBRType pbrType;
 
 		public PBRSpriteContents(ResourceLocation name, FrameSize size, NativeImage image, ResourceMetadata metadata, PBRType pbrType) {
-			super(name, size, image, metadata);
+			super(name, size, image, metadata.getSection(AnimationMetadataSection.TYPE), List.of());
 			this.pbrType = pbrType;
 		}
 

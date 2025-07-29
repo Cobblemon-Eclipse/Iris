@@ -223,7 +223,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	@Override
-	public boolean mouseClicked(double d, double e, int i) {
+	public boolean mouseClicked(double d, double e, int i, boolean bl2) {
 		int widthValue = this.font.width("New update available!");
 		if (this.updateComponent != null && d < widthValue && e > (this.height - 10) && e < this.height) {
 			this.minecraft.setScreen(new ConfirmLinkScreen(bl -> {
@@ -233,7 +233,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				this.minecraft.setScreen(this);
 			}, Iris.getUpdateChecker().getUpdateLink().map(URI::toString).orElse(""), true));
 		}
-		return super.mouseClicked(d, e, i);
+		return super.mouseClicked(d, e, i, bl2);
 	}
 
 	@Override

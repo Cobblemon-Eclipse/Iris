@@ -140,7 +140,7 @@ public class MixinLevelRenderer {
 
 	// Inject a bit early so that we can end our rendering before mods like VoxelMap (which inject at RETURN)
 	// render their waypoint beams.
-	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V"))
+	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4fStack;popMatrix()Lorg/joml/Matrix4fStack;"))
 	private void iris$endLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelMatrix, Matrix4f projectionMatrix, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		HandRenderer.INSTANCE.renderTranslucent(modelMatrix, deltaTracker.getGameTimeDeltaPartialTick(true), camera, this.minecraft.gameRenderer, pipeline);
 		Profiler.get().popPush("iris_final");
@@ -164,7 +164,7 @@ public class MixinLevelRenderer {
 	// avoid breaking other mods such as Light Overlay: https://github.com/IrisShaders/Iris/issues/1356
 
 	// Do this before sky rendering so it's ready before the sky render starts.
-	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;collectVisibleEntities(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Ljava/util/List;)Z", shift = At.Shift.AFTER))
+	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;extractVisibleEntities(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/client/renderer/LevelRenderState;)V", shift = At.Shift.AFTER))
 	private void iris$renderTerrainShadows(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		pipeline.renderShadows((LevelRendererAccessor) this, camera);
 

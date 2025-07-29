@@ -299,7 +299,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
 			if (this.allowEnableShadersButton) {
 				setShadersEnabled(!this.shadersEnabled);
 				GuiUtil.playButtonClickSound();
@@ -369,7 +369,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
 			if (this.allowPressButton) {
 				GuiUtil.playButtonClickSound();
 				onClick.run();
@@ -460,7 +460,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
 			// Only do anything on left-click
 			if (button != 0) {
 				return false;

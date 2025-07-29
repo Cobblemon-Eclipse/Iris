@@ -4,9 +4,9 @@ plugins {
     id("fabric-loom") version("1.10.1") apply(false)
 }
 
-val MINECRAFT_VERSION by extra { "1.21.6" }
+val MINECRAFT_VERSION by extra { "25w31a" }
 val NEOFORGE_VERSION by extra { "21.6.20-beta" }
-val FABRIC_LOADER_VERSION by extra { "0.16.14" }
+val FABRIC_LOADER_VERSION by extra { "0.17.0" }
 val FABRIC_API_VERSION by extra { "0.126.1+1.21.6" }
 
 val SODIUM_DEPENDENCY_FABRIC by extra { "maven.modrinth:sodium:ND4ROcMQ"}

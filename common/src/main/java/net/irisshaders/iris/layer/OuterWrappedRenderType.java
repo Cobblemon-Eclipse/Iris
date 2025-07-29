@@ -4,9 +4,6 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.irisshaders.batchedentityrendering.impl.BlendingStateHolder;
-import net.irisshaders.batchedentityrendering.impl.TransparencyType;
-import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
 import net.irisshaders.iris.mixin.rendertype.RenderTypeAccessor;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -15,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 
-public class OuterWrappedRenderType extends RenderType implements WrappableRenderType, BlendingStateHolder {
+public class OuterWrappedRenderType extends RenderType {
 	private final RenderStateShard extra;
 	private final RenderType wrapped;
 
@@ -28,11 +25,15 @@ public class OuterWrappedRenderType extends RenderType implements WrappableRende
 	}
 
 	public static OuterWrappedRenderType wrapExactlyOnce(String name, RenderType wrapped, RenderStateShard extra) {
-		if (wrapped instanceof OuterWrappedRenderType) {
+		while (wrapped instanceof OuterWrappedRenderType) {
 			wrapped = ((OuterWrappedRenderType) wrapped).unwrap();
 		}
 
 		return new OuterWrappedRenderType(name, wrapped, extra);
+	}
+
+	private RenderType unwrap() {
+		return wrapped;
 	}
 
 	private static boolean shouldSortOnUpload(RenderType type) {
@@ -51,11 +52,6 @@ public class OuterWrappedRenderType extends RenderType implements WrappableRende
 		super.clearRenderState();
 
 		extra.clearRenderState();
-	}
-
-	@Override
-	public RenderType unwrap() {
-		return this.wrapped;
 	}
 
 	@Override
@@ -138,15 +134,5 @@ public class OuterWrappedRenderType extends RenderType implements WrappableRende
 	@Override
 	public String toString() {
 		return "iris_wrapped:" + this.wrapped.toString();
-	}
-
-	@Override
-	public TransparencyType getTransparencyType() {
-		return ((BlendingStateHolder) wrapped).getTransparencyType();
-	}
-
-	@Override
-	public void setTransparencyType(TransparencyType transparencyType) {
-		((BlendingStateHolder) wrapped).setTransparencyType(transparencyType);
 	}
 }

@@ -2,9 +2,9 @@ package net.irisshaders.iris.pathways;
 
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import net.irisshaders.batchedentityrendering.impl.FullyBufferedMultiBufferSource;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.GameRendererAccessor;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;
@@ -15,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -32,7 +33,8 @@ import org.joml.Matrix4fc;
 public class HandRenderer {
 	public static final HandRenderer INSTANCE = new HandRenderer();
 	public static final float DEPTH = 0.125F;
-	private final FullyBufferedMultiBufferSource bufferSource = new FullyBufferedMultiBufferSource();
+	private final ByteBufferBuilder storage = new ByteBufferBuilder(1024);
+	private final MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(storage);
 	private final PerspectiveProjectionMatrixBuffer cachedProjectionMatrixBuffer = new PerspectiveProjectionMatrixBuffer("hand (Iris)");
 	private boolean ACTIVE;
 	private boolean renderingSolid;
@@ -101,11 +103,10 @@ public class HandRenderer {
 		RenderSystem.getModelViewStack().pushMatrix();
 		RenderSystem.getModelViewStack().set(poseStack.last().pose());
 
-		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource.getUnflushableWrapper(), Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
+		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
 
 		Profiler.get().pop();
 
-		bufferSource.readyUp();
 		bufferSource.endBatch();
 
 		RenderSystem.restoreProjectionMatrix();
@@ -164,7 +165,7 @@ public class HandRenderer {
 		return renderingSolid;
 	}
 
-	public FullyBufferedMultiBufferSource getBufferSource() {
-		return bufferSource;
+	public void destroy() {
+		storage.close();
 	}
 }

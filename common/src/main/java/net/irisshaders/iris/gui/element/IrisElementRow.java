@@ -131,8 +131,8 @@ public class IrisElementRow {
 		return this.orderedElements.stream().filter(Element::isFocused).findFirst();
 	}
 
-	public boolean mouseClicked(double mx, double my, int button) {
-		return getHovered(mx, my).map(element -> element.mouseClicked(mx, my, button)).orElse(false);
+	public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
+		return getHovered(mx, my).map(element -> element.mouseClicked(mx, my, button, bl2)).orElse(false);
 	}
 
 	public boolean mouseReleased(double mx, double my, int button) {
@@ -200,7 +200,7 @@ public class IrisElementRow {
 		}
 
 		@Override
-		public boolean mouseClicked(double mx, double my, int button) {
+		public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
 			if (this.disabled) {
 				return false;
 			}
@@ -209,7 +209,7 @@ public class IrisElementRow {
 				return this.onClick.apply((T) this);
 			}
 
-			return super.mouseClicked(mx, my, button);
+			return super.mouseClicked(mx, my, button, bl2);
 		}
 
 		@Override

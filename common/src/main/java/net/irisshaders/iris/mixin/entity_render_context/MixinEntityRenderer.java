@@ -24,26 +24,4 @@ public class MixinEntityRenderer<T extends Entity, S extends EntityRenderState> 
 	@Unique
 	private int lastId = -100;
 
-	@Inject(method = "renderNameTag", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/state/EntityRenderState;isDiscrete:Z"))
-	private void setNameTagId(S entityRenderState, Component component, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, CallbackInfo ci) {
-		Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
-
-		if (entityIds == null) {
-			return;
-		}
-
-		this.lastId = CapturedRenderingState.INSTANCE.getCurrentRenderedEntity();
-
-		int intId = entityIds.applyAsInt(NAME_TAG_ID);
-
-		CapturedRenderingState.INSTANCE.setCurrentEntity(intId);
-	}
-
-	@Inject(method = "renderNameTag", at = @At("RETURN"))
-	private void resetId(S entityRenderState, Component component, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, CallbackInfo ci) {
-		if (lastId != -100) {
-			CapturedRenderingState.INSTANCE.setCurrentEntity(lastId);
-			lastId = -100;
-		}
-	}
 }

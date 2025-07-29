@@ -60,7 +60,7 @@ public abstract class MixinDebugScreenOverlay {
 		return ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed();
 	}
 
-	@Inject(method = "getSystemInformation", at = @At("RETURN"))
+	//@Inject(method = "getSystemInformation", at = @At("RETURN"))
 	private void iris$appendShaderPackText(CallbackInfoReturnable<List<String>> cir) {
 		List<String> messages = cir.getReturnValue();
 
@@ -83,7 +83,7 @@ public abstract class MixinDebugScreenOverlay {
 		//}
 	}
 
-	@Inject(method = "getGameInformation", at = @At("RETURN"))
+	//@Inject(method = "getGameInformation", at = @At("RETURN"))
 	private void iris$appendShadowDebugText(CallbackInfoReturnable<List<String>> cir) {
 		List<String> messages = cir.getReturnValue();
 

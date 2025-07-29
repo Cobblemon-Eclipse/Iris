@@ -193,8 +193,8 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
-			return this.widgets.get(getHoveredWidget((int) mouseX)).mouseClicked(mouseX, mouseY, button);
+		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
+			return this.widgets.get(getHoveredWidget((int) mouseX)).mouseClicked(mouseX, mouseY, button, bl2);
 		}
 
 		@Override
@@ -319,9 +319,9 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
-			boolean backButtonResult = backButton != null && backButton.mouseClicked(mouseX, mouseY, button);
-			boolean utilButtonResult = utilityButtons.mouseClicked(mouseX, mouseY, button);
+		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
+			boolean backButtonResult = backButton != null && backButton.mouseClicked(mouseX, mouseY, button, bl2);
+			boolean utilButtonResult = utilityButtons.mouseClicked(mouseX, mouseY, button, bl2);
 
 			return backButtonResult || utilButtonResult;
 		}

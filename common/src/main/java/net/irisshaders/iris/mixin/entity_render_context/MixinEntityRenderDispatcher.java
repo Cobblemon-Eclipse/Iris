@@ -12,8 +12,8 @@ import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -27,7 +27,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -47,44 +46,30 @@ public class MixinEntityRenderDispatcher {
 	private static final Object2ObjectMap<EntityType<?>, NamespacedId> ENTITY_IDS = new Object2ObjectOpenHashMap<>();
 
 	// Inject after MatrixStack#push since at this point we know that most cancellation checks have already passed.
-	@ModifyVariable(method = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;render(Lnet/minecraft/world/entity/Entity;DDDFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;createRenderState(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/client/renderer/entity/state/EntityRenderState;", shift = At.Shift.AFTER),
-		allow = 1, require = 1, argsOnly = true)
-	private <E extends Entity> MultiBufferSource iris$beginEntityRender(MultiBufferSource bufferSource, E entity) {
+	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V", shift = At.Shift.AFTER))
+	private <E extends Entity, S extends EntityRenderState> void iris$beginEntityRender(S entity, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
 
 		if (entityIds == null || !ImmediateState.isRenderingLevel) {
-			return bufferSource;
+			return;
 		}
 
 		int intId;
 
-		if (entity instanceof ZombieVillager zombie && zombie.isConverting() && WorldRenderingSettings.INSTANCE.hasVillagerConversionId()) {
-			intId = entityIds.applyAsInt(CONVERTING_VILLAGER);
-		} else if (entity instanceof Player && Minecraft.getInstance().getCameraEntity() == entity) {
-			if (entityIds.containsKey(CURRENT_PLAYER)) {
-				intId = entityIds.getInt(CURRENT_PLAYER);
-			} else {
-				intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.getType(), k -> {
-					ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-					return new NamespacedId(entityId.getNamespace(), entityId.getPath());
-				}));
-			}
-		} else {
-			intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.getType(), k -> {
-				ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-				return new NamespacedId(entityId.getNamespace(), entityId.getPath());
-			}));
-		}
+		// TODO: Add special types
+
+		intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
+			ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
+			return new NamespacedId(entityId.getNamespace(), entityId.getPath());
+		}));
 
 		CapturedRenderingState.INSTANCE.setCurrentEntity(intId);
-
-		return new BufferSourceWrapper(bufferSource, (renderType) -> OuterWrappedRenderType.wrapExactlyOnce("iris:entity", renderType, EntityRenderStateShard.INSTANCE));
 	}
 
 	// Inject before MatrixStack#pop so that our wrapper stack management operations naturally line up
 	// with vanilla's MatrixStack management functions.
-	@Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
-	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(S entityRenderState, double d, double e, double f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, EntityRenderer<?, S> entityRenderer, CallbackInfo ci) {
+	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
+	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(S entityRenderState, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 	}

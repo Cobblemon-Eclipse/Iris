@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EquipmentLayerRenderer.class)
 public abstract class MixinEquipmentLayerRenderer {
-	private static final String V = "Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/resources/ResourceLocation;)V";
+	private static final String V = "Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/ResourceLocation;I)V";
 	@Inject(method = V, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/EquipmentClientInfo$Layer;usePlayerTexture()Z"))
 	private void changeId(CallbackInfo ci, @Local(argsOnly = true) ItemStack itemStack) {
 		if (WorldRenderingSettings.INSTANCE.getItemIds() == null) return;
@@ -51,7 +51,7 @@ public abstract class MixinEquipmentLayerRenderer {
 		EntityState.interposeItemId(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(new NamespacedId("minecraft", "trim_" + armorTrim.material().value().assets().base().suffix())));
 	}
 
-	@Inject(method = V, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/Model;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;II)V", shift = At.Shift.AFTER))
+	@Inject(method = V, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/RenderType;IIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;II)V", ordinal = 2, shift = At.Shift.AFTER))
 	private void changeTrimTemp2(CallbackInfo ci) {
 		EntityState.restoreItemId();
 	}

@@ -109,7 +109,7 @@ public class SliderElementWidget extends StringElementWidget {
 	}
 
 	@Override
-	public boolean mouseClicked(double mx, double my, int button) {
+	public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
 		if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
 			if (Screen.hasShiftDown()) {
 				if (this.applyOriginalValue()) {

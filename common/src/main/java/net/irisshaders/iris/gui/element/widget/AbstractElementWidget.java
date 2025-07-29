@@ -43,7 +43,7 @@ public abstract class AbstractElementWidget<T extends OptionMenuElement> impleme
 	public abstract void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float tickDelta, boolean hovered);
 
 	@Override
-	public boolean mouseClicked(double mx, double my, int button) {
+	public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
 		return false;
 	}
 
