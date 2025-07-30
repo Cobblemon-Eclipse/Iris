@@ -6,6 +6,7 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import net.caffeinemc.mods.sodium.client.gl.GlObject;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlShader;
+import net.caffeinemc.mods.sodium.client.gl.shader.ShaderParser;
 import net.caffeinemc.mods.sodium.client.gl.shader.ShaderType;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderBindingPoints;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -98,7 +99,7 @@ public class SodiumPrograms {
 		for (Map.Entry<PatchShaderType, String> entry : transformed.entrySet()) {
 			if (entry.getValue() == null) continue;
 			newMap.put(entry.getKey(), new GlShader(ShaderType.fromGlShaderType(entry.getKey().glShaderType.id),
-				ResourceLocation.fromNamespaceAndPath("iris", "sodium-shader-" + passName), entry.getValue()));
+				ResourceLocation.fromNamespaceAndPath("iris", "sodium-shader-" + passName), new ShaderParser.ParsedShader(entry.getValue(), new String[0])));
 		}
 		return newMap;
 	}

@@ -66,7 +66,9 @@ public class OuterWrappedRenderType extends RenderType {
 
 	@Override
 	public void draw(MeshData meshData) {
+		extra.setupRenderState();
 		wrapped.draw(meshData);
+		extra.clearRenderState();
 	}
 
 	@Override

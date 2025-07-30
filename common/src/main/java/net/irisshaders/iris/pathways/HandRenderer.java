@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
+import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.util.profiling.Profiler;
@@ -33,8 +34,7 @@ import org.joml.Matrix4fc;
 public class HandRenderer {
 	public static final HandRenderer INSTANCE = new HandRenderer();
 	public static final float DEPTH = 0.125F;
-	private final ByteBufferBuilder storage = new ByteBufferBuilder(1024);
-	private final MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(storage);
+	private final RenderBuffers bufferSource = new RenderBuffers(Runtime.getRuntime().availableProcessors());
 	private final PerspectiveProjectionMatrixBuffer cachedProjectionMatrixBuffer = new PerspectiveProjectionMatrixBuffer("hand (Iris)");
 	private boolean ACTIVE;
 	private boolean renderingSolid;
@@ -103,11 +103,11 @@ public class HandRenderer {
 		RenderSystem.getModelViewStack().pushMatrix();
 		RenderSystem.getModelViewStack().set(poseStack.last().pose());
 
-		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
+		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource.bufferSource(), Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
 
 		Profiler.get().pop();
 
-		bufferSource.endBatch();
+		bufferSource.bufferSource().endBatch();
 
 		RenderSystem.restoreProjectionMatrix();
 
@@ -141,7 +141,7 @@ public class HandRenderer {
 		RenderSystem.getModelViewStack().pushMatrix();
 		RenderSystem.getModelViewStack().set(poseStack.last().pose());
 
-		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
+		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), bufferSource.bufferSource(), Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.getEntity(), tickDelta));
 
 		poseStack.popPose();
 
@@ -149,7 +149,7 @@ public class HandRenderer {
 
 		RenderSystem.restoreProjectionMatrix();
 
-		bufferSource.endBatch();
+		bufferSource.bufferSource().endBatch();
 		RenderSystem.getModelViewStack().popMatrix();
 
 		pipeline.setPhase(WorldRenderingPhase.NONE);
@@ -166,6 +166,6 @@ public class HandRenderer {
 	}
 
 	public void destroy() {
-		storage.close();
+
 	}
 }

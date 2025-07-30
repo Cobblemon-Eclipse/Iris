@@ -32,8 +32,10 @@ import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.uniforms.CelestialUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -46,13 +48,18 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.TickRateManager;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -515,6 +522,17 @@ public class ShadowRenderer {
 
 		Frustum entityShadowFrustum = entityFrustumHolder.getFrustum();
 		entityShadowFrustum.prepare(cameraX, cameraY, cameraZ);
+		this.levelRenderState.reset();
+
+
+		if (shouldRenderEntities) {
+			extractVisibleEntities(playerCamera, entityFrustumHolder.getFrustum(), Minecraft.getInstance().getDeltaTracker(), levelRenderState);
+		} else if (shouldRenderPlayer) {
+			Player player = Minecraft.getInstance().player;
+
+			float g = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+			levelRenderState.entityRenderStates.add(Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(player, g));
+		}
 
 		// Render nearby entities
 		//
@@ -525,11 +543,7 @@ public class ShadowRenderer {
 		EntityRenderDispatcher dispatcher = levelRenderer.getEntityRenderDispatcher();
 		RenderSystem.getModelViewStack().identity();
 
-		if (shouldRenderEntities) {
-			renderedShadowEntities = renderEntities(levelRenderer, dispatcher, bufferSource, modelView, tickDelta, entityShadowFrustum, cameraX, cameraY, cameraZ);
-		} else if (shouldRenderPlayer) {
-			renderedShadowEntities = renderPlayerEntity(levelRenderer, dispatcher, bufferSource, modelView, tickDelta, entityShadowFrustum, cameraX, cameraY, cameraZ);
-		}
+		renderedShadowEntities = renderEntities(levelRenderer, dispatcher, bufferSource, modelView, tickDelta, entityShadowFrustum, cameraX, cameraY, cameraZ);
 
 		profiler.popPush("build blockentities");
 
@@ -540,6 +554,8 @@ public class ShadowRenderer {
 		}
 
 		profiler.popPush("draw entities");
+
+		featureRenderDispatcher.renderAllFeatures();
 
 		bufferSource.endBatch();
 
@@ -634,34 +650,41 @@ public class ShadowRenderer {
 	private int renderEntities(LevelRendererAccessor levelRenderer, EntityRenderDispatcher dispatcher, MultiBufferSource.BufferSource bufferSource, PoseStack modelView, float tickDelta, Frustum frustum, double cameraX, double cameraY, double cameraZ) {
 		Profiler.get().push("cull");
 
-		List<Entity> renderedEntities = new ArrayList<>(32);
-
-		// TODO: I'm sure that this can be improved / optimized.
-		for (Entity entity : getLevel().entitiesForRendering()) {
-			if (!dispatcher.shouldRender(entity, frustum, cameraX, cameraY, cameraZ) || entity.isSpectator()) {
-				continue;
-			}
-
-			renderedEntities.add(entity);
-		}
-
-		Profiler.get().popPush("sort");
-
-		// Sort the entities by type first in order to allow vanilla's entity batching system to work better.
-		renderedEntities.sort(Comparator.comparingInt(entity -> entity.getType().hashCode()));
-
-		Profiler.get().popPush("build entity geometry");
-
-		for (Entity entity : renderedEntities) {
-			float realTickDelta = Minecraft.getInstance().level.tickRateManager().isEntityFrozen(entity) ? tickDelta : CapturedRenderingState.INSTANCE.getRealTickDelta();
-			//levelRenderer.invokeRenderEntity(entity, cameraX, cameraY, cameraZ, realTickDelta, modelView, bufferSource);
+		for (EntityRenderState entityRenderState : levelRenderState.entityRenderStates) {
+			Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, entityRenderState.x - cameraX, entityRenderState.y - cameraY, entityRenderState.z - cameraZ, modelView, submitNodeStorage);
 		}
 
 		Profiler.get().pop();
 
-		return renderedEntities.size();
+		return levelRenderState.entityRenderStates.size();
 	}
 
+	private void extractVisibleEntities(Camera camera, Frustum frustum, DeltaTracker deltaTracker, LevelRenderState levelRenderState) {
+		Vec3 vec3 = camera.getPosition();
+		double d = vec3.x();
+		double e = vec3.y();
+		double f = vec3.z();
+		TickRateManager tickRateManager = Minecraft.getInstance().level.tickRateManager();
+		Entity.setViewScale(Mth.clamp((double)Minecraft.getInstance().options.getEffectiveRenderDistance() / (double)8.0F, (double)1.0F, (double)2.5F) * (Double)Minecraft.getInstance().options.entityDistanceScaling().get());
+
+		for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+			if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRender(entity, frustum, d, e, f) || entity.hasIndirectPassenger(Minecraft.getInstance().player)) {
+				BlockPos blockPos = entity.blockPosition();
+				if ((Minecraft.getInstance().level.isOutsideBuildHeight(blockPos.getY()) || Minecraft.getInstance().levelRenderer.isSectionCompiled(blockPos))) {
+					if (entity.tickCount == 0) {
+						entity.xOld = entity.getX();
+						entity.yOld = entity.getY();
+						entity.zOld = entity.getZ();
+					}
+
+					float g = deltaTracker.getGameTimeDeltaPartialTick(!tickRateManager.isEntityFrozen(entity));
+					EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, g);
+					levelRenderState.entityRenderStates.add(entityRenderState);
+				}
+			}
+		}
+
+	}
 	private int renderPlayerEntity(LevelRendererAccessor levelRenderer, EntityRenderDispatcher dispatcher, MultiBufferSource.BufferSource bufferSource, PoseStack modelView, float tickDelta, Frustum frustum, double cameraX, double cameraY, double cameraZ) {
 		Profiler.get().push("cull");
 

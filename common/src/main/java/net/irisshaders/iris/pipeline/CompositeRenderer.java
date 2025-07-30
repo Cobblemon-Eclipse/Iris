@@ -75,7 +75,7 @@ public class CompositeRenderer {
 		.withDepthWrite(false)
 		.withColorWrite(true)
 		.withoutBlend()
-		.withLocation(ResourceLocation.fromNamespaceAndPath("iris", "composite")).withVertexShader("core/blit_screen").withFragmentShader("core/blit_screen")
+		.withLocation(ResourceLocation.fromNamespaceAndPath("iris", "composite")).withVertexShader("core/screenquad").withFragmentShader("core/blit_screen")
 		.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
 		.build();
 
