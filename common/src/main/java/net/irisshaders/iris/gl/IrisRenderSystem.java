@@ -732,7 +732,7 @@ public class IrisRenderSystem {
 
 		@Override
 		public void bindTextureToUnit(int target, int unit, int texture) {
-			int activeTexture = GlStateManager._getActiveTexture();
+			int activeTexture = GlStateManagerAccessor.getActiveTexture();
 			GlStateManager._activeTexture(GL30C.GL_TEXTURE0 + unit);
 			GL46C.glBindTexture(target, texture);
 			if (target == GL46C.GL_TEXTURE_2D) {

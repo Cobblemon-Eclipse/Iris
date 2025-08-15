@@ -65,6 +65,11 @@ public class OuterWrappedRenderType extends RenderType {
 	}
 
 	@Override
+	public RenderPipeline pipeline() {
+		return wrapped.pipeline();
+	}
+
+	@Override
 	public void draw(MeshData meshData) {
 		extra.setupRenderState();
 		wrapped.draw(meshData);

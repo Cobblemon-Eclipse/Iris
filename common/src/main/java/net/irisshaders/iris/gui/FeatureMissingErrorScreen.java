@@ -29,7 +29,7 @@ public class FeatureMissingErrorScreen extends Screen {
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
 		this.renderBackground(guiGraphics, mouseX, mouseY, delta);
 		guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 90, 0xFFFFFFFF);
-		message.renderCentered(guiGraphics, this.width / 2, 110, 9, 0xFFFFFFFF);
+		message.render(guiGraphics, MultiLineLabel.Align.CENTER,  this.width / 2, 110, 9, false, 0xFFFFFFFF);
 		super.render(guiGraphics, mouseX, mouseY, delta);
 	}
 }

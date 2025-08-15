@@ -231,4 +231,9 @@ public class VanillaRenderingPipeline implements WorldRenderingPipeline {
 	public void onBeginClear() {
 
 	}
+
+	@Override
+	public boolean supportsEndFlash() {
+		return false;
+	}
 }

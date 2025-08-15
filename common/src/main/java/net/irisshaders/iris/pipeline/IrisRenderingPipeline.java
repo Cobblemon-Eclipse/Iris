@@ -197,11 +197,13 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	private GlFramebuffer defaultFB;
 	private GlFramebuffer defaultFBAlt;
 	private GlFramebuffer defaultFBShadow;
+	private final boolean supportsEndFlash;
 
 	public IrisRenderingPipeline(ProgramSet programSet) {
 		ShaderPrinter.resetPrintState();
 
 		this.shouldRenderUnderwaterOverlay = programSet.getPackDirectives().underwaterOverlay();
+		this.supportsEndFlash = programSet.getPackDirectives().supportsEndFlash();
 		this.shouldRenderVignette = programSet.getPackDirectives().vignette();
 		this.shouldWriteRainAndSnowToDepthBuffer = programSet.getPackDirectives().rainDepth();
 		this.oldLighting = programSet.getPackDirectives().isOldLighting();
@@ -1182,7 +1184,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		//
 		// Without this code, there will be weird issues when reloading certain shaderpacks.
 		for (int i = 0; i < 16; i++) {
-			GlStateManager.glActiveTexture(GL20C.GL_TEXTURE0 + i);
+			GlStateManager._activeTexture(GL20C.GL_TEXTURE0 + i);
 			IrisRenderSystem.unbindAllSamplers();
 			GlStateManager._bindTexture(0);
 		}
@@ -1190,7 +1192,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		// Set the active texture unit to unit 0
 		//
 		// This seems to be what most code expects. It's a sane default in any case.
-		GlStateManager.glActiveTexture(GL20C.GL_TEXTURE0);
+		GlStateManager._activeTexture(GL20C.GL_TEXTURE0);
 
 		for (int i = 0; i < 12; i++) {
 			// Clear all shader textures
@@ -1286,6 +1288,11 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 			horizonRenderer.renderHorizon(CapturedRenderingState.INSTANCE.getGbufferModelView(), CapturedRenderingState.INSTANCE.getGbufferProjection(), fogColor);
 		}
+	}
+
+	@Override
+	public boolean supportsEndFlash() {
+		return supportsEndFlash;
 	}
 
 	public Optional<ProgramSource> getDHTerrainShader() {

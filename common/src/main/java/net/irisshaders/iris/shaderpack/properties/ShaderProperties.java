@@ -107,6 +107,7 @@ public class ShaderProperties {
 	private OptionalBoolean separateEntityDraws = OptionalBoolean.DEFAULT;
 	private OptionalBoolean skipAllRendering = OptionalBoolean.DEFAULT;
 	private OptionalBoolean frustumCulling = OptionalBoolean.DEFAULT;
+	private OptionalBoolean supportsEndFlash = OptionalBoolean.DEFAULT;
 	private OptionalBoolean occlusionCulling = OptionalBoolean.DEFAULT;
 	private ShadowCullState shadowCulling = ShadowCullState.DEFAULT;
 	private OptionalBoolean shadowEnabled = OptionalBoolean.DEFAULT;
@@ -213,6 +214,7 @@ public class ShaderProperties {
 				particleRenderingSettings = ParticleRenderingSettings.MIXED;
 			});
 			handleBooleanDirective(key, value, "frustum.culling", bool -> frustumCulling = bool);
+			handleBooleanDirective(key, value, "endFlashShadows", bool -> supportsEndFlash = bool);
 			handleBooleanDirective(key, value, "occlusion.culling", bool -> occlusionCulling = bool);
 			handleBooleanDirective(key, value, "shadow.enabled", bool -> shadowEnabled = bool);
 			handleBooleanDirective(key, value, "skipAllRendering", bool -> skipAllRendering = bool);
@@ -855,6 +857,10 @@ public class ShaderProperties {
 
 	public OptionalBoolean getFrustumCulling() {
 		return frustumCulling;
+	}
+
+	public OptionalBoolean supportsEndFlash() {
+		return supportsEndFlash;
 	}
 
 	public OptionalBoolean getOcclusionCulling() {

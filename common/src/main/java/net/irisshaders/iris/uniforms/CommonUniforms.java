@@ -121,7 +121,7 @@ public final class CommonUniforms {
 		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
 		BiomeUniforms.addBiomeUniforms(uniforms);
 		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
-		IrisExclusiveUniforms.addIrisExclusiveUniforms(uniforms);
+		IrisExclusiveUniforms.addIrisExclusiveUniforms(uniforms, updateNotifier);
 		IrisTimeUniforms.addTimeUniforms(uniforms);
 		MatrixUniforms.addMatrixUniforms(uniforms, directives);
 		IdMapUniforms.addIdMapUniforms(updateNotifier, uniforms, idMap, directives.isOldHandLight());
@@ -216,11 +216,11 @@ public final class CommonUniforms {
 	}
 
 	private static Vector3d getSkyColor() {
-		if (client.level == null || client.cameraEntity == null) {
+		if (client.level == null || client.getCameraEntity() == null) {
 			return ZERO_VECTOR_3d;
 		}
 
-		int skyColor = client.level.getSkyColor(client.cameraEntity.position(),
+		int skyColor = client.level.getSkyColor(client.getCameraEntity().position(),
 			CapturedRenderingState.INSTANCE.getTickDelta());
 
 		return new Vector3d(ARGB.redFloat(skyColor), ARGB.greenFloat(skyColor), ARGB.blueFloat(skyColor));
@@ -261,21 +261,21 @@ public final class CommonUniforms {
 	}
 
 	private static float getPlayerMood() {
-		if (!(client.cameraEntity instanceof LocalPlayer)) {
+		if (!(client.getCameraEntity() instanceof LocalPlayer)) {
 			return 0.0F;
 		}
 
 		// This should always be 0 to 1 anyways but just making sure
-		return Math.clamp(0.0F, 1.0F, ((LocalPlayer) client.cameraEntity).getCurrentMood());
+		return Math.clamp(0.0F, 1.0F, ((LocalPlayer) client.getCameraEntity()).getCurrentMood());
 	}
 
 	private static float getConstantMood() {
-		if (!(client.cameraEntity instanceof LocalPlayer)) {
+		if (!(client.getCameraEntity() instanceof LocalPlayer)) {
 			return 0.0F;
 		}
 
 		// This should always be 0 to 1 anyways but just making sure
-		return Math.clamp(0.0F, 1.0F, ((LocalPlayerInterface) client.cameraEntity).getCurrentConstantMood());
+		return Math.clamp(0.0F, 1.0F, ((LocalPlayerInterface) client.getCameraEntity()).getCurrentConstantMood());
 	}
 
 	static float getRainStrength() {
@@ -289,12 +289,12 @@ public final class CommonUniforms {
 	}
 
 	private static Vector2i getEyeBrightness() {
-		if (client.cameraEntity == null || client.level == null) {
+		if (client.getCameraEntity() == null || client.level == null) {
 			return ZERO_VECTOR_2i;
 		}
 
-		Vec3 feet = client.cameraEntity.position();
-		Vec3 eyes = new Vec3(feet.x, client.cameraEntity.getEyeY(), feet.z);
+		Vec3 feet = client.getCameraEntity().position();
+		Vec3 eyes = new Vec3(feet.x, client.getCameraEntity().getEyeY(), feet.z);
 		BlockPos eyeBlockPos = BlockPos.containing(eyes);
 
 		int blockLight = client.level.getBrightness(LightLayer.BLOCK, eyeBlockPos);

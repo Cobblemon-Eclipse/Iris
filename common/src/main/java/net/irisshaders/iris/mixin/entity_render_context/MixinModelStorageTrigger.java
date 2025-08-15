@@ -13,7 +13,11 @@ import java.util.List;
 public class MixinModelStorageTrigger {
 	@WrapOperation(method = "submitModel", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
 	private <E> boolean iris$capture(List instance, E e, Operation<Boolean> original) {
-		((ModelStorage) e).iris$capture();
+		if (e instanceof SubmitNodeStorage.TranslucentModelSubmit<?> tms) {
+			((ModelStorage) (Object) tms.modelSubmit()).iris$capture();
+		} else {
+			((ModelStorage) e).iris$capture();
+		}
 		return original.call(instance, e);
 	}
 

@@ -39,6 +39,7 @@ import org.lwjgl.opengl.GL30C;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL32C;
 import org.lwjgl.opengl.GL43C;
+import org.lwjgl.opengl.GL46C;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -208,7 +209,7 @@ public class IrisGenericRenderProgram implements IDhApiGenericObjectShaderProgra
 			matrix.get(buffer);
 			buffer.rewind();
 
-			GlStateManager._glUniformMatrix4(index, buffer);
+			GL46C.glUniformMatrix4fv(index, false, buffer);
 		}
 	}
 

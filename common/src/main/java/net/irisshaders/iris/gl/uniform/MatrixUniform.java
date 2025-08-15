@@ -6,6 +6,7 @@ import net.irisshaders.iris.gl.state.ValueUpdateNotifier;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL46C;
 
 import java.nio.FloatBuffer;
 import java.util.function.Supplier;
@@ -47,7 +48,7 @@ public class MatrixUniform extends Uniform {
 			cachedValue.get(buffer);
 			buffer.rewind();
 
-			GlStateManager._glUniformMatrix4(location, buffer);
+			GL46C.glUniformMatrix4fv(location, false, buffer);
 		}
 	}
 }
