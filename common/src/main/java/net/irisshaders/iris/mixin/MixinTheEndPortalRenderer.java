@@ -3,20 +3,26 @@ package net.irisshaders.iris.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.layer.BlockEntityRenderStateShard;
+import net.irisshaders.iris.layer.OuterWrappedRenderType;
 import net.irisshaders.iris.uniforms.SystemTimeUniforms;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TheEndPortalRenderer.class)
 public class MixinTheEndPortalRenderer {
@@ -39,20 +45,25 @@ public class MixinTheEndPortalRenderer {
 		return 0.375F;
 	}
 
-	@Inject(method = "render(Lnet/minecraft/world/level/block/entity/TheEndPortalBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
-	public void iris$onRender(TheEndPortalBlockEntity entity, float tickDelta, PoseStack poseStack, MultiBufferSource multiBufferSource, int light, int overlay, Vec3 vec3, CallbackInfo ci) {
+	@Inject(method = "renderType", at = @At("HEAD"), cancellable = true)
+	private static void iris$renderType(CallbackInfoReturnable<RenderType> cir) {
+		if (Iris.getCurrentPack().isPresent()) {
+			cir.setReturnValue(RenderType.entitySolid(TheEndPortalRenderer.END_PORTAL_LOCATION));
+		}
+	}
+
+	@Inject(method = "method_73539", at = @At("HEAD"), cancellable = true)
+	public <T extends TheEndPortalBlockEntity> void iris$onRender(TheEndPortalBlockEntity entity, PoseStack.Pose pose, VertexConsumer vertexConsumer, CallbackInfo ci) {
 		if (Iris.getCurrentPack().isEmpty()) {
 			return;
 		}
 
+		int overlay = OverlayTexture.NO_OVERLAY;
+		int light = LightTexture.FULL_BRIGHT;
+
 		ci.cancel();
 
-		// POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL
-		VertexConsumer vertexConsumer =
-			multiBufferSource.getBuffer(RenderType.entitySolid(TheEndPortalRenderer.END_PORTAL_LOCATION));
-
-		PoseStack.Pose pose = poseStack.last();
-		Matrix3f normal = poseStack.last().normal();
+		Matrix3f normal = pose.normal();
 
 		// animation with a period of 100 seconds.
 		// note that texture coordinates are wrapping, not clamping.

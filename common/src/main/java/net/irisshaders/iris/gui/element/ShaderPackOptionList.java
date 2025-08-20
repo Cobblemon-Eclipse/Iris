@@ -163,12 +163,12 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-			this.cachedWidth = entryWidth;
-			this.cachedPosX = x;
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
+			this.cachedWidth = getContentWidth();
+			this.cachedPosX = getContentX();
 
 			// The amount of space widgets will occupy, excluding margins. Will be divided up between widgets.
-			int totalWidthWithoutMargins = entryWidth - (2 * (widgets.size() - 1));
+			int totalWidthWithoutMargins = getContentWidth() - (2 * (widgets.size() - 1));
 
 			totalWidthWithoutMargins -= 3; // Centers it for some reason
 
@@ -177,9 +177,9 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 
 			for (int i = 0; i < widgets.size(); i++) {
 				AbstractElementWidget<?> widget = widgets.get(i);
-				boolean widgetHovered = (hovered && (getHoveredWidget(mouseX) == i)) || getFocused() == widget;
+				boolean widgetHovered = (isHovered && (getHoveredWidget(mouseX) == i)) || getFocused() == widget;
 
-				widget.bounds = new ScreenRectangle(x + (int) ((singleWidgetWidth + 2) * i), y, (int) singleWidgetWidth, entryHeight + 2);
+				widget.bounds = new ScreenRectangle(getContentX() + (int) ((singleWidgetWidth + 2) * i), getContentY(), (int) singleWidgetWidth, getContentHeight() + 2);
 				widget.render(guiGraphics, mouseX, mouseY, tickDelta, widgetHovered);
 
 				screen.setElementHoveredStatus(widget, widgetHovered);
@@ -265,8 +265,12 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
 			// Draw dividing line
+			int x = getX();
+			int y = getY();
+			int entryWidth = getWidth();
+			int entryHeight = getHeight();
 			guiGraphics.fill(x - 3, (y + entryHeight) - 2, x + entryWidth, (y + entryHeight) - 1, 0x66BEBEBE);
 
 			Font font = Minecraft.getInstance().font;
@@ -278,7 +282,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 
 			// Draw back button if present
 			if (this.backButton != null) {
-				backButton.render(guiGraphics, x, y, BUTTON_HEIGHT, mouseX, mouseY, tickDelta, hovered);
+				backButton.render(guiGraphics, x, y, BUTTON_HEIGHT, mouseX, mouseY, tickDelta, isHovered);
 			}
 
 			boolean shiftDown = Screen.hasShiftDown();
@@ -288,7 +292,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 			this.resetButton.text = !resetButton.disabled ? RESET_BUTTON_TEXT_ACTIVE : RESET_BUTTON_TEXT_INACTIVE;
 
 			// Draw the utility buttons
-			this.utilityButtons.renderRightAligned(guiGraphics, (x + entryWidth) - 3, y, BUTTON_HEIGHT, mouseX, mouseY, tickDelta, hovered);
+			this.utilityButtons.renderRightAligned(guiGraphics, (x + entryWidth) - 3, y, BUTTON_HEIGHT, mouseX, mouseY, tickDelta, isHovered);
 
 			// Draw the reset button's tooltip
 			if (this.resetButton.isHovered() || this.resetButton.isFocused()) {

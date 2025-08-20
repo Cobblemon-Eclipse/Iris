@@ -8,6 +8,7 @@ import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -31,14 +32,14 @@ public class ItemStackStateLayerMixin {
 		this.parentState = itemStackRenderState;
 	}
 
-	@Inject(method = "render", at = @At("HEAD"))
-	private void onRender(PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo ci, @Share("lastBState") LocalIntRef ref) {
+	@Inject(method = "submit", at = @At("HEAD"))
+	private void onRender(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, int j, int k, CallbackInfo ci, @Share("lastBState") LocalIntRef ref) {
 		ref.set(CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity());
 		iris$setupId(((ItemContextState) parentState).getDisplayItem(), ((ItemContextState) parentState).getDisplayItemModel());
 	}
 
-	@Inject(method = "render", at = @At("TAIL"))
-	private void onRenderEnd(PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j, CallbackInfo ci, @Share("lastBState") LocalIntRef ref) {
+	@Inject(method = "submit", at = @At("TAIL"))
+	private void onRenderEnd(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, int j, int k, CallbackInfo ci, @Share("lastBState") LocalIntRef ref) {
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(ref.get());
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 	}

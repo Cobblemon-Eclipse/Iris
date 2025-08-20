@@ -11,4 +11,5 @@ public class ImmediateState {
 	public static boolean bypass;
 	public static boolean temporarilyIgnorePass;
 	public static boolean safeToMultiply;
+	public static boolean isRenderingBEs;
 }

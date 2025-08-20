@@ -79,7 +79,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 	@Override
 	public boolean keyPressed(int pContainerEventHandler0, int pInt1, int pInt2) {
 		if (pContainerEventHandler0 == GLFW.GLFW_KEY_UP) {
-			if (getFocused() == getFirstElement()) return true;
+			if (getFocused() == this.children().getFirst()) return true;
 		}
 
 		return super.keyPressed(pContainerEventHandler0, pInt1, pInt2);
@@ -227,7 +227,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 
 	public void select(String name) {
 		for (int i = 0; i < getItemCount(); i++) {
-			BaseEntry entry = getEntry(i);
+			BaseEntry entry = this.children().get(i);
 
 			if (entry instanceof ShaderPackEntry && ((ShaderPackEntry) entry).packName.equals(name)) {
 				setSelected(entry);
@@ -262,7 +262,13 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
+			// Draw dividing line
+			int x = getContentX();
+			int y = getContentY();
+			int entryWidth = getContentWidth();
+			int entryHeight = getContentHeight();
+
 			guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, (x + entryWidth / 2) - 2, y + (entryHeight - 11) / 2, 0xFFC2C2C2);
 		}
 	}
@@ -288,9 +294,15 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
+			// Draw dividing line
+			int x = getContentX();
+			int y = getContentY();
+			int entryWidth = getContentWidth();
+			int entryHeight = getContentHeight();
+
 			GuiUtil.bindIrisWidgetsTexture();
-			GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth, entryHeight + 2, hovered, !allowEnableShadersButton);
+			GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth, entryHeight + 2, isHovered, !allowEnableShadersButton);
 			guiGraphics.drawCenteredString(Minecraft.getInstance().font, getEnableDisableLabel(), (x + entryWidth / 2) - 2, y + (entryHeight - 11) / 2, 0xFFFFFFFF);
 		}
 
@@ -362,9 +374,15 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
+			// Draw dividing line
+			int x = getContentX();
+			int y = getContentY();
+			int entryWidth = getContentWidth();
+			int entryHeight = getContentHeight();
+
 			GuiUtil.bindIrisWidgetsTexture();
-			GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth, entryHeight + 2, hovered, !allowPressButton);
+			GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth, entryHeight + 2, isHovered, !allowPressButton);
 			guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, (x + entryWidth / 2) - 2, y + (entryHeight - 11) / 2, 0xFFFFFFFF);
 		}
 
@@ -425,15 +443,21 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public void render(GuiGraphics guiGraphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isHovered, float tickDelta) {
+			// Draw dividing line
+			int x = getContentX();
+			int y = getContentY();
+			int entryWidth = getContentWidth();
+			int entryHeight = getContentHeight();
+
 			this.bounds = new ScreenRectangle(x, y, entryWidth, entryHeight);
 			Font font = Minecraft.getInstance().font;
 			int color = 0xFFFFFFFF;
 			String name = packName;
 
-			if (hovered) {
+			if (isHovered) {
 				GuiUtil.bindIrisWidgetsTexture();
-				GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth, entryHeight + 4, hovered, false);
+				GuiUtil.drawButton(guiGraphics, x - 2, y - 2, entryWidth + 4, entryHeight + 4, isHovered, false);
 			}
 
 			boolean shadersEnabled = list.getTopButtonRow().shadersEnabled;

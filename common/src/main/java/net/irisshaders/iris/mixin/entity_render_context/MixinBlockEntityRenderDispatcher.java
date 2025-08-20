@@ -1,5 +1,7 @@
 package net.irisshaders.iris.mixin.entity_render_context;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.irisshaders.iris.layer.BlockEntityRenderStateShard;
@@ -9,7 +11,9 @@ import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,29 +42,27 @@ public class MixinBlockEntityRenderDispatcher {
 	//
 	// NOTE: This is the last location that we can inject at, because the MultiBufferSource variable gets
 	// captured by the lambda shortly afterwards, and therefore our ModifyVariable call becomes ineffective!
-	@ModifyVariable(method = "render", at = @At(value = "INVOKE",
-		target = "Lnet/minecraft/world/level/block/entity/BlockEntityType;isValid(Lnet/minecraft/world/level/block/state/BlockState;)Z"),
-		allow = 1, require = 1, argsOnly = true)
-	private MultiBufferSource iris$wrapBufferSource(MultiBufferSource bufferSource, BlockEntity blockEntity) {
+	@WrapMethod(method = "submit")
+	private <E extends BlockEntity> void iris$wrapSubmission(E blockEntity, float f, PoseStack poseStack, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, SubmitNodeCollector submitNodeCollector, Operation<Void> original) {
 		BlockState state = blockEntity.getBlockState();
+
+		ImmediateState.isRenderingBEs = true;
 
 		Object2IntMap<BlockState> blockStateIds = WorldRenderingSettings.INSTANCE.getBlockStateIds();
 
 		if (blockStateIds == null || !ImmediateState.isRenderingLevel) {
-			return bufferSource;
+			original.call(blockEntity, f, poseStack, crumblingOverlay, submitNodeCollector);
+
+			return;
 		}
 
 		int intId = blockStateIds.getOrDefault(state, -1);
 
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(intId);
 
-		return new BufferSourceWrapper(bufferSource, (renderType) -> OuterWrappedRenderType.wrapExactlyOnce("iris:block_entity", renderType, BlockEntityRenderStateShard.INSTANCE));
-	}
+		original.call(blockEntity, f, poseStack, crumblingOverlay, submitNodeCollector);
 
-
-	@Inject(method = "render", at = @At(value = "RETURN"))
-	private void iris$afterRender(BlockEntity blockEntity, float tickDelta, PoseStack matrix,
-								  MultiBufferSource bufferSource, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);
+		ImmediateState.isRenderingBEs = false;
 	}
 }

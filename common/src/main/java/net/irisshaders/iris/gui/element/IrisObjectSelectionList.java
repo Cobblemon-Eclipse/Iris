@@ -17,7 +17,7 @@ public class IrisObjectSelectionList<E extends AbstractSelectionList.Entry<E>> e
 	}
 
 	public void select(int entry) {
-		setSelected(this.getEntry(entry));
+		setSelected(this.children().get(entry));
 	}
 
 	@Override

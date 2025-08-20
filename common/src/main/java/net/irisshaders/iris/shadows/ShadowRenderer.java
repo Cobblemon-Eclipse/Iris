@@ -42,6 +42,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.OutlineBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
@@ -171,7 +172,7 @@ public class ShadowRenderer {
 
 		levelRenderState = new LevelRenderState();
 		submitNodeStorage = new SubmitNodeStorage();
-		featureRenderDispatcher = new FeatureRenderDispatcher(submitNodeStorage, Minecraft.getInstance().getBlockRenderer(), buffers.bufferSource(), Minecraft.getInstance().getAtlasManager(), outlineBuffers, Minecraft.getInstance().font);
+		featureRenderDispatcher = new FeatureRenderDispatcher(submitNodeStorage, Minecraft.getInstance().getBlockRenderer(), buffers.bufferSource(), Minecraft.getInstance().getAtlasManager(), outlineBuffers, buffers.crumblingBufferSource(), Minecraft.getInstance().font);
 	}
 
 	public static PoseStack createShadowModelView(float sunPathRotation, float intervalSize, float nearPlane, float farPlane) {
@@ -548,9 +549,9 @@ public class ShadowRenderer {
 		profiler.popPush("build blockentities");
 
 		if (shouldRenderBlockEntities) {
-			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, buffers, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, false);
+			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, submitNodeStorage, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, false);
 		} else if (shouldRenderLightBlockEntities) {
-			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, buffers, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, true);
+			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, submitNodeStorage, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, true);
 		}
 
 		profiler.popPush("draw entities");
@@ -613,7 +614,7 @@ public class ShadowRenderer {
 		profiler.popPush("updatechunks");
 	}
 
-	public int renderBlockEntities(RenderBuffers bufferSource, PoseStack modelView, Camera camera, double cameraX, double cameraY, double cameraZ, float tickDelta, boolean hasEntityFrustum, boolean lightsOnly) {
+	public int renderBlockEntities(SubmitNodeCollector bufferSource, PoseStack modelView, Camera camera, double cameraX, double cameraY, double cameraZ, float tickDelta, boolean hasEntityFrustum, boolean lightsOnly) {
 		Profiler.get().push("build blockentities");
 
 		int shadowBlockEntities = 0;
@@ -634,9 +635,10 @@ public class ShadowRenderer {
 					continue;
 				}
 			}
+
 			modelView.pushPose();
 			modelView.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
-			Minecraft.getInstance().getBlockEntityRenderDispatcher().render(entity, tickDelta, modelView, buffers.bufferSource());
+			Minecraft.getInstance().getBlockEntityRenderDispatcher().submit(entity, tickDelta, modelView, null, bufferSource);
 			modelView.popPose();
 
 			shadowBlockEntities++;

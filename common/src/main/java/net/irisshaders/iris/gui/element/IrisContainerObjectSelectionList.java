@@ -16,6 +16,6 @@ public class IrisContainerObjectSelectionList<E extends ContainerObjectSelection
 	}
 
 	public void select(int entry) {
-		setSelected(this.getEntry(entry));
+		setSelected(this.children().get(entry));
 	}
 }
