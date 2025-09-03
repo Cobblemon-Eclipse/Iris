@@ -11,6 +11,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.ScreenDirection;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -110,7 +112,7 @@ public abstract class BaseOptionElementWidget<T extends OptionMenuElement> exten
 	}
 
 	protected final void tryRenderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered) {
-		if (Screen.hasShiftDown()) {
+		if (Minecraft.getInstance().hasShiftDown()) {
 			renderTooltip(guiGraphics, SET_TO_DEFAULT, mouseX, mouseY, hovered);
 		} else if (this.isLabelTrimmed && !this.screen.isDisplayingComment()) {
 			renderTooltip(guiGraphics, this.unmodifiedLabel, mouseX, mouseY, hovered);
@@ -164,15 +166,15 @@ public abstract class BaseOptionElementWidget<T extends OptionMenuElement> exten
 	}
 
 	@Override
-	public boolean mouseClicked(double mx, double my, int button, boolean bl2) {
-		if (button == GLFW.GLFW_MOUSE_BUTTON_1 || button == GLFW.GLFW_MOUSE_BUTTON_2) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean bl2) {
+		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1 || event.button() == GLFW.GLFW_MOUSE_BUTTON_2) {
 			boolean refresh = false;
 
-			if (Screen.hasShiftDown()) {
+			if (Minecraft.getInstance().hasShiftDown()) {
 				refresh = applyOriginalValue();
 			}
 			if (!refresh) {
-				if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
+				if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1) {
 					refresh = applyNextValue();
 				} else {
 					refresh = applyPreviousValue();
@@ -187,15 +189,15 @@ public abstract class BaseOptionElementWidget<T extends OptionMenuElement> exten
 
 			return true;
 		}
-		return super.mouseClicked(mx, my, button, bl2);
+		return super.mouseClicked(event, bl2);
 	}
 
 	@Override
-	public boolean keyPressed(int keycode, int scancode, int modifiers) {
-		if (keycode == InputConstants.KEY_RETURN) {
-			boolean refresh = Screen.hasControlDown()
+	public boolean keyPressed(KeyEvent event) {
+		if (event.isConfirmation()) {
+			boolean refresh = Minecraft.getInstance().hasControlDown()
 				? applyOriginalValue()
-				: (Screen.hasShiftDown() ? applyPreviousValue() : applyNextValue());
+				: (Minecraft.getInstance().hasShiftDown() ? applyPreviousValue() : applyNextValue());
 
 			if (refresh) {
 				this.navigation.refresh();

@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BlockMarker.class)
 public class MixinStationaryItemParticle {
-	@Unique
+	/*@Unique
 	private boolean isOpaque;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
@@ -34,5 +34,5 @@ public class MixinStationaryItemParticle {
 		if (isOpaque) {
 			cir.setReturnValue(IrisParticleRenderTypes.TERRAIN_OPAQUE);
 		}
-	}
+	}*/
 }

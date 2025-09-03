@@ -3,17 +3,27 @@ package net.irisshaders.iris.mixin.entity_render_context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.Object2IntFunction;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.irisshaders.iris.layer.BlockEntityRenderStateShard;
 import net.irisshaders.iris.layer.BufferSourceWrapper;
 import net.irisshaders.iris.layer.OuterWrappedRenderType;
+import net.irisshaders.iris.shaderpack.materialmap.NamespacedId;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,34 +44,28 @@ public class MixinBlockEntityRenderDispatcher {
 	private static final String RUN_REPORTED =
 		"Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;tryRender(Lnet/minecraft/world/level/block/entity/BlockEntity;Ljava/lang/Runnable;)V";
 
-	// I inject here in the method so that:
-	//
-	// 1. we can know that some checks we need have already been done
-	// 2. if someone cancels this method hopefully it gets cancelled before this point, so we
-	//    aren't running any redundant computations.
-	//
-	// NOTE: This is the last location that we can inject at, because the MultiBufferSource variable gets
-	// captured by the lambda shortly afterwards, and therefore our ModifyVariable call becomes ineffective!
-	@WrapMethod(method = "submit")
-	private <E extends BlockEntity> void iris$wrapSubmission(E blockEntity, float f, PoseStack poseStack, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, SubmitNodeCollector submitNodeCollector, Operation<Void> original) {
-		BlockState state = blockEntity.getBlockState();
-
-		ImmediateState.isRenderingBEs = true;
-
+	// Inject after MatrixStack#push since at this point we know that most cancellation checks have already passed.
+	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;getRenderer(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;)Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;", shift = At.Shift.AFTER))
+	private <E extends BlockEntity, S extends BlockEntityRenderState> void iris$beginEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		Object2IntMap<BlockState> blockStateIds = WorldRenderingSettings.INSTANCE.getBlockStateIds();
-
+		ImmediateState.isRenderingBEs = true;
 		if (blockStateIds == null || !ImmediateState.isRenderingLevel) {
-			original.call(blockEntity, f, poseStack, crumblingOverlay, submitNodeCollector);
-
 			return;
 		}
 
-		int intId = blockStateIds.getOrDefault(state, -1);
+		int intId;
+
+		// TODO: Add special types
+
+		intId = blockStateIds.applyAsInt(blockEntityRenderState.blockState);
 
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(intId);
+	}
 
-		original.call(blockEntity, f, poseStack, crumblingOverlay, submitNodeCollector);
-
+	// Inject before MatrixStack#pop so that our wrapper stack management operations naturally line up
+	// with vanilla's MatrixStack management functions.
+	@Inject(method = "submit", at = @At(value = "RETURN"))
+	private<E extends BlockEntity, S extends BlockEntityRenderState> void iris$endEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);
 		ImmediateState.isRenderingBEs = false;
 	}

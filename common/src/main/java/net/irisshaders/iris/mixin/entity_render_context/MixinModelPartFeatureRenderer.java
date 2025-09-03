@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ModelPartFeatureRenderer.class)
 public class MixinModelPartFeatureRenderer {
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/geom/ModelPart;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"))
-	private void iris$set(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, CallbackInfo ci, @Local SubmitNodeStorage.ModelPartSubmit modelSubmit) {
+	private void iris$set(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, MultiBufferSource.BufferSource bufferSource2, CallbackInfo ci, @Local SubmitNodeStorage.ModelPartSubmit modelSubmit) {
 		((ModelStorage) (Object) modelSubmit).iris$set();
 	}
 
 	@Inject(method = "render", at = @At("RETURN"))
-	private void iris$clear(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+	private void iris$clear(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, MultiBufferSource.BufferSource bufferSource2, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);

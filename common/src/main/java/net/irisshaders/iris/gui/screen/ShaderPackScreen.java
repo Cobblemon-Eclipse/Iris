@@ -25,6 +25,8 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.PostChain;
@@ -135,7 +137,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		notifier.onNewFrame();
 		backgroundInit = 1.0f;
 
-		if (Screen.hasControlDown() && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_D)) {
+		if (Minecraft.getInstance().hasControlDown() && InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), GLFW.GLFW_KEY_D)) {
 			Minecraft.getInstance().setScreen(new ConfirmScreen((option) -> {
 				Iris.setDebug(option);
 				Minecraft.getInstance().setScreen(this);
@@ -145,7 +147,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				Component.literal("No")));
 		}
 
-		if (Screen.hasControlDown() && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G)) {
+		if (Minecraft.getInstance().hasControlDown() && InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), GLFW.GLFW_KEY_G)) {
 			Minecraft.getInstance().setScreen(new ConfirmScreen((option) -> {
 				try {
 					Iris.getIrisConfig().setUnknown(option);
@@ -223,9 +225,11 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	@Override
-	public boolean mouseClicked(double d, double e, int i, boolean bl2) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean bl2) {
 		int widthValue = this.font.width("New update available!");
-		if (this.updateComponent != null && d < widthValue && e > (this.height - 10) && e < this.height) {
+		double x = event.x();
+		double y = event.y();
+		if (this.updateComponent != null && x < widthValue && y > (this.height - 10) && y < this.height) {
 			this.minecraft.setScreen(new ConfirmLinkScreen(bl -> {
 				if (bl) {
 					Iris.getUpdateChecker().getUpdateLink().ifPresent(Util.getPlatform()::openUri);
@@ -233,7 +237,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				this.minecraft.setScreen(this);
 			}, Iris.getUpdateChecker().getUpdateLink().map(URI::toString).orElse(""), true));
 		}
-		return super.mouseClicked(d, e, i, bl2);
+		return super.mouseClicked(event, bl2);
 	}
 
 	@Override
@@ -386,8 +390,8 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	@Override
-	public boolean keyPressed(int key, int j, int k) {
-		if (key == GLFW.GLFW_KEY_ESCAPE) {
+	public boolean keyPressed(KeyEvent event) {
+		if (event.isEscape()) {
 			if (this.guiHidden) {
 				this.guiHidden = false;
 				this.init();
@@ -403,9 +407,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 				return true;
 			}
-		} else if (key == GLFW.GLFW_KEY_TAB) {
+		} else if (event.isCycleFocus()) {
 			if (!optionMenuOpen) {
-				shaderPackList.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+				shaderPackList.keyPressed(new KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
 			}
 
 			this.optionMenuOpen = !this.optionMenuOpen;
@@ -420,12 +424,12 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			this.init();
 
 			this.setFocused(null);
-		} else if (key == GLFW.GLFW_KEY_F1 && this.showHideButton != null) {
+		} else if (event.key() == GLFW.GLFW_KEY_F1 && this.showHideButton != null) {
 			this.guiHidden = !guiHidden;
 			this.init();
 		}
 
-		return this.guiHidden || super.keyPressed(key, j, k);
+		return this.guiHidden || super.keyPressed(event);
 	}
 
 	@Override

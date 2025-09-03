@@ -52,8 +52,8 @@ import java.util.Queue;
  * As the saying goes, "Work smarter, not harder."
  */
 @Mixin(ParticleEngine.class)
-public class MixinParticleEngine implements PhasedParticleEngine {
-	private static final List<ParticleRenderType> OPAQUE_PARTICLE_RENDER_TYPES;
+public class MixinParticleEngine {// implements PhasedParticleEngine {
+	/*private static final List<ParticleRenderType> OPAQUE_PARTICLE_RENDER_TYPES;
 	@Mutable
 	@Shadow
 	@Final
@@ -102,5 +102,5 @@ public class MixinParticleEngine implements PhasedParticleEngine {
 	@Override
 	public void setParticleRenderingPhase(ParticleRenderingPhase phase) {
 		this.phase = phase;
-	}
+	}*/
 }

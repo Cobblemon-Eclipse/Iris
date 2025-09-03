@@ -9,7 +9,9 @@ import net.irisshaders.iris.uniforms.SystemTimeUniforms;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.AbstractEndPortalRenderer;
 import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
+import net.minecraft.client.renderer.blockentity.state.EndPortalRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
@@ -24,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(TheEndPortalRenderer.class)
+@Mixin(AbstractEndPortalRenderer.class)
 public class MixinTheEndPortalRenderer {
 	@Unique
 	private static final float RED = 0.075f;
@@ -53,7 +55,7 @@ public class MixinTheEndPortalRenderer {
 	}
 
 	@Inject(method = "method_73539", at = @At("HEAD"), cancellable = true)
-	public <T extends TheEndPortalBlockEntity> void iris$onRender(TheEndPortalBlockEntity entity, PoseStack.Pose pose, VertexConsumer vertexConsumer, CallbackInfo ci) {
+	public <T extends TheEndPortalBlockEntity> void iris$onRender(EndPortalRenderState entity, PoseStack.Pose pose, VertexConsumer vertexConsumer, CallbackInfo ci) {
 		if (Iris.getCurrentPack().isEmpty()) {
 			return;
 		}
@@ -109,13 +111,13 @@ public class MixinTheEndPortalRenderer {
 	}
 
 	@Unique
-	private void quad(TheEndPortalBlockEntity entity, VertexConsumer vertexConsumer, PoseStack.Pose pose, Matrix3f normal,
+	private void quad(EndPortalRenderState entity, VertexConsumer vertexConsumer, PoseStack.Pose pose, Matrix3f normal,
 					  Direction direction, float progress, int overlay, int light,
 					  float x1, float y1, float z1,
 					  float x2, float y2, float z2,
 					  float x3, float y3, float z3,
 					  float x4, float y4, float z4) {
-		if (!entity.shouldRenderFace(direction)) {
+		if (!entity.facesToShow.contains(direction)) {
 			return;
 		}
 

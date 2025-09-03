@@ -31,36 +31,7 @@ import java.util.SortedSet;
 @Mixin(SodiumWorldRenderer.class)
 public class MixinSodiumWorldRenderer {
 	@Unique
-	private static boolean renderLightsOnly = false;
-	@Unique
-	private static int beList = 0;
-
-	static {
-		ShadowRenderingState.setBlockEntityRenderFunction((shadowRenderer, bufferSource, modelView, camera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, lightsOnly) -> {
-			renderLightsOnly = lightsOnly;
-
-			SodiumWorldRenderer.instance().renderBlockEntities(modelView, Minecraft.getInstance().renderBuffers(), bufferSource, ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).getDestructionProgress(), camera, tickDelta, null);
-
-			int finalBeList = beList;
-
-			beList = 0;
-
-			return finalBeList;
-		});
-	}
-
-	@Unique
 	private float lastSunAngle;
-
-	@Inject(method = "renderBlockEntity", at = @At("HEAD"), cancellable = true)
-	private static void checkRenderShadow(PoseStack matrices, RenderBuffers bufferBuilders, Long2ObjectMap<SortedSet<BlockDestructionProgress>> blockBreakingProgressions, float tickDelta, SubmitNodeCollector collector, double x, double y, double z, BlockEntityRenderDispatcher dispatcher, BlockEntity entity, LocalPlayer player, LocalBooleanRef isGlowing, CallbackInfo ci) {
-		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
-			if (renderLightsOnly && entity.getBlockState().getLightEmission() == 0) {
-				ci.cancel();
-			}
-			beList++;
-		}
-	}
 
 
 	@Redirect(method = "setupTerrain", remap = false,

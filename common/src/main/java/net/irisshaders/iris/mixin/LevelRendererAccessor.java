@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
@@ -43,4 +44,7 @@ public interface LevelRendererAccessor {
 
 	@Accessor
 	Long2ObjectMap<SortedSet<BlockDestructionProgress>> getDestructionProgress();
+
+	@Invoker("extractVisibleBlockEntities")
+	void invokeExtractBlockEntities(Camera camera, float f, LevelRenderState levelRenderState);
 }

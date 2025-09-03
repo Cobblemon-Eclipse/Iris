@@ -42,7 +42,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRenderer {
-	@Shadow
+	/*@Shadow
 	@Final
 	private Minecraft minecraft;
 
@@ -84,5 +84,5 @@ public abstract class MixinLevelRenderer {
 
 	private ParticleRenderingSettings getRenderingSettings() {
 		return Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::getParticleRenderingSettings).orElse(ParticleRenderingSettings.MIXED);
-	}
+	}*/
 }

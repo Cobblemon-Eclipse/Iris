@@ -14,8 +14,8 @@ public class MixinFireworkSparkParticle extends SimpleAnimatedParticle {
 		super(level, x, y, z, spriteProvider, upwardsAcceleration);
 	}
 
-	@Override
+	/*@Override
 	public ParticleRenderType getRenderType() {
 		return Iris.IS_FOOL ? ParticleRenderType.TERRAIN_SHEET : ParticleRenderType.PARTICLE_SHEET_OPAQUE;
-	}
+	}*/
 }

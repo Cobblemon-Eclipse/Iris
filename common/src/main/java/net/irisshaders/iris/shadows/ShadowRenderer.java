@@ -44,6 +44,7 @@ import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -71,6 +72,7 @@ import org.lwjgl.opengl.GL30C;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -548,11 +550,11 @@ public class ShadowRenderer {
 
 		profiler.popPush("build blockentities");
 
-		if (shouldRenderBlockEntities) {
-			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, submitNodeStorage, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, false);
-		} else if (shouldRenderLightBlockEntities) {
-			renderedShadowBlockEntities = ShadowRenderingState.renderBlockEntities(this, submitNodeStorage, modelView, playerCamera, cameraX, cameraY, cameraZ, tickDelta, hasEntityFrustum, true);
+		if (shouldRenderBlockEntities || shouldRenderLightBlockEntities) {
+			extractVisibleBlockEntities(levelRenderer, bufferSource, modelView, tickDelta, playerCamera, levelRenderState, !shouldRenderBlockEntities && shouldRenderLightBlockEntities);
 		}
+
+		renderedShadowBlockEntities = renderBlockEntities(levelRenderer, modelView, submitNodeStorage, levelRenderState, playerCamera);
 
 		profiler.popPush("draw entities");
 
@@ -614,39 +616,38 @@ public class ShadowRenderer {
 		profiler.popPush("updatechunks");
 	}
 
-	public int renderBlockEntities(SubmitNodeCollector bufferSource, PoseStack modelView, Camera camera, double cameraX, double cameraY, double cameraZ, float tickDelta, boolean hasEntityFrustum, boolean lightsOnly) {
-		Profiler.get().push("build blockentities");
+	private int renderBlockEntities(LevelRendererAccessor levelRenderer, PoseStack modelView, SubmitNodeStorage submitNodeStorage, LevelRenderState levelRenderState, Camera camera) {
+		Vec3 vec3 = camera.getPosition();
+		PoseStack poseStack = modelView;
+		double d = vec3.x();
+		double e = vec3.y();
+		double f = vec3.z();
 
-		int shadowBlockEntities = 0;
-		BoxCuller culler = null;
-		if (hasEntityFrustum) {
-			culler = new BoxCuller(halfPlaneLength * (renderDistanceMultiplier * entityShadowDistanceMultiplier));
-			culler.setPosition(cameraX, cameraY, cameraZ);
+		int i = 0;
+
+		for (BlockEntityRenderState blockEntityRenderState : levelRenderState.blockEntityRenderStates) {
+			BlockPos blockPos = blockEntityRenderState.blockPos;
+			poseStack.pushPose();
+			poseStack.translate(blockPos.getX() - d, blockPos.getY() - e, blockPos.getZ() - f);
+			Minecraft.getInstance().getBlockEntityRenderDispatcher().submit(blockEntityRenderState, poseStack, submitNodeStorage);
+			poseStack.popPose();
+			i++;
 		}
 
-		for (BlockEntity entity : visibleBlockEntities) {
-			if (lightsOnly && entity.getBlockState().getLightEmission() == 0) {
-				continue;
+		return i;
+	}
+
+	private void extractVisibleBlockEntities(LevelRendererAccessor accessor, MultiBufferSource.BufferSource bufferSource, PoseStack modelView, float tickDelta, Camera camera, LevelRenderState levelRenderState, boolean lightsOnly) {
+		accessor.invokeExtractBlockEntities(camera, tickDelta, levelRenderState);
+
+		if (lightsOnly) {
+			Iterator<BlockEntityRenderState> state = levelRenderState.blockEntityRenderStates.iterator();
+
+			while (state.hasNext()) {
+				BlockEntityRenderState blockEntityRenderState = (BlockEntityRenderState) state.next();
+				if (blockEntityRenderState.blockState.getLightEmission() == 0) state.remove();
 			}
-
-			BlockPos pos = entity.getBlockPos();
-			if (hasEntityFrustum) {
-				if (culler.isCulled(pos.getX() - 1, pos.getY() - 1, pos.getZ() - 1, pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1)) {
-					continue;
-				}
-			}
-
-			modelView.pushPose();
-			modelView.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
-			Minecraft.getInstance().getBlockEntityRenderDispatcher().submit(entity, tickDelta, modelView, null, bufferSource);
-			modelView.popPose();
-
-			shadowBlockEntities++;
 		}
-
-		Profiler.get().pop();
-
-		return shadowBlockEntities;
 	}
 
 	private int renderEntities(LevelRendererAccessor levelRenderer, EntityRenderDispatcher dispatcher, MultiBufferSource.BufferSource bufferSource, PoseStack modelView, float tickDelta, Frustum frustum, double cameraX, double cameraY, double cameraZ) {

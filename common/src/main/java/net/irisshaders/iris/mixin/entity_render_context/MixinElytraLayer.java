@@ -12,9 +12,9 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.layers.WingsLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -39,7 +39,7 @@ public abstract class MixinElytraLayer<S extends HumanoidRenderState, M extends 
 	private void changeId(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, S humanoidRenderState, float f, float g, CallbackInfo ci) {
 		if (WorldRenderingSettings.INSTANCE.getItemIds() == null) return;
 
-		if (humanoidRenderState instanceof PlayerRenderState state && state.skin.capeTexture() != null
+		if (humanoidRenderState instanceof AvatarRenderState state && state.skin.capeTexture() != null
 			&& state.showCape) {
 			CapturedRenderingState.INSTANCE.setCurrentRenderedItem(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(ELYTRA_CAPE_LOCATION));
 			return;

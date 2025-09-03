@@ -3,6 +3,7 @@ package net.irisshaders.iris.mixin.fantastic;
 import net.irisshaders.iris.fantastic.IrisParticleRenderTypes;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -18,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TerrainParticle.class)
 public class MixinTerrainParticle {
-	@Unique
+	/*@Unique
 	private boolean isOpaque;
 
 	@Inject(method = "<init>(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V", at = @At("RETURN"))
@@ -30,10 +31,10 @@ public class MixinTerrainParticle {
 		}
 	}
 
-	@Inject(method = "getRenderType", at = @At("HEAD"), cancellable = true)
-	private void iris$overrideParticleSheet(CallbackInfoReturnable<ParticleRenderType> cir) {
+	@Inject(method = "getLayer", at = @At("HEAD"), cancellable = true)
+	private void iris$overrideParticleSheet(CallbackInfoReturnable<SingleQuadParticle.Layer> cir) {
 		if (isOpaque) {
 			cir.setReturnValue(IrisParticleRenderTypes.TERRAIN_OPAQUE);
 		}
-	}
+	}*/
 }

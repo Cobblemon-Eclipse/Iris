@@ -15,6 +15,8 @@ import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -77,12 +79,12 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 	}
 
 	@Override
-	public boolean keyPressed(int pContainerEventHandler0, int pInt1, int pInt2) {
-		if (pContainerEventHandler0 == GLFW.GLFW_KEY_UP) {
+	public boolean keyPressed(KeyEvent event) {
+		if (event.isUp()) {
 			if (getFocused() == this.children().getFirst()) return true;
 		}
 
-		return super.keyPressed(pContainerEventHandler0, pInt1, pInt2);
+		return super.keyPressed(event);
 	}
 
 	@Override
@@ -311,7 +313,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
+		public boolean mouseClicked(MouseButtonEvent event, boolean bl2) {
 			if (this.allowEnableShadersButton) {
 				setShadersEnabled(!this.shadersEnabled);
 				GuiUtil.playButtonClickSound();
@@ -322,8 +324,8 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean keyPressed(int keycode, int scancode, int modifiers) {
-			if (keycode == GLFW.GLFW_KEY_ENTER) {
+		public boolean keyPressed(KeyEvent event) {
+			if (event.isConfirmation()) {
 				if (this.allowEnableShadersButton) {
 					setShadersEnabled(!this.shadersEnabled);
 					GuiUtil.playButtonClickSound();
@@ -387,7 +389,7 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
+		public boolean mouseClicked(MouseButtonEvent event, boolean repeat) {
 			if (this.allowPressButton) {
 				GuiUtil.playButtonClickSound();
 				onClick.run();
@@ -398,8 +400,8 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean keyPressed(int keycode, int scancode, int modifiers) {
-			if (keycode == GLFW.GLFW_KEY_ENTER) {
+		public boolean keyPressed(KeyEvent event) {
+			if (event.isConfirmation()) {
 				if (this.allowPressButton) {
 					GuiUtil.playButtonClickSound();
 					onClick.run();
@@ -484,9 +486,9 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
+		public boolean mouseClicked(MouseButtonEvent event, boolean repeat) {
 			// Only do anything on left-click
-			if (button != 0) {
+			if (event.button() != 0) {
 				return false;
 			}
 
@@ -494,9 +496,9 @@ public class ShaderPackSelectionList extends IrisObjectSelectionList<ShaderPackS
 		}
 
 		@Override
-		public boolean keyPressed(int keycode, int pInt1, int pInt2) {
+		public boolean keyPressed(KeyEvent event) {
 			// Only do anything on key-press
-			if (keycode != GLFW.GLFW_KEY_ENTER) {
+			if (!event.isConfirmation()) {
 				return false;
 			}
 

@@ -23,6 +23,8 @@ import net.minecraft.client.gui.navigation.ScreenDirection;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -193,13 +195,13 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
-			return this.widgets.get(getHoveredWidget((int) mouseX)).mouseClicked(mouseX, mouseY, button, bl2);
+		public boolean mouseClicked(MouseButtonEvent event, boolean bl2) {
+			return this.widgets.get(getHoveredWidget((int) event.x())).mouseClicked(event, bl2);
 		}
 
 		@Override
-		public boolean mouseReleased(double mouseX, double mouseY, int button) {
-			return this.widgets.get(getHoveredWidget((int) mouseX)).mouseReleased(mouseX, mouseY, button);
+		public boolean mouseReleased(MouseButtonEvent event) {
+			return this.widgets.get(getHoveredWidget((int) event.x())).mouseReleased(event);
 		}
 
 		@Override
@@ -285,7 +287,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 				backButton.render(guiGraphics, x, y, BUTTON_HEIGHT, mouseX, mouseY, tickDelta, isHovered);
 			}
 
-			boolean shiftDown = Screen.hasShiftDown();
+			boolean shiftDown = Minecraft.getInstance().hasShiftDown();
 
 			// Set the appearance of the reset button
 			this.resetButton.disabled = !shiftDown && !resetButton.isFocused();
@@ -323,20 +325,20 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button, boolean bl2) {
-			boolean backButtonResult = backButton != null && backButton.mouseClicked(mouseX, mouseY, button, bl2);
-			boolean utilButtonResult = utilityButtons.mouseClicked(mouseX, mouseY, button, bl2);
+		public boolean mouseClicked(MouseButtonEvent event, boolean bl2) {
+			boolean backButtonResult = backButton != null && backButton.mouseClicked(event, bl2);
+			boolean utilButtonResult = utilityButtons.mouseClicked(event, bl2);
 
 			return backButtonResult || utilButtonResult;
 		}
 
 		@Override
-		public boolean keyPressed(int keycode, int scancode, int modifiers) {
-			if (backButton != null && backButton.keyPressed(keycode, scancode, modifiers)) {
+		public boolean keyPressed(KeyEvent event) {
+			if (backButton != null && backButton.keyPressed(event)) {
 				return true;
 			}
 
-			return utilityButtons.keyPressed(keycode, scancode, modifiers);
+			return utilityButtons.keyPressed(event);
 		}
 
 		@Override
@@ -352,7 +354,7 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 		}
 
 		private boolean resetButtonClicked(IrisElementRow.TextButtonElement button) {
-			if (Screen.hasShiftDown()) {
+			if (Minecraft.getInstance().hasShiftDown()) {
 				Iris.resetShaderPackOptionsOnNextReload();
 				this.screen.applyChanges();
 				GuiUtil.playButtonClickSound();
