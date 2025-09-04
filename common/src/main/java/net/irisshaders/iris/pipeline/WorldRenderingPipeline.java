@@ -13,6 +13,7 @@ import net.irisshaders.iris.shaderpack.properties.ParticleRenderingSettings;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
 import net.minecraft.client.Camera;
+import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -22,7 +23,7 @@ public interface WorldRenderingPipeline {
 
 	void renderShadows(LevelRendererAccessor worldRenderer, Camera camera);
 
-	void addDebugText(List<String> messages);
+	void addDebugText(DebugScreenDisplayer messages);
 
 	OptionalInt getForcedShadowRenderDistanceChunksForDisplay();
 

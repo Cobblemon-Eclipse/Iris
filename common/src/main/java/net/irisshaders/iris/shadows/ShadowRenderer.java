@@ -34,6 +34,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderState;
@@ -732,25 +733,25 @@ public class ShadowRenderer {
 		targets.copyPreTranslucentDepth();
 	}
 
-	public void addDebugText(List<String> messages) {
+	public void addDebugText(DebugScreenDisplayer messages) {
 		if (IrisVideoSettings.getOverriddenShadowDistance(IrisVideoSettings.shadowDistance) == 0) {
-			messages.add("[" + Iris.MODNAME + "] Shadow Maps: off, shadow distance 0");
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Maps: off, shadow distance 0");
 			return;
 		}
 
 		if (Iris.getIrisConfig().areDebugOptionsEnabled()) {
-			messages.add("[" + Iris.MODNAME + "] Shadow Maps: " + debugStringOverall);
-			messages.add("[" + Iris.MODNAME + "] Shadow Distance Terrain: " + terrainFrustumHolder.getDistanceInfo() + " Entity: " + entityFrustumHolder.getDistanceInfo());
-			messages.add("[" + Iris.MODNAME + "] Shadow Culling Terrain: " + terrainFrustumHolder.getCullingInfo() + " Entity: " + entityFrustumHolder.getCullingInfo());
-			messages.add("[" + Iris.MODNAME + "] Shadow Projection: " + getProjectionInfo());
-			messages.add("[" + Iris.MODNAME + "] Shadow Terrain: " + debugStringTerrain
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Maps: " + debugStringOverall);
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Distance Terrain: " + terrainFrustumHolder.getDistanceInfo() + " Entity: " + entityFrustumHolder.getDistanceInfo());
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Culling Terrain: " + terrainFrustumHolder.getCullingInfo() + " Entity: " + entityFrustumHolder.getCullingInfo());
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Projection: " + getProjectionInfo());
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Terrain: " + debugStringTerrain
 				+ (shouldRenderTerrain ? "" : " (no terrain) ") + (shouldRenderTranslucent ? "" : "(no translucent)"));
-			messages.add("[" + Iris.MODNAME + "] Shadow Entities: " + getEntitiesDebugString());
-			messages.add("[" + Iris.MODNAME + "] Shadow Block Entities: " + getBlockEntitiesDebugString());
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Entities: " + getEntitiesDebugString());
+			messages.addLine("[" + Iris.MODNAME + "] Shadow Block Entities: " + getBlockEntitiesDebugString());
 		} else {
-			messages.add("[" + Iris.MODNAME + "] Shadow info: " + debugStringTerrain);
-			messages.add("[" + Iris.MODNAME + "] E: " + renderedShadowEntities);
-			messages.add("[" + Iris.MODNAME + "] BE: " + renderedShadowBlockEntities);
+			messages.addLine("[" + Iris.MODNAME + "] Shadow info: " + debugStringTerrain);
+			messages.addLine("[" + Iris.MODNAME + "] E: " + renderedShadowEntities);
+			messages.addLine("[" + Iris.MODNAME + "] BE: " + renderedShadowBlockEntities);
 		}
 	}
 
@@ -759,7 +760,7 @@ public class ShadowRenderer {
 	}
 
 	private String getEntitiesDebugString() {
-		return (shouldRenderEntities || shouldRenderPlayer) ? (renderedShadowEntities + "/" + Minecraft.getInstance().level.getEntityCount()) : "disabled by pack";
+		return (shouldRenderEntities || shouldRenderPlayer) ? (renderedShadowEntities + "/" + (Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getEntityCount())) : "disabled by pack";
 	}
 
 	private String getBlockEntitiesDebugString() {

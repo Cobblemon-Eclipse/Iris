@@ -95,6 +95,7 @@ import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -1007,13 +1008,11 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	}
 
 	@Override
-	public void addDebugText(List<String> messages) {
+	public void addDebugText(DebugScreenDisplayer messages) {
 		if (this.shadowRenderer != null) {
-			messages.add("");
 			shadowRenderer.addDebugText(messages);
 		} else {
-			messages.add("");
-			messages.add("[Iris] Shadow Maps: not used by shader pack");
+			messages.addLine("[Iris] Shadow Maps: not used by shader pack");
 		}
 	}
 

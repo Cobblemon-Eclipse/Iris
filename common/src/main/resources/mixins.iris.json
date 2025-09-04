@@ -26,7 +26,7 @@
     "MixinChunkBorderRenderer",
     "MixinClientLanguage",
     "MixinClientPacketListener",
-    "MixinDebugScreenOverlay",
+    "MixinDebugEntries",
     "MixinEndFlash",
     "MixinEntityRenderDispatcher",
     "MixinFogRenderer",

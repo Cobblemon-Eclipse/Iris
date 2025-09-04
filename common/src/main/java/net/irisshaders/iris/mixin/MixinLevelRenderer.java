@@ -144,6 +144,10 @@ public class MixinLevelRenderer {
 	private void iris$endLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelMatrix, Matrix4f projectionMatrix, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		HandRenderer.INSTANCE.renderTranslucent(modelMatrix, deltaTracker.getGameTimeDeltaPartialTick(true), camera, this.minecraft.gameRenderer, pipeline);
 		Profiler.get().popPush("iris_final");
+
+		if (Iris.shouldActivateWireframe() && this.minecraft.isLocalServer()) {
+			IrisRenderSystem.setPolygonMode(GL43C.GL_FILL);
+		}
 		pipeline.finalizeLevelRendering();
 		pipeline = null;
 
@@ -155,9 +159,6 @@ public class MixinLevelRenderer {
 
 		IrisRenderSystem.restoreCullingState();
 
-		if (Iris.shouldActivateWireframe() && this.minecraft.isLocalServer()) {
-			IrisRenderSystem.setPolygonMode(GL43C.GL_FILL);
-		}
 	}
 
 	// Setup shadow terrain & render shadows before the main terrain setup. We need to do things in this order to
