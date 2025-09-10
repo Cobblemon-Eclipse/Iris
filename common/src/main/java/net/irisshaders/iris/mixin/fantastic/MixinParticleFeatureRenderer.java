@@ -9,6 +9,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.fantastic.ParticleRenderingPhase;
 import net.irisshaders.iris.fantastic.PhasedParticleEngine;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.QuadParticleRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.feature.ParticleFeatureRenderer;
@@ -34,12 +35,17 @@ public abstract class MixinParticleFeatureRenderer implements PhasedParticleEngi
 		this.phase = phase;
 	}
 
+	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;getParticlesTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
+	private RenderTarget iris$preventFabulousCrash(LevelRenderer instance, Operation<RenderTarget> original) {
+		return phase == ParticleRenderingPhase.OPAQUE ? null : original.call(instance);
+	}
+
 	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector$ParticleGroupRenderer;prepare(Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer$ParticleBufferCache;)Lnet/minecraft/client/renderer/QuadParticleRenderState$PreparedBuffers;"))
 	private QuadParticleRenderState.PreparedBuffers iris$overrideCode(SubmitNodeCollector.ParticleGroupRenderer particleGroupRenderer, ParticleFeatureRenderer.ParticleBufferCache particleBufferCache, Operation<QuadParticleRenderState.PreparedBuffers> original) {
 		Minecraft minecraft = Minecraft.getInstance();
 		TextureManager textureManager = minecraft.getTextureManager();
 		RenderTarget renderTarget = minecraft.getMainRenderTarget();
-		RenderTarget renderTarget2 = minecraft.levelRenderer.getParticlesTarget();
+		RenderTarget renderTarget2 = phase == ParticleRenderingPhase.OPAQUE ? null : minecraft.levelRenderer.getParticlesTarget();
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 
 		QuadParticleRenderState.PreparedBuffers preparedBuffers = original.call(particleGroupRenderer, particleBufferCache);

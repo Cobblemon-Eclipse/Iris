@@ -2,8 +2,10 @@ package net.irisshaders.iris.mixin.fantastic;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.fantastic.ParticleRenderingPhase;
@@ -14,6 +16,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.ParticlesRenderState;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -41,6 +44,21 @@ public class MixinLevelRenderer {
 	@Shadow
 	@Final
 	private FeatureRenderDispatcher featureRenderDispatcher;
+
+	@Shadow
+	@Final
+	private LevelTargetBundle targets;
+
+	@Inject(method = "addMainPass", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderState;haveGlowingEntities:Z"))
+	private void iris$addParticleTarget(FrameGraphBuilder frameGraphBuilder, Frustum frustum, Camera camera, Matrix4f matrix4f, GpuBufferSlice gpuBufferSlice, boolean bl, LevelRenderState levelRenderState, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci, @Local FramePass framePass) {
+		ParticleRenderingSettings settings = getRenderingSettings();
+
+		if (settings == ParticleRenderingSettings.BEFORE) {
+			if (this.targets.particles != null) {
+				this.targets.particles = framePass.readsAndWrites(this.targets.particles);
+			}
+		}
+	}
 
 	@WrapOperation(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderAllFeatures()V"))
 	private void iris$renderMainParticles(FeatureRenderDispatcher instance, Operation<Void> original) {
