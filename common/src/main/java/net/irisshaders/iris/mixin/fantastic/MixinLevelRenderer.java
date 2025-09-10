@@ -54,7 +54,10 @@ public class MixinLevelRenderer {
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(settings == ParticleRenderingSettings.BEFORE ? ParticleRenderingPhase.EVERYTHING : ParticleRenderingPhase.OPAQUE);
 			original.call(instance);
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);
-			this.submitNodeStorage.getSubmitsPerOrder().values().forEach(c -> c.getParticleGroupRenderers().clear());
+
+			if (settings == ParticleRenderingSettings.BEFORE) {
+				particlesRenderState.reset();
+			}
 		}
 	}
 
