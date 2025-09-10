@@ -13,8 +13,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
+import net.minecraft.client.renderer.feature.CustomFeatureRenderer;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.feature.ModelPartFeatureRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,14 +25,11 @@ import java.util.List;
 
 @Mixin(SubmitNodeCollection.class)
 public class MixinModelStorageTrigger {
-	@WrapOperation(method = "submitModel", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-	private <E> boolean iris$capture(List instance, E e, Operation<Boolean> original) {
-		if (e instanceof SubmitNodeStorage.TranslucentModelSubmit<?> tms) {
-			((ModelStorage) (Object) tms.modelSubmit()).iris$capture();
-		} else {
-			((ModelStorage) e).iris$capture();
-		}
-		return original.call(instance, e);
+	@WrapOperation(method = "submitModel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelSubmit;)V"))
+	private <E> void iris$capture(ModelFeatureRenderer.Storage instance, RenderType renderType, SubmitNodeStorage.ModelSubmit<?> e, Operation<Void> original) {
+		((ModelStorage) (Object) e).iris$capture();
+
+		original.call(instance, renderType, e);
 	}
 
 	@WrapMethod(method = "submitModel")
@@ -52,11 +50,11 @@ public class MixinModelStorageTrigger {
 		original.call(poseStack, renderType, customGeometryRenderer);
 	}
 
-	@WrapOperation(method = "submitModelPart", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-	private <E> boolean iris$capture3(List instance, E e, Operation<Boolean> original) {
-		((ModelStorage) e).iris$capture();
+	@WrapOperation(method = "submitModelPart", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelPartSubmit;)V"))
+	private <E> void iris$capture3(ModelPartFeatureRenderer.Storage instance, RenderType renderType, SubmitNodeStorage.ModelPartSubmit e, Operation<Void> original) {
+		((ModelStorage) (Object) e).iris$capture();
 
-		return original.call(instance, e);
+		original.call(instance, renderType, e);
 	}
 
 	@WrapOperation(method = "submitItem", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
@@ -66,9 +64,10 @@ public class MixinModelStorageTrigger {
 		return original.call(instance, e);
 	}
 
-	@WrapOperation(method = "submitCustomGeometry", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-	private <E> boolean iris$capture2(List instance, E e, Operation<Boolean> original) {
+	@WrapOperation(method = "submitCustomGeometry", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage;add(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V"))
+	private <E> void iris$capture2(CustomFeatureRenderer.Storage instance, PoseStack poseStack, RenderType renderType, SubmitNodeCollector.CustomGeometryRenderer e, Operation<Void> original) {
 		((ModelStorage) e).iris$capture();
-		return original.call(instance, e);
+
+		original.call(instance, poseStack, renderType, e);
 	}
 }
