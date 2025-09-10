@@ -29,33 +29,32 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderSun", at = @At("HEAD"), cancellable = true)
-	private void iris$beforeDrawSun(float f, MultiBufferSource multiBufferSource, PoseStack poseStack, CallbackInfo ci) {
+	private void iris$beforeDrawSun(float f, PoseStack poseStack, CallbackInfo ci) {
 		if (!Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderSun).orElse(true)) {
 			ci.cancel();
 		}
 	}
 
 	@Inject(method = "renderMoon", at = @At("HEAD"), cancellable = true)
-	private void iris$beforeDrawMoon(int i, float f, MultiBufferSource multiBufferSource, PoseStack poseStack, CallbackInfo ci) {
+	private void iris$beforeDrawMoon(int i, float f, PoseStack poseStack, CallbackInfo ci) {
 		if (!Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderMoon).orElse(true)) {
 			ci.cancel();
 		}
 	}
 
-	@WrapOperation(method = "renderSun", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"))
-	private VertexConsumer iris$setSunRenderStage(MultiBufferSource instance, RenderType renderType, Operation<VertexConsumer> original) {
-		return original.call(instance, new OuterWrappedRenderType("iris_sun", renderType, SetStateShard.SUN));
+	@Inject(method = "renderSun", at = @At(value = "HEAD"))
+	private void iris$setSunRenderStage(float f, PoseStack poseStack, CallbackInfo ci) {
+		setPhase(WorldRenderingPhase.SUN);
 	}
 
-	@WrapOperation(method = "renderSunriseAndSunset", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"))
-	private VertexConsumer iris$setSunsetRenderStage(MultiBufferSource.BufferSource instance, RenderType renderType, Operation<VertexConsumer> original) {
-		return original.call(instance, new OuterWrappedRenderType("iris_sunset", renderType, SetStateShard.SUNSET));
-
+	@Inject(method = "renderMoon", at = @At(value = "HEAD"))
+	private void iris$setMoonRenderStage(int i, float f, PoseStack poseStack, CallbackInfo ci) {
+		setPhase(WorldRenderingPhase.MOON);
 	}
 
-	@WrapOperation(method = "renderMoon", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"))
-	private VertexConsumer iris$setMoonRenderStage(MultiBufferSource instance, RenderType renderType, Operation<VertexConsumer> original) {
-		return original.call(instance, new OuterWrappedRenderType("iris_moon", renderType, SetStateShard.MOON));
+	@Inject(method = "renderSunriseAndSunset", at = @At(value = "HEAD"))
+	private void iris$setSunsetRenderStage(PoseStack poseStack, float f, int i, CallbackInfo ci) {
+		setPhase(WorldRenderingPhase.SUNSET);
 	}
 
 	@Inject(method = "renderStars", at = @At(value = "HEAD"))
@@ -69,7 +68,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 1))
-	private void iris$renderSky$tiltSun(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float f, int i, float g, float h, CallbackInfo ci) {
+	private void iris$renderSky$tiltSun(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
 		poseStack.mulPose(Axis.ZP.rotationDegrees(getSunPathRotation()));
 	}
 

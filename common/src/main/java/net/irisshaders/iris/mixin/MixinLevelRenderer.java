@@ -61,6 +61,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer {
@@ -83,19 +84,28 @@ public class MixinLevelRenderer {
 	private int ticks;
 
 	@Shadow
-	private Frustum cullingFrustum;
-
-	@Shadow
 	@Final
 	private LevelTargetBundle targets;
 	private boolean warned;
 
+	@Unique
+	private boolean disableFrustumCulling;
+
+	@Inject(method = "prepareCullFrustum", at = @At("HEAD"), cancellable = true)
+	private void iris$disableFrustum(Matrix4f matrix4f, Matrix4f matrix4f2, Vec3 vec3, CallbackInfoReturnable<Frustum> cir) {
+		if (this.disableFrustumCulling) {
+			NonCullingFrustum f = new NonCullingFrustum();
+			f.prepare(vec3.x, vec3.y, vec3.z);
+
+			cir.setReturnValue(f);
+		}
+	}
 	// Begin shader rendering after buffers have been cleared.
 	// At this point we've ensured that Minecraft's main framebuffer is cleared.
 	// This is important or else very odd issues will happen with shaders that have a final pass that doesn't write to
 	// all pixels.
 	@Inject(method = "renderLevel", at = @At("HEAD"))
-	private void iris$setupPipeline(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelView, Matrix4f projection, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
+	private void iris$setupPipeline(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelView, Matrix4f projection, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		DHCompat.checkFrame();
 
 		IrisTimeUniforms.updateTime();
@@ -107,10 +117,7 @@ public class MixinLevelRenderer {
 
 		pipeline = Iris.getPipelineManager().preparePipeline(Iris.getCurrentDimension());
 
-		if (pipeline.shouldDisableFrustumCulling()) {
-			this.cullingFrustum = new NonCullingFrustum();
-			this.cullingFrustum.prepare(camera.getPosition().x(), camera.getPosition().y(), camera.getPosition().z());
-		}
+		this.disableFrustumCulling = pipeline.shouldDisableFrustumCulling();
 
     	pipeline.beginLevelRendering();
 		pipeline.setPhase(WorldRenderingPhase.NONE);
@@ -126,7 +133,7 @@ public class MixinLevelRenderer {
 	// This is important or else very odd issues will happen with shaders that have a final pass that doesn't write to
 	// all pixels.
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/framegraph/FramePass;executes(Ljava/lang/Runnable;)V", ordinal = 0, shift = At.Shift.AFTER))
-	private void iris$beginLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder, @Local(ordinal = 0) FramePass clearPass) {
+	private void iris$beginLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder, @Local(ordinal = 0) FramePass clearPass) {
 		FramePass framePass = frameGraphBuilder.addPass("iris_setup");
 		this.targets.main = framePass.readsAndWrites(this.targets.main);
 		framePass.requires(clearPass);
@@ -141,7 +148,7 @@ public class MixinLevelRenderer {
 	// Inject a bit early so that we can end our rendering before mods like VoxelMap (which inject at RETURN)
 	// render their waypoint beams.
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4fStack;popMatrix()Lorg/joml/Matrix4fStack;"))
-	private void iris$endLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelMatrix, Matrix4f projectionMatrix, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
+	private void iris$endLevelRender(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f modelMatrix, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		HandRenderer.INSTANCE.renderTranslucent(modelMatrix, deltaTracker.getGameTimeDeltaPartialTick(true), camera, this.minecraft.gameRenderer, pipeline);
 		Profiler.get().popPush("iris_final");
 
@@ -166,7 +173,7 @@ public class MixinLevelRenderer {
 
 	// Do this before sky rendering so it's ready before the sky render starts.
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;extractVisibleEntities(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/client/renderer/LevelRenderState;)V", shift = At.Shift.AFTER))
-	private void iris$renderTerrainShadows(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
+	private void iris$renderTerrainShadows(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
 		pipeline.renderShadows((LevelRendererAccessor) this, camera);
 
 	}
