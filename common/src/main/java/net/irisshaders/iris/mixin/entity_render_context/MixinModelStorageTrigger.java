@@ -63,11 +63,4 @@ public class MixinModelStorageTrigger {
 
 		return original.call(instance, e);
 	}
-
-	@WrapOperation(method = "submitCustomGeometry", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/CustomFeatureRenderer$Storage;add(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V"))
-	private <E> void iris$capture2(CustomFeatureRenderer.Storage instance, PoseStack poseStack, RenderType renderType, SubmitNodeCollector.CustomGeometryRenderer e, Operation<Void> original) {
-		((ModelStorage) e).iris$capture();
-
-		original.call(instance, poseStack, renderType, e);
-	}
 }
