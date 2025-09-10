@@ -4,6 +4,7 @@ import net.irisshaders.iris.fantastic.IrisParticleRenderTypes;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.BlockMarker;
 import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -17,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BlockMarker.class)
 public class MixinStationaryItemParticle {
-	/*@Unique
+	@Unique
 	private boolean isOpaque;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
@@ -29,10 +30,10 @@ public class MixinStationaryItemParticle {
 		}
 	}
 
-	@Inject(method = "getRenderType", at = @At("HEAD"), cancellable = true)
-	private void iris$overrideParticleRenderType(CallbackInfoReturnable<ParticleRenderType> cir) {
+	@Inject(method = "getLayer", at = @At("HEAD"), cancellable = true)
+	private void iris$overrideParticleRenderType(CallbackInfoReturnable<SingleQuadParticle.Layer> cir) {
 		if (isOpaque) {
 			cir.setReturnValue(IrisParticleRenderTypes.TERRAIN_OPAQUE);
 		}
-	}*/
+	}
 }

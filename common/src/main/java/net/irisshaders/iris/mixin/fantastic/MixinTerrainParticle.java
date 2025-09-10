@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(TerrainParticle.class)
 public class MixinTerrainParticle {
-	/*@Unique
+	@Unique
 	private boolean isOpaque;
 
 	@Inject(method = "<init>(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V", at = @At("RETURN"))
@@ -36,5 +36,5 @@ public class MixinTerrainParticle {
 		if (isOpaque) {
 			cir.setReturnValue(IrisParticleRenderTypes.TERRAIN_OPAQUE);
 		}
-	}*/
+	}
 }

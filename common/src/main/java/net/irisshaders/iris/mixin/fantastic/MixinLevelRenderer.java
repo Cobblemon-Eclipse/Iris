@@ -1,0 +1,81 @@
+package net.irisshaders.iris.mixin.fantastic;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.resource.ResourceHandle;
+import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.fantastic.ParticleRenderingPhase;
+import net.irisshaders.iris.fantastic.PhasedParticleEngine;
+import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
+import net.irisshaders.iris.shaderpack.properties.ParticleRenderingSettings;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.renderer.LevelRenderState;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.ParticlesRenderState;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import net.minecraft.util.profiling.ProfilerFiller;
+import org.joml.Matrix4f;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(LevelRenderer.class)
+public class MixinLevelRenderer {
+	@Shadow
+	@Final
+	private ParticlesRenderState particlesRenderState;
+
+	@Shadow
+	@Final
+	private SubmitNodeStorage submitNodeStorage;
+
+	@Shadow
+	@Final
+	private FeatureRenderDispatcher featureRenderDispatcher;
+
+	@WrapOperation(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderAllFeatures()V"))
+	private void iris$renderMainParticles(FeatureRenderDispatcher instance, Operation<Void> original) {
+		ParticleRenderingSettings settings = getRenderingSettings();
+
+		if (settings == ParticleRenderingSettings.AFTER) {
+			original.call(instance);
+			return;
+		} else {
+			this.particlesRenderState.submit(this.submitNodeStorage);
+			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(settings == ParticleRenderingSettings.BEFORE ? ParticleRenderingPhase.EVERYTHING : ParticleRenderingPhase.OPAQUE);
+			original.call(instance);
+			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);
+			this.submitNodeStorage.getSubmitsPerOrder().values().forEach(c -> c.getParticleGroupRenderers().clear());
+		}
+	}
+
+	@Unique
+	private ParticleRenderingSettings getRenderingSettings() {
+		return Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::getParticleRenderingSettings).orElse(ParticleRenderingSettings.MIXED);
+	}
+
+	@Inject(method = "addParticlesPass", at = @At("HEAD"), cancellable = true)
+	private void iris$disablePassIfNeeded(FrameGraphBuilder frameGraphBuilder, GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
+		if (getRenderingSettings() == ParticleRenderingSettings.BEFORE) {
+			ci.cancel();
+		}
+	}
+
+	@WrapOperation(method = "method_62213", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderAllFeatures()V"))
+	private void iris$renderTranslucentParticles(FeatureRenderDispatcher instance, Operation<Void> original) {
+		ParticleRenderingSettings settings = getRenderingSettings();
+
+		((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(settings == ParticleRenderingSettings.AFTER ? ParticleRenderingPhase.EVERYTHING : ParticleRenderingPhase.TRANSLUCENT);
+		original.call(instance);
+		((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);
+	}
+}
