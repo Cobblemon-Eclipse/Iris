@@ -530,6 +530,10 @@ public class ShadowRenderer {
 
 			float g = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
 			levelRenderState.entityRenderStates.add(Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(player, g));
+
+			if (player.getVehicle() != null) {
+				levelRenderState.entityRenderStates.add(Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(player.getVehicle(), g));
+			}
 		}
 
 		// Render nearby entities
