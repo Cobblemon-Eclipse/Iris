@@ -42,6 +42,7 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -86,6 +87,9 @@ public class MixinLevelRenderer {
 	@Shadow
 	@Final
 	private LevelTargetBundle targets;
+	@Shadow
+	@Final
+	private LevelRenderState levelRenderState;
 	private boolean warned;
 
 	@Unique
@@ -174,7 +178,7 @@ public class MixinLevelRenderer {
 	// Do this before sky rendering so it's ready before the sky render starts.
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;prepareCullFrustum(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/client/renderer/culling/Frustum;", shift = At.Shift.AFTER))
 	private void iris$renderTerrainShadows(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci) {
-		pipeline.renderShadows((LevelRendererAccessor) this, camera);
+		pipeline.renderShadows((LevelRendererAccessor) this, camera, this.levelRenderState.cameraRenderState);
 
 	}
 
@@ -223,7 +227,7 @@ public class MixinLevelRenderer {
 	}
 
 
-	@Inject(method = { "method_62216", NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldBorderRenderer;render(Lnet/minecraft/world/level/border/WorldBorder;Lnet/minecraft/world/phys/Vec3;DD)V"))
+	@Inject(method = { "method_62216", NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldBorderRenderer;render(Lnet/minecraft/client/renderer/state/WorldBorderRenderState;Lnet/minecraft/world/phys/Vec3;DD)V"))
 	private void iris$beginWorldBorder(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.WORLD_BORDER);
 	}
@@ -233,12 +237,12 @@ public class MixinLevelRenderer {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 
-	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDD)V"))
+	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDDZ)V"))
 	private void iris$setDebugRenderStage(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.DEBUG);
 	}
 
-	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDD)V", shift = At.Shift.AFTER))
+	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDDZ)V", shift = At.Shift.AFTER))
 	private void iris$resetDebugRenderStage(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
@@ -251,9 +255,9 @@ public class MixinLevelRenderer {
 
 	// TODO this needs to be more consistent.
 	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endBatch()V", ordinal = 1))
-	private void iris$beginTranslucents(CallbackInfo ci, @Local(argsOnly = true) DeltaTracker deltaTracker, @Local(ordinal = 0, argsOnly = true) Matrix4f modelMatrix, @Local(argsOnly = true) Camera camera) {
+	private void iris$beginTranslucents(CallbackInfo ci,  @Local(ordinal = 0, argsOnly = true) Matrix4f modelMatrix) {
 		pipeline.beginHand();
-		HandRenderer.INSTANCE.renderSolid(modelMatrix, deltaTracker.getGameTimeDeltaPartialTick(true), camera, Minecraft.getInstance().gameRenderer, pipeline);
+		HandRenderer.INSTANCE.renderSolid(modelMatrix, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true), Minecraft.getInstance().gameRenderer.getMainCamera(), Minecraft.getInstance().gameRenderer, pipeline);
 		Profiler.get().popPush("iris_pre_translucent");
 		pipeline.beginTranslucents();
 	}

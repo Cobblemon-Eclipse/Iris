@@ -10,7 +10,7 @@ import net.irisshaders.iris.fantastic.ParticleRenderingPhase;
 import net.irisshaders.iris.fantastic.PhasedParticleEngine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.QuadParticleRenderState;
+import net.minecraft.client.renderer.state.QuadParticleRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.feature.ParticleFeatureRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -40,7 +40,7 @@ public abstract class MixinParticleFeatureRenderer implements PhasedParticleEngi
 		return phase == ParticleRenderingPhase.OPAQUE ? null : original.call(instance);
 	}
 
-	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector$ParticleGroupRenderer;prepare(Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer$ParticleBufferCache;)Lnet/minecraft/client/renderer/QuadParticleRenderState$PreparedBuffers;"))
+	@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector$ParticleGroupRenderer;prepare(Lnet/minecraft/client/renderer/feature/ParticleFeatureRenderer$ParticleBufferCache;)Lnet/minecraft/client/renderer/state/QuadParticleRenderState$PreparedBuffers;"))
 	private QuadParticleRenderState.PreparedBuffers iris$overrideCode(SubmitNodeCollector.ParticleGroupRenderer particleGroupRenderer, ParticleFeatureRenderer.ParticleBufferCache particleBufferCache, Operation<QuadParticleRenderState.PreparedBuffers> original) {
 		Minecraft minecraft = Minecraft.getInstance();
 		TextureManager textureManager = minecraft.getTextureManager();

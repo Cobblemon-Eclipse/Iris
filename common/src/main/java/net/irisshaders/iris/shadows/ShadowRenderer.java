@@ -36,7 +36,8 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.OutlineBufferSource;
@@ -375,10 +376,16 @@ public class ShadowRenderer {
 		GlStateManager._viewport(0, 0, resolution, resolution);
 	}
 
-	public void renderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera) {
+	public void renderShadows(LevelRendererAccessor levelRenderer, Camera playerCamera, CameraRenderState renderState) {
 		if (IrisVideoSettings.getOverriddenShadowDistance(IrisVideoSettings.shadowDistance) == 0) {
 			return;
 		}
+
+		levelRenderState.cameraRenderState.blockPos = renderState.blockPos;
+		levelRenderState.cameraRenderState.pos = renderState.pos;
+		levelRenderState.cameraRenderState.orientation = renderState.orientation;
+		levelRenderState.cameraRenderState.entityPos = renderState.entityPos;
+		levelRenderState.cameraRenderState.initialized = renderState.initialized;
 
 		Minecraft client = Minecraft.getInstance();
 
@@ -628,7 +635,7 @@ public class ShadowRenderer {
 			BlockPos blockPos = blockEntityRenderState.blockPos;
 			poseStack.pushPose();
 			poseStack.translate(blockPos.getX() - d, blockPos.getY() - e, blockPos.getZ() - f);
-			Minecraft.getInstance().getBlockEntityRenderDispatcher().submit(blockEntityRenderState, poseStack, submitNodeStorage);
+			Minecraft.getInstance().getBlockEntityRenderDispatcher().submit(blockEntityRenderState, poseStack, submitNodeStorage, levelRenderState.cameraRenderState);
 			poseStack.popPose();
 			i++;
 		}
@@ -653,7 +660,7 @@ public class ShadowRenderer {
 		Profiler.get().push("cull");
 
 		for (EntityRenderState entityRenderState : levelRenderState.entityRenderStates) {
-			Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, entityRenderState.x - cameraX, entityRenderState.y - cameraY, entityRenderState.z - cameraZ, modelView, submitNodeStorage);
+			Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, levelRenderState.cameraRenderState, entityRenderState.x - cameraX, entityRenderState.y - cameraY, entityRenderState.z - cameraZ, modelView, submitNodeStorage);
 		}
 
 		Profiler.get().pop();

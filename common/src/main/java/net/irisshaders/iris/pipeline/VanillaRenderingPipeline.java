@@ -19,6 +19,7 @@ import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
+import net.minecraft.client.renderer.state.CameraRenderState;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -41,7 +42,7 @@ public class VanillaRenderingPipeline implements WorldRenderingPipeline {
 	}
 
 	@Override
-	public void renderShadows(LevelRendererAccessor worldRenderer, Camera camera) {
+	public void renderShadows(LevelRendererAccessor worldRenderer, Camera camera, CameraRenderState renderState) {
 		// stub: nothing to do here
 	}
 

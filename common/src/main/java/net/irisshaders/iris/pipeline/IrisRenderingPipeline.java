@@ -97,6 +97,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.apache.commons.lang3.StringUtils;
@@ -112,7 +113,6 @@ import org.lwjgl.opengl.GL43C;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -999,9 +999,9 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	}
 
 	@Override
-	public void renderShadows(LevelRendererAccessor worldRenderer, Camera playerCamera) {
+	public void renderShadows(LevelRendererAccessor worldRenderer, Camera playerCamera, CameraRenderState renderState) {
 		if (shadowRenderer != null) {
-			this.shadowRenderer.renderShadows(worldRenderer, playerCamera);
+			this.shadowRenderer.renderShadows(worldRenderer, playerCamera, renderState);
 		}
 
 		prepareRenderer.renderAll();

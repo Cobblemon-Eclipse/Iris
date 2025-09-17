@@ -10,6 +10,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.WeatherEffectRenderer;
+import net.minecraft.client.renderer.state.WeatherRenderState;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(WeatherEffectRenderer.class)
 public class MixinWeatherRenderer {
-	@Redirect(method = "render(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/phys/Vec3;IFLjava/util/List;Ljava/util/List;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;useShaderTransparency()Z"))
+	@Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;useShaderTransparency()Z"))
 	private boolean iris$writeRainAndSnowToDepthBuffer() {
 		if (Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldWriteRainAndSnowToDepthBuffer).orElse(false)) {
 			return true;
@@ -29,10 +30,10 @@ public class MixinWeatherRenderer {
 		return Minecraft.useShaderTransparency();
 	}
 
-	@WrapMethod(method = "render(Lnet/minecraft/world/level/Level;Lnet/minecraft/client/renderer/MultiBufferSource;IFLnet/minecraft/world/phys/Vec3;)V")
-	private void iris$disableWeather(Level level, MultiBufferSource multiBufferSource, int i, float f, Vec3 vec3, Operation<Void> original) {
+	@WrapMethod(method = "render")
+	private void iris$disableWeather(MultiBufferSource multiBufferSource, Vec3 vec3, WeatherRenderState weatherRenderState, Operation<Void> original) {
 		if (Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderWeather).orElse(true)) {
-			original.call(level, multiBufferSource, i, f, vec3);
+			original.call(multiBufferSource, vec3, weatherRenderState);
 		}
 	}
 

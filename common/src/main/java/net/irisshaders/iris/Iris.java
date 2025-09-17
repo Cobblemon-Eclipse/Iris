@@ -86,7 +86,7 @@ public class Iris {
 	public static final boolean IS_FOOL;
 	private static final Map<String, String> shaderPackOptionQueue = new HashMap<>();
 	// Change this for snapshots!
-	private static final String backupVersionNumber = "1.21";
+	private static final String backupVersionNumber = "1.21.9";
 	public static NamespacedId lastDimension = null;
 	public static boolean testing = false;
 	private static Path shaderpacksDirectory;

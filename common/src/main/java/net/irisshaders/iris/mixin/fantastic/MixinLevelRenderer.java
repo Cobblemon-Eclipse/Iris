@@ -14,10 +14,10 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.properties.ParticleRenderingSettings;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.renderer.LevelRenderState;
+import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
-import net.minecraft.client.renderer.ParticlesRenderState;
+import net.minecraft.client.renderer.state.ParticlesRenderState;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
@@ -49,8 +49,12 @@ public class MixinLevelRenderer {
 	@Final
 	private LevelTargetBundle targets;
 
-	@Inject(method = "addMainPass", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderState;haveGlowingEntities:Z"))
-	private void iris$addParticleTarget(FrameGraphBuilder frameGraphBuilder, Frustum frustum, Camera camera, Matrix4f matrix4f, GpuBufferSlice gpuBufferSlice, boolean bl, LevelRenderState levelRenderState, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci, @Local FramePass framePass) {
+	@Shadow
+	@Final
+	private LevelRenderState levelRenderState;
+
+	@Inject(method = "addMainPass", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/state/LevelRenderState;haveGlowingEntities:Z"))
+	private void iris$addParticleTarget(FrameGraphBuilder frameGraphBuilder, Frustum frustum, Matrix4f matrix4f, GpuBufferSlice gpuBufferSlice, boolean bl, LevelRenderState levelRenderState, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci, @Local FramePass framePass) {
 		ParticleRenderingSettings settings = getRenderingSettings();
 
 		if (settings == ParticleRenderingSettings.BEFORE) {
@@ -68,7 +72,7 @@ public class MixinLevelRenderer {
 			original.call(instance);
 			return;
 		} else {
-			this.particlesRenderState.submit(this.submitNodeStorage);
+			this.particlesRenderState.submit(this.submitNodeStorage, this.levelRenderState.cameraRenderState);
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(settings == ParticleRenderingSettings.BEFORE ? ParticleRenderingPhase.EVERYTHING : ParticleRenderingPhase.OPAQUE);
 			original.call(instance);
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);

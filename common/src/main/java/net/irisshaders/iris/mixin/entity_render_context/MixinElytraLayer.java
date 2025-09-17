@@ -39,7 +39,7 @@ public abstract class MixinElytraLayer<S extends HumanoidRenderState, M extends 
 	private void changeId(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, S humanoidRenderState, float f, float g, CallbackInfo ci) {
 		if (WorldRenderingSettings.INSTANCE.getItemIds() == null) return;
 
-		if (humanoidRenderState instanceof AvatarRenderState state && state.skin.capeTexture() != null
+		if (humanoidRenderState instanceof AvatarRenderState state && state.skin.cape() != null
 			&& state.showCape) {
 			CapturedRenderingState.INSTANCE.setCurrentRenderedItem(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(ELYTRA_CAPE_LOCATION));
 			return;

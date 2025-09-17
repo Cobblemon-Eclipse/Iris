@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -47,7 +48,7 @@ public class MixinEntityRenderDispatcher {
 
 	// Inject after MatrixStack#push since at this point we know that most cancellation checks have already passed.
 	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V", shift = At.Shift.AFTER))
-	private <E extends Entity, S extends EntityRenderState> void iris$beginEntityRender(S entity, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
+	private <E extends Entity, S extends EntityRenderState> void iris$beginEntityRender(S entity, CameraRenderState cameraRenderState, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		Object2IntFunction<NamespacedId> entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
 
 		if (entityIds == null || !ImmediateState.isRenderingLevel) {
@@ -69,7 +70,7 @@ public class MixinEntityRenderDispatcher {
 	// Inject before MatrixStack#pop so that our wrapper stack management operations naturally line up
 	// with vanilla's MatrixStack management functions.
 	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
-	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(S entityRenderState, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
+	private<E extends Entity, S extends EntityRenderState> void iris$endEntityRender(S entityRenderState, CameraRenderState cameraRenderState, double d, double e, double f, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 	}

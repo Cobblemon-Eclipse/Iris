@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -46,7 +47,7 @@ public class MixinBlockEntityRenderDispatcher {
 
 	// Inject after MatrixStack#push since at this point we know that most cancellation checks have already passed.
 	@Inject(method = "submit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;getRenderer(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;)Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;", shift = At.Shift.AFTER))
-	private <E extends BlockEntity, S extends BlockEntityRenderState> void iris$beginEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
+	private <E extends BlockEntity, S extends BlockEntityRenderState> void iris$beginEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		Object2IntMap<BlockState> blockStateIds = WorldRenderingSettings.INSTANCE.getBlockStateIds();
 		ImmediateState.isRenderingBEs = true;
 		if (blockStateIds == null || !ImmediateState.isRenderingLevel) {
@@ -65,7 +66,7 @@ public class MixinBlockEntityRenderDispatcher {
 	// Inject before MatrixStack#pop so that our wrapper stack management operations naturally line up
 	// with vanilla's MatrixStack management functions.
 	@Inject(method = "submit", at = @At(value = "RETURN"))
-	private<E extends BlockEntity, S extends BlockEntityRenderState> void iris$endEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
+	private<E extends BlockEntity, S extends BlockEntityRenderState> void iris$endEntityRender(S blockEntityRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);
 		ImmediateState.isRenderingBEs = false;
 	}
