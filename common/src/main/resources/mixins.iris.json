@@ -68,6 +68,7 @@
     "MixinTextureUtil",
     "MixinSkyRenderer",
     "MixinTheEndPortalRenderer",
+    "MixinTheEndGatewayRenderer",
     "MixinTitleScreen",
     "MixinUniform",
     "MixinWindow",
