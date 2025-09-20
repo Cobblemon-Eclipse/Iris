@@ -10,10 +10,12 @@ import com.mojang.blaze3d.resource.ResourceHandle;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.fantastic.ParticleRenderingPhase;
 import net.irisshaders.iris.fantastic.PhasedParticleEngine;
+import net.irisshaders.iris.mixinterface.ParticleRenderStateExtension;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.shaderpack.properties.ParticleRenderingSettings;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
@@ -29,6 +31,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
@@ -72,7 +75,7 @@ public class MixinLevelRenderer {
 			original.call(instance);
 			return;
 		} else {
-			this.particlesRenderState.submit(this.submitNodeStorage, this.levelRenderState.cameraRenderState);
+			this.particlesRenderState.submit(submitNodeStorage, this.levelRenderState.cameraRenderState);
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(settings == ParticleRenderingSettings.BEFORE ? ParticleRenderingPhase.EVERYTHING : ParticleRenderingPhase.OPAQUE);
 			original.call(instance);
 			((PhasedParticleEngine) ((FeatureRenderDispatcherAccessor) this.featureRenderDispatcher).getParticleFeatureRenderer()).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);
@@ -92,6 +95,17 @@ public class MixinLevelRenderer {
 	private void iris$disablePassIfNeeded(FrameGraphBuilder frameGraphBuilder, GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
 		if (getRenderingSettings() == ParticleRenderingSettings.BEFORE) {
 			ci.cancel();
+		}
+	}
+
+	@Redirect(method = "method_62213", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/state/ParticlesRenderState;submit(Lnet/minecraft/client/renderer/SubmitNodeStorage;Lnet/minecraft/client/renderer/state/CameraRenderState;)V"))
+	private void iris$redirectToAvoidItemPickupParticles(ParticlesRenderState instance, SubmitNodeStorage submitNodeStorage, CameraRenderState cameraRenderState) {
+		ParticleRenderingSettings settings = getRenderingSettings();
+
+		if (settings == ParticleRenderingSettings.MIXED) {
+			((ParticleRenderStateExtension) instance).submitWithoutItems(submitNodeStorage, cameraRenderState);
+		} else {
+			instance.submit(submitNodeStorage, cameraRenderState);
 		}
 	}
 
