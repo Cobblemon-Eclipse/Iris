@@ -4,7 +4,6 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.datafixers.types.Func;
 import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import net.caffeinemc.mods.sodium.client.render.immediate.CloudRenderer;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pathways.HandRenderer;
 import net.irisshaders.iris.pipeline.programs.ShaderKey;
@@ -79,8 +78,6 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.DRAGON_EXPLOSION_ALPHA, p -> ShaderKey.ENTITIES_ALPHA);
 		assignToMain(RenderPipelines.CRUMBLING, p -> ShaderKey.CRUMBLING);
 		assignToMain(RenderPipelines.LEASH, p -> ShaderKey.LEASH);
-		assignToMain(CloudRenderer.CLOUDS_FLAT, p -> ShaderKey.CLOUDS_SODIUM);
-		assignToMain(CloudRenderer.CLOUDS_FULL, p -> ShaderKey.CLOUDS_SODIUM);
 		assignToMain(RenderPipelines.CLOUDS, p -> ShaderKey.CLOUDS);
 		assignToMain(RenderPipelines.FLAT_CLOUDS, p -> ShaderKey.CLOUDS);
 		assignToMain(RenderPipelines.DEBUG_LINE_STRIP, p -> ShaderKey.BASIC_COLOR);
@@ -133,10 +130,6 @@ public class IrisPipelines {
 		assignToShadow(RenderPipelines.END_GATEWAY, p -> ShaderKey.SHADOW_BLOCK);
 		assignToShadow(RenderPipelines.ARMOR_TRANSLUCENT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
 		assignToShadow(RenderPipelines.LIGHTNING, p -> ShaderKey.SHADOW_LIGHTNING);
-
-		// TODO: Currently impossible
-		assignToShadow(CloudRenderer.CLOUDS_FLAT, p -> ShaderKey.CLOUDS_SODIUM);
-		assignToShadow(CloudRenderer.CLOUDS_FULL, p -> ShaderKey.CLOUDS_SODIUM);
 		// Check that all shaders are accounted for
 		//for (RenderPipeline pipeline : RenderPipelines.getStaticPipelines()) {
 		//	if (coreShaderMap.containsKey(pipeline) && !coreShaderMapShadow.containsKey(pipeline)) {
