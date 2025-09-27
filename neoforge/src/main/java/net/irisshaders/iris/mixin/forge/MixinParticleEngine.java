@@ -48,14 +48,4 @@ public class MixinParticleEngine {
 		//	RenderSystem.setShader(ShaderAccess.getParticleTranslucentShader());
 		//}
 	}
-
-	@Redirect(method = "<clinit>", at = @At(value = "INVOKE", target = "Ljava/util/List;of(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;"))
-	private static <E> List<E> iris$changeList(E e1, E e2, E e3) {
-		return (List<E>) List.of(IrisParticleRenderTypes.TERRAIN_OPAQUE,  e1, e2, e3);
-	}
-
-	//@Inject(method = "renderParticleType(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/particle/ParticleRenderType;Ljava/util/Queue;Lnet/minecraft/client/renderer/culling/Frustum;)V", at = @At("HEAD"))
-	private static void i(Camera p_382847_, float p_383032_, MultiBufferSource.BufferSource p_383105_, ParticleRenderType p_383179_, Queue<Particle> p_383046_, Frustum frustum, CallbackInfo ci) {
-		System.out.println("Rendering particle " + p_383179_.name());
-	}
 }

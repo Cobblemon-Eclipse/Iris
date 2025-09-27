@@ -40,9 +40,6 @@ config = "mixins.iris.fantastic.json"
 config = "mixins.iris.vertexformat.json"
 
 [[mixins]]
-config = "iris-batched-entity-rendering.mixins.json"
-
-[[mixins]]
 config = "mixins.iris.compat.sodium.json"
 
 [[mixins]]

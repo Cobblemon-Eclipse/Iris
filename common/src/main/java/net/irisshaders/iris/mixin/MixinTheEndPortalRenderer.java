@@ -54,7 +54,10 @@ public class MixinTheEndPortalRenderer {
 		}
 	}
 
-	@Inject(method = "method_73539", at = @At("HEAD"), cancellable = true)
+	@Inject(method = {
+		"method_73539",
+		"lambda$submit$0"
+	}, at = @At("HEAD"), cancellable = true, require = 1)
 	public <T extends TheEndPortalBlockEntity> void iris$onRender(EndPortalRenderState entity, PoseStack.Pose pose, VertexConsumer vertexConsumer, CallbackInfo ci) {
 		if (Iris.getCurrentPack().isEmpty()) {
 			return;
