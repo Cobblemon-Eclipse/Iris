@@ -3,6 +3,7 @@ package net.irisshaders.iris.shadows.frustum.advanced;
 import net.caffeinemc.mods.sodium.client.render.viewport.frustum.Frustum;
 import net.irisshaders.iris.shadows.frustum.BoxCuller;
 import net.minecraft.world.phys.AABB;
+import org.joml.FrustumIntersection;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
@@ -58,6 +59,39 @@ public class ReversedAdvancedShadowCullingFrustum extends AdvancedShadowCullingF
 			return true;
 		}
 
-		return this.checkCornerVisibility(minX, minY, minZ, maxX, maxY, maxZ) > 0;
+		return this.checkCornerVisibility(minX, minY, minZ, maxX, maxY, maxZ) != FrustumIntersection.OUTSIDE;
+	}
+
+
+	@Override
+	public int intersectAab(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
+		var distanceResult = this.distanceCuller.intersectAab(minX, minY, minZ, maxX, maxY, maxZ);
+		if (distanceResult == FrustumIntersection.OUTSIDE) {
+			return FrustumIntersection.OUTSIDE;
+		}
+
+		var safeZoneResult = FrustumIntersection.OUTSIDE;
+		if (this.boxCuller != null) {
+			safeZoneResult = this.boxCuller.intersectAab(minX, minY, minZ, maxX, maxY, maxZ);
+			if (safeZoneResult == FrustumIntersection.INSIDE) {
+				return FrustumIntersection.INSIDE;
+			}
+		}
+
+		if (distanceResult == FrustumIntersection.INTERSECT && safeZoneResult == FrustumIntersection.INTERSECT) {
+			return FrustumIntersection.INTERSECT;
+		}
+
+		var frustumResult = this.checkCornerVisibility(minX, minY, minZ, maxX, maxY, maxZ);
+
+		if (safeZoneResult == FrustumIntersection.OUTSIDE && frustumResult == FrustumIntersection.OUTSIDE) {
+			return FrustumIntersection.OUTSIDE;
+		}
+
+		if (frustumResult == FrustumIntersection.INSIDE && distanceResult == FrustumIntersection.INSIDE) {
+			return FrustumIntersection.INSIDE;
+		}
+
+		return FrustumIntersection.INTERSECT;
 	}
 }

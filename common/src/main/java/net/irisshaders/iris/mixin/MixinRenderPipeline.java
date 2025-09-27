@@ -5,7 +5,6 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.caffeinemc.mods.sodium.client.render.immediate.CloudRenderer;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
@@ -34,8 +33,6 @@ public class MixinRenderPipeline {
 				cir.setReturnValue(IrisVertexFormats.GLYPH);
 			} else if (vf == DefaultVertexFormat.NEW_ENTITY) {
 				cir.setReturnValue(IrisVertexFormats.ENTITY);
-			} else if (thiss == CloudRenderer.CLOUDS_FLAT || thiss == CloudRenderer.CLOUDS_FULL) {
-				cir.setReturnValue(IrisVertexFormats.CLOUDS);
 			}
 		}
 	}

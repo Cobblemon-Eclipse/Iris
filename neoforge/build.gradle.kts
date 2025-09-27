@@ -1,6 +1,6 @@
 plugins {
     id("idea")
-    id("net.neoforged.moddev") version "2.0.78"
+    id("net.neoforged.moddev") version "2.0.107"
     id("java-library")
 }
 
@@ -19,13 +19,8 @@ sourceSets {
 
 repositories {
     mavenLocal()
-    maven("https://maven.pkg.github.com/ims212/FRAPI-Testing") {
-        credentials {
-            username = "IMS212"
-            // Read only token
-            password = "ghp_" + "DEuGv0Z56vnSOYKLCXdsS9svK4nb9K39C1Hn"
-        }
-    }
+    maven("https://maven.irisshaders.dev/releases")
+
     maven("https://maven.su5ed.dev/releases")
     maven("https://maven.neoforged.net/releases/")
 
@@ -42,8 +37,8 @@ repositories {
         }
     }
     maven {
-        name = "Maven for PR #2297" // https://github.com/neoforged/NeoForge/pull/2297
-        url = uri("https://prmaven.neoforged.net/NeoForge/pr2297")
+        name = "Maven for PR #2639" // https://github.com/neoforged/NeoForge/pull/2639
+        url = uri("https://prmaven.neoforged.net/NeoForge/pr2639")
         content {
             includeModule("net.neoforged", "neoforge")
             includeModule("net.neoforged", "testframework")
@@ -138,6 +133,7 @@ dependencies {
     compileOnly(project.project(":common").sourceSets.getByName("headers").output)
     compileOnly(project.project(":common").sourceSets.getByName("api").output)
     runtimeOnly("org.sinytra.forgified-fabric-api:fabric-api-base:0.4.42+d1308ded19")
+    runtimeOnly("net.caffeinemc:fabric-renderer-api-v1-neo-test:7.0.0")
    /// runtimeOnly("org.sinytra.forgified-fabric-api:fabric-block-view-api-v2:1.0.10+9afaaf8c19")
    // runtimeOnly("net.caffeinemc:fabric-renderer-api-v1:6.0.0")
 
