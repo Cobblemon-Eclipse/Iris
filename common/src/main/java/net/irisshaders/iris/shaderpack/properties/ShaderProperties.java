@@ -180,7 +180,7 @@ public class ShaderProperties {
 				switch (value) {
 					case "false" -> shadowCulling = ShadowCullState.DISTANCE;
 					case "true" -> shadowCulling = ShadowCullState.ADVANCED;
-					case "reversed" -> shadowCulling = ShadowCullState.REVERSED;
+					case "reversed", "safe_zone" -> shadowCulling = ShadowCullState.SAFE_ZONE;
 					case null, default -> Iris.logger.error("Unrecognized shadow culling setting: " + value);
 				}
 			}

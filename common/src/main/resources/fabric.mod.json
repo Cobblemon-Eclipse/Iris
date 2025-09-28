@@ -37,7 +37,10 @@
   "depends": {
     "fabricloader": ">=0.12.3",
     "minecraft": [
-      "1.21.x"
+      "1.21.9"
+    ],
+    "sodium": [
+      "0.7.x"
     ]
   },
   "breaks": {
