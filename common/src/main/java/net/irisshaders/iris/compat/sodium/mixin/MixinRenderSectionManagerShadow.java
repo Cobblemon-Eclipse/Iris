@@ -125,6 +125,9 @@ public abstract class MixinRenderSectionManagerShadow {
 		}
 	}
 
+	/**
+	 * Adding a note for myself: This is how the occlusion culling skip for the shadow map is done. Remember this.
+	 */
 	@Redirect(method = "createTerrainRenderList", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager;isOutOfGraph(Lnet/minecraft/core/SectionPos;)Z"))
 	private boolean iris$setOutOfGraph(RenderSectionManager instance, SectionPos pos) {
 		return ShadowRenderingState.areShadowsCurrentlyBeingRendered() || this.isOutOfGraph(pos);
