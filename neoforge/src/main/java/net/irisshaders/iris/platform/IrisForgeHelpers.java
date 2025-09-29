@@ -19,19 +19,19 @@ import java.nio.file.Path;
 public class IrisForgeHelpers implements IrisPlatformHelpers {
 	@Override
 	public boolean isModLoaded(String modId) {
-		return LoadingModList.get().getModFileById(modId) != null;
+		return FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
 	}
 
 	boolean HAS_CAMO = isModLoaded("cable_facades");
 
 	@Override
 	public String getVersion() {
-		return LoadingModList.get().getModFileById(Iris.MODID).versionString();
+		return FMLLoader.getCurrent().getLoadingModList().getModFileById(Iris.MODID).versionString();
 	}
 
 	@Override
 	public boolean isDevelopmentEnvironment() {
-		return !FMLLoader.isProduction();
+		return !FMLLoader.getCurrent().isProduction();
 	}
 
 	@Override
