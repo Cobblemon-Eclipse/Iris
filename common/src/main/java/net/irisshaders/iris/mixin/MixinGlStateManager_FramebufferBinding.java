@@ -4,6 +4,7 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import org.joml.Vector4i;
 import org.lwjgl.opengl.GL30C;
+import org.lwjgl.opengl.GL46C;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +30,12 @@ public class MixinGlStateManager_FramebufferBinding {
 		IrisRenderSystem.onProgramUse();
 
 		iris$program = pInt0;
+	}
+
+	@Inject(method = "_activeTexture", at = @At("HEAD"))
+	private static void iris$checkActiveTexture(int i, CallbackInfo ci) {
+		int tex = i - GL46C.GL_TEXTURE0;
+		if (tex < 0 || tex > 128) throw new IllegalArgumentException("Texture " + tex + " out of range");
 	}
 
 	@Inject(method = "_viewport", at = @At("HEAD"), cancellable = true)
