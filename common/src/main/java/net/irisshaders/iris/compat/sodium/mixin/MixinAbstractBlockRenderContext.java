@@ -35,7 +35,7 @@ public class MixinAbstractBlockRenderContext {
 		if ((Object) this instanceof BlockRenderer r && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null && cullFace != null) {
 			BlockState override = IrisModSupport.INSTANCE.getModelPartState(part);
 			if (override != null) {
-				((BlockSensitiveBufferBuilder) ((BlockRendererAccessor) r).getBuffers()).overrideBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(override));
+				//((BlockSensitiveBufferBuilder) ((BlockRendererAccessor) r)).overrideBlock(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(override));
 			}
 		}
 	}
@@ -43,7 +43,7 @@ public class MixinAbstractBlockRenderContext {
 	@Inject(method = "bufferDefaultModel", at = @At(value = "TAIL"))
 	private void checkDirectionNeo(BlockModelPart part, Predicate<Direction> cullTest, CallbackInfo ci) {
 		if ((Object) this instanceof BlockRenderer r && WorldRenderingSettings.INSTANCE.getBlockStateIds() != null) {
-			((BlockSensitiveBufferBuilder) ((BlockRendererAccessor) r).getBuffers()).restoreBlock();
+			//((BlockSensitiveBufferBuilder) ((BlockRendererAccessor) r).getBuffers()).restoreBlock();
 		}
 	}
 }
