@@ -623,7 +623,7 @@ public class ShadowRenderer {
 	}
 
 	private int renderBlockEntities(LevelRendererAccessor levelRenderer, PoseStack modelView, SubmitNodeStorage submitNodeStorage, LevelRenderState levelRenderState, Camera camera) {
-		Vec3 vec3 = camera.getPosition();
+		Vec3 vec3 = camera.position();
 		PoseStack poseStack = modelView;
 		double d = vec3.x();
 		double e = vec3.y();
@@ -669,7 +669,7 @@ public class ShadowRenderer {
 	}
 
 	private void extractVisibleEntities(Camera camera, Frustum frustum, DeltaTracker deltaTracker, LevelRenderState levelRenderState) {
-		Vec3 vec3 = camera.getPosition();
+		Vec3 vec3 = camera.position();
 		double d = vec3.x();
 		double e = vec3.y();
 		double f = vec3.z();
