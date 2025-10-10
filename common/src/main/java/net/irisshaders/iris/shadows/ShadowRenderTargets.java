@@ -64,9 +64,7 @@ public class ShadowRenderTargets {
 
 		this.mainDepth = RenderSystem.getDevice().createTexture("Shadow Map", GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, this.mipped[0] ? log2(resolution) : 1);
 		this.noTranslucents = RenderSystem.getDevice().createTexture("Shadow Map / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.DEPTH32, resolution, resolution, 1, this.mipped[1] ? log2(resolution) : 1);
-
-		this.noTranslucents.setTextureFilter(linearFiltered[1] ? FilterMode.LINEAR : FilterMode.NEAREST, this.mipped[1]);
-		this.mainDepth.setTextureFilter(linearFiltered[0] ? FilterMode.LINEAR : FilterMode.NEAREST, this.mipped[0]);
+		// TODO: linear filtered shadow maps
 
 		// NB: Make sure all buffers are cleared so that they don't contain undefined
 		// data. Otherwise very weird things can happen.

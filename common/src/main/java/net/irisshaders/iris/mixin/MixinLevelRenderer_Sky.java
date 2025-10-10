@@ -43,16 +43,16 @@ public class MixinLevelRenderer_Sky {
 	 * ways the fog can be reduced in {@link FogRenderer#setupFog}.</p>
 	 */
 	@Inject(method = { "method_62215", NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At("HEAD"), cancellable = true)
-	private void preRenderSky(CallbackInfo ci) {
+	private static void preRenderSky(CallbackInfo ci) {
 		if (Iris.getCurrentPack().isEmpty()) {
 			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-			Vec3 cameraPosition = camera.getPosition();
-			Entity cameraEntity = camera.getEntity();
+			Vec3 cameraPosition = camera.position();
+			Entity cameraEntity = camera.entity();
 
 			boolean isSubmersed = camera.getFluidInCamera() != FogType.NONE;
 			boolean blockSky = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).invokeDoesMobEffectBlockSky(camera);
-			boolean useThickFog = this.minecraft.level.effects().isFoggyAt(Mth.floor(cameraPosition.x()),
-				Mth.floor(cameraPosition.y())) || this.minecraft.gui.getBossOverlay().shouldCreateWorldFog();
+			boolean useThickFog = Minecraft.getInstance().level.effects().isFoggyAt(Mth.floor(cameraPosition.x()),
+				Mth.floor(cameraPosition.y())) || Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
 
 			if (isSubmersed || blockSky || useThickFog) {
 				ci.cancel();

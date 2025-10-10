@@ -13,6 +13,7 @@ import net.irisshaders.iris.gl.program.Program;
 import net.irisshaders.iris.gl.program.ProgramBuilder;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
 import net.irisshaders.iris.gl.program.ProgramUniforms;
+import net.irisshaders.iris.gl.sampler.GlSampler;
 import net.irisshaders.iris.gl.texture.DepthCopyStrategy;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.gl.texture.PixelType;
@@ -69,8 +70,8 @@ public class CenterDepthSampler {
 			throw new RuntimeException(e);
 		}
 
-		builder.addDynamicSampler(depthSupplier, "depth");
-		builder.addDynamicSampler(() -> altTexture, "altDepth");
+		builder.addDynamicSampler(depthSupplier,  GlSampler.NEAREST, "depth");
+		builder.addDynamicSampler(() -> altTexture, GlSampler.NEAREST,  "altDepth");
 		builder.uniform1f(UniformUpdateFrequency.PER_FRAME, "lastFrameTime", SystemTimeUniforms.TIMER::getLastFrameTime);
 		builder.uniform1f(UniformUpdateFrequency.ONCE, "decay", () -> (1.0f / ((halfLife * 0.1) / LN2)));
 		// TODO: can we just do this for all composites?

@@ -72,10 +72,6 @@ public class RenderTargets {
 		this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, mojangDepthFormat, width, height, 1, 1);
 		this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, mojangDepthFormat, width, height, 1, 1);
 
-		this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
-		this.noHand.setTextureFilter(FilterMode.NEAREST, false);
-		this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-		this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
 		this.noTranslucentsDestFb = createFramebufferWritingToMain(new int[]{0});
 		this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
 
@@ -180,10 +176,9 @@ public class RenderTargets {
 
 			this.noTranslucents = RenderSystem.getDevice().createTexture("Depth / Opaque", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, newDepthTextureId.getFormat(), newWidth, newHeight, 1, 1);
 			this.noHand = RenderSystem.getDevice().createTexture("Depth / Before Hand", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, newDepthTextureId.getFormat(), newWidth, newHeight, 1, 1);
-			this.noTranslucents.setTextureFilter(FilterMode.NEAREST, false);
-			this.noHand.setTextureFilter(FilterMode.NEAREST, false);
-			this.noTranslucents.setAddressMode(AddressMode.CLAMP_TO_EDGE);
-			this.noHand.setAddressMode(AddressMode.CLAMP_TO_EDGE);
+
+			// TODO: linear horrors
+
 			this.noTranslucentsDestFb.addDepthAttachment(this.noTranslucents);
 			this.noHandDestFb.addDepthAttachment(this.noHand);
 

@@ -24,7 +24,6 @@ public class IrisPipelines {
 	static {
 		assignToMain(RenderPipelines.SOLID, p -> ShaderKey.TERRAIN_SOLID);
 		assignToMain(RenderPipelines.CUTOUT, p -> ShaderKey.TERRAIN_CUTOUT);
-		assignToMain(RenderPipelines.CUTOUT_MIPPED, p -> ShaderKey.TERRAIN_CUTOUT);
 		assignToMain(RenderPipelines.TRANSLUCENT, p -> ShaderKey.TERRAIN_TRANSLUCENT);
 		assignToMain(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.MOVING_BLOCK);
 		assignToMain(RenderPipelines.TRIPWIRE, p -> ShaderKey.TERRAIN_TRANSLUCENT);
@@ -39,7 +38,6 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.ENTITY_NO_OUTLINE, p -> getTranslucent(p));
 		assignToMain(RenderPipelines.ENTITY_DECAL, p -> getCutout(p));
 		assignToMain(RenderPipelines.LINES, p -> ShaderKey.LINES);
-		assignToMain(RenderPipelines.LINE_STRIP, p -> ShaderKey.LINES);
 		assignToMain(RenderPipelines.SECONDARY_BLOCK_OUTLINE, p -> ShaderKey.LINES);
 		assignToMain(RenderPipelines.STARS, p -> ShaderKey.SKY_BASIC);
 		assignToMain(RenderPipelines.SUNRISE_SUNSET, p -> ShaderKey.SKY_BASIC_COLOR);
@@ -80,11 +78,9 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.LEASH, p -> ShaderKey.LEASH);
 		assignToMain(RenderPipelines.CLOUDS, p -> ShaderKey.CLOUDS);
 		assignToMain(RenderPipelines.FLAT_CLOUDS, p -> ShaderKey.CLOUDS);
-		assignToMain(RenderPipelines.DEBUG_LINE_STRIP, p -> ShaderKey.BASIC_COLOR);
 
 		assignToShadow(RenderPipelines.SOLID, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
 		assignToShadow(RenderPipelines.CUTOUT, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-		assignToShadow(RenderPipelines.CUTOUT_MIPPED, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
 		assignToShadow(RenderPipelines.TRANSLUCENT, p -> ShaderKey.SHADOW_TRANSLUCENT);
 		assignToShadow(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.SHADOW_TRANSLUCENT);
 		assignToShadow(RenderPipelines.TRIPWIRE, p -> ShaderKey.SHADOW_TRANSLUCENT);
@@ -113,7 +109,6 @@ public class IrisPipelines {
 		assignToShadow(RenderPipelines.OPAQUE_PARTICLE, p -> ShaderKey.SHADOW_PARTICLES);
 		assignToShadow(RenderPipelines.TRANSLUCENT_PARTICLE, p -> ShaderKey.SHADOW_PARTICLES);
 		assignToShadow(RenderPipelines.LINES, p -> ShaderKey.SHADOW_LINES);
-		assignToShadow(RenderPipelines.LINE_STRIP, p -> ShaderKey.SHADOW_LINES);
 		assignToShadow(RenderPipelines.LEASH, p -> ShaderKey.SHADOW_LEASH);
 		assignToShadow(RenderPipelines.SECONDARY_BLOCK_OUTLINE, p -> ShaderKey.SHADOW_LINES);
 		assignToShadow(RenderPipelines.TEXT, p -> ShaderKey.SHADOW_TEXT);

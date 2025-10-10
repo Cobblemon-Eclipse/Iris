@@ -173,9 +173,9 @@ public class MixinGlCommandEncoder {
 	@Inject(method = "trySetup", at = @At("RETURN"))
 	private void iris$setupState(GlRenderPass glRenderPass, Collection<String> collection, CallbackInfoReturnable<Boolean> cir) {
 		if (glRenderPass.pipeline.program() instanceof IrisProgram is && !is.iris$isSetUp()) {
-			GpuTextureView sam = glRenderPass.samplers.get("Sampler0");
+			GlRenderPass.TextureViewAndSampler sam = glRenderPass.samplers.get("Sampler0");
 			if (sam != null) {
-				RenderSystem.setShaderTexture(0, sam);
+				RenderSystem.setShaderTexture(0, sam.view(), sam.sampler());
 			}
 			is.iris$setupState();
 			programsToClear.add(is);

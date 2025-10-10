@@ -129,7 +129,6 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		if (TextureFormatLoader.getFormat() != null && !TextureFormatLoader.getFormat().canInterpolateValues(type)) {
 			texture.iris$markMipmapNonLinear();
 		}
-		texture.setTextureFilter(FilterMode.NEAREST, mipLevel > 1);
 
 		TextureManipulationUtil.fillWithColor(texture.iris$getGlId(), mipLevel, type.getDefaultValue());
 		TextureTracker.INSTANCE.trackTexture(this.texture.iris$getGlId(), (AbstractTexture) (Object) this);
@@ -186,7 +185,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 				SpriteContentsTickerAccessor tickerAccessor = (SpriteContentsTickerAccessor) targetTicker;
 				SpriteContentsAnimatedTextureAccessor infoAccessor = (SpriteContentsAnimatedTextureAccessor) tickerAccessor.getAnimationInfo();
 
-				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture);
+				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture, 2);
 				return;
 			}
 		}

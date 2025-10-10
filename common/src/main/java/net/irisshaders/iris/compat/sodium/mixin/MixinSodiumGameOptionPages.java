@@ -1,8 +1,9 @@
 package net.irisshaders.iris.compat.sodium.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.caffeinemc.mods.sodium.client.gui.SodiumGameOptionPages;
 import net.caffeinemc.mods.sodium.client.gui.options.Option;
-import net.caffeinemc.mods.sodium.client.gui.options.OptionFlag;
 import net.caffeinemc.mods.sodium.client.gui.options.OptionGroup;
 import net.caffeinemc.mods.sodium.client.gui.options.OptionImpact;
 import net.caffeinemc.mods.sodium.client.gui.options.OptionImpl;
@@ -11,7 +12,6 @@ import net.caffeinemc.mods.sodium.client.gui.options.control.CyclingControl;
 import net.caffeinemc.mods.sodium.client.gui.options.control.SliderControl;
 import net.caffeinemc.mods.sodium.client.gui.options.storage.MinecraftOptionsStorage;
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.fantastic.SupportedGraphicsMode;
 import net.irisshaders.iris.gui.option.IrisVideoSettings;
 import net.irisshaders.iris.pathways.colorspace.ColorSpace;
 import net.minecraft.client.Options;
@@ -21,7 +21,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
@@ -56,7 +55,7 @@ public class MixinSodiumGameOptionPages {
 
 	@Redirect(method = "quality", remap = false,
 		slice = @Slice(
-			from = @At(value = "CONSTANT", args = "stringValue=options.graphics"),
+			from = @At(value = "CONSTANT", args = "stringValue=options.improvedTransparency"),
 			to = @At(value = "CONSTANT", args = "stringValue=options.renderClouds")
 		),
 		at = @At(value = "INVOKE", remap = false,
@@ -72,22 +71,25 @@ public class MixinSodiumGameOptionPages {
 		return builder;
 	}
 
-	@ModifyArg(method = "quality", remap = false,
+	@WrapOperation(method = "quality", remap = false,
 		slice = @Slice(
-			from = @At(value = "CONSTANT", args = "stringValue=options.graphics"),
+			from = @At(value = "CONSTANT", args = "stringValue=options.improvedTransparency"),
 			to = @At(value = "CONSTANT", args = "stringValue=options.renderClouds")
 		),
 		at = @At(value = "INVOKE", remap = false,
-			target = "net/caffeinemc/mods/sodium/client/gui/options/OptionGroup$Builder.add (" +
-				"Lnet/caffeinemc/mods/sodium/client/gui/options/Option;" +
-				")Lnet/caffeinemc/mods/sodium/client/gui/options/OptionGroup$Builder;"),
+			target = "Lnet/caffeinemc/mods/sodium/client/gui/options/OptionImpl$Builder;setTooltip(Lnet/minecraft/network/chat/Component;)Lnet/caffeinemc/mods/sodium/client/gui/options/OptionImpl$Builder;"),
 		allow = 1)
-	private static Option<?> iris$replaceGraphicsQualityButton(Option<?> candidate) {
-		if (!Iris.getIrisConfig().areShadersEnabled()) {
-			return candidate;
-		} else {
-			return createLimitedVideoSettingsButton(vanillaOpts);
-		}
+	private static <S, T> OptionImpl.Builder<S, T> iris$replaceGraphicsQualityButton(OptionImpl.Builder<S, T> instance, Component tooltip, Operation<OptionImpl.Builder<S, T>> original) {
+		instance.setEnabled(() -> !Iris.getIrisConfig().areShadersEnabled());
+		instance.setTooltip((t) -> {
+			if (Iris.getIrisConfig().areShadersEnabled()) {
+				return Component.literal("This cannot be used with shader packs enabled.");
+			} else {
+				return tooltip;
+			}
+		});
+
+		return instance;
 	}
 
 	@Unique
@@ -137,21 +139,5 @@ public class MixinSodiumGameOptionPages {
 	@Unique
 	private static ControlValueFormatter translateVariableOrDisabled(String key, String disabled) {
 		return (v) -> v == 0 ? Component.literal(disabled) : (Component.translatable(key, v));
-	}
-
-	@Unique
-	private static OptionImpl<Options, SupportedGraphicsMode> createLimitedVideoSettingsButton(MinecraftOptionsStorage vanillaOpts) {
-		return OptionImpl.createBuilder(SupportedGraphicsMode.class, vanillaOpts)
-			.setName(Component.translatable("options.graphics"))
-			// TODO: State that Fabulous Graphics is incompatible with Shader Packs in the tooltip
-			.setTooltip(Component.translatable("sodium.options.graphics_quality.tooltip"))
-			.setControl(option -> new CyclingControl<>(option, SupportedGraphicsMode.class,
-				new Component[]{Component.translatable("options.graphics.fast"), Component.translatable("options.graphics.fancy")}))
-			.setBinding(
-				(opts, value) -> opts.graphicsMode().set(value.toVanilla()),
-				opts -> SupportedGraphicsMode.fromVanilla(opts.graphicsMode()))
-			.setImpact(OptionImpact.HIGH)
-			.setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)
-			.build();
 	}
 }

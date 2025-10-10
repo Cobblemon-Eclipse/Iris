@@ -6,10 +6,10 @@ plugins {
 
 val MINECRAFT_VERSION by extra { "25w41a" }
 val NEOFORGE_VERSION by extra { "21.9.0-alpha.1.21.9-rc1.20250928.195244" }
-val FABRIC_LOADER_VERSION by extra { "0.17.2" }
-val FABRIC_API_VERSION by extra { "0.133.12+1.21.9" }
+val FABRIC_LOADER_VERSION by extra { "0.17.3" }
+val FABRIC_API_VERSION by extra { "0.135.1+1.21.11" }
 
-val SODIUM_DEPENDENCY_FABRIC by extra { "maven.modrinth:sodium:AQpu5aS1"}
+val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.7.0-snapshot+mc25w41a-local.jar"))}
 val SODIUM_DEPENDENCY_NEO by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-neoforge-0.7.0-snapshot+mc1.21.9-rc1-local.jar"))}
 
 // This value can be set to null to disable Parchment.

@@ -13,6 +13,7 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SkyRenderer;
+import net.minecraft.world.level.MoonPhase;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,7 +37,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderMoon", at = @At("HEAD"), cancellable = true)
-	private void iris$beforeDrawMoon(int i, float f, PoseStack poseStack, CallbackInfo ci) {
+	private void iris$beforeDrawMoon(MoonPhase moonPhase, float f, PoseStack poseStack, CallbackInfo ci) {
 		if (!Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderMoon).orElse(true)) {
 			ci.cancel();
 		}
@@ -48,7 +49,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderMoon", at = @At(value = "HEAD"))
-	private void iris$setMoonRenderStage(int i, float f, PoseStack poseStack, CallbackInfo ci) {
+	private void iris$setMoonRenderStage(MoonPhase moonPhase, float f, PoseStack poseStack, CallbackInfo ci) {
 		setPhase(WorldRenderingPhase.MOON);
 	}
 
@@ -68,7 +69,7 @@ public class MixinSkyRenderer {
 	}
 
 	@Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 1))
-	private void iris$renderSky$tiltSun(PoseStack poseStack, float f, int i, float g, float h, CallbackInfo ci) {
+	private void iris$renderSky$tiltSun(PoseStack poseStack, float f, MoonPhase moonPhase, float g, float h, CallbackInfo ci) {
 		poseStack.mulPose(Axis.ZP.rotationDegrees(getSunPathRotation()));
 	}
 

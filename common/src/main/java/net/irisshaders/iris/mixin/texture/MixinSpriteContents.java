@@ -21,8 +21,8 @@ public class MixinSpriteContents implements SpriteContentsExtension {
 	@Nullable
 	private SpriteContents.Ticker createdTicker;
 
-	@Redirect(method = "increaseMipLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/MipmapGenerator;generateMipLevels([Lcom/mojang/blaze3d/platform/NativeImage;I)[Lcom/mojang/blaze3d/platform/NativeImage;"))
-	private NativeImage[] iris$redirectMipmapGeneration(NativeImage[] nativeImages, int mipLevel) {
+	@Redirect(method = "increaseMipLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/MipmapGenerator;generateMipLevels([Lcom/mojang/blaze3d/platform/NativeImage;IZ)[Lcom/mojang/blaze3d/platform/NativeImage;"))
+	private NativeImage[] iris$redirectMipmapGeneration(NativeImage[] nativeImages, int mipLevel, boolean bl) {
 		if (this instanceof CustomMipmapGenerator.Provider provider) {
 			CustomMipmapGenerator generator = provider.getMipmapGenerator();
 			if (generator != null) {
@@ -33,7 +33,7 @@ public class MixinSpriteContents implements SpriteContentsExtension {
 				}
 			}
 		}
-		return MipmapGenerator.generateMipLevels(nativeImages, mipLevel);
+		return MipmapGenerator.generateMipLevels(nativeImages, mipLevel, bl);
 	}
 
 	@Inject(method = "createTicker()Lnet/minecraft/client/renderer/texture/SpriteTicker;", at = @At("RETURN"))

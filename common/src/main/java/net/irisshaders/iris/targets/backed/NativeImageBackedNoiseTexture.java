@@ -14,7 +14,6 @@ import java.util.function.IntSupplier;
 public class NativeImageBackedNoiseTexture extends DynamicTexture implements TextureAccess {
 	public NativeImageBackedNoiseTexture(int size) {
 		super(() -> "Noise / " + size, create(size));
-		this.texture.setTextureFilter(FilterMode.LINEAR, false);
 	}
 
 	private static NativeImage create(int size) {

@@ -38,11 +38,11 @@ public class MixinWeatherRenderer {
 	}
 
 	@WrapMethod(method = "tickRainParticles")
-	private void disableRainParticles(ClientLevel clientLevel, Camera camera, int i, ParticleStatus particleStatus, Operation<Void> original) {
+	private void disableRainParticles(ClientLevel clientLevel, Camera camera, int i, ParticleStatus particleStatus, int j, Operation<Void> original) {
 		if (!Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderWeatherParticles).orElse(true)) {
-			original.call(clientLevel, camera, i, ParticleStatus.MINIMAL);
+			original.call(clientLevel, camera, i, ParticleStatus.MINIMAL, j);
 		} else {
-			original.call(clientLevel, camera, i, particleStatus);
+			original.call(clientLevel, camera, i, particleStatus, j);
 		}
 	}
 }

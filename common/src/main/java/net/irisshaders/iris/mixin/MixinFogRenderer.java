@@ -24,7 +24,7 @@ public class MixinFogRenderer {
 	@Inject(method = "setupFog", at = @At("HEAD"))
 	private void iris$setupLegacyWaterFog(Camera camera, int i, boolean bl, DeltaTracker deltaTracker, float f, ClientLevel clientLevel, CallbackInfoReturnable<Vector4f> cir) {
 		if (camera.getFluidInCamera() == FogType.WATER) {
-			Entity entity = camera.getEntity();
+			Entity entity = camera.entity();
 
 			float density = 0.05F;
 

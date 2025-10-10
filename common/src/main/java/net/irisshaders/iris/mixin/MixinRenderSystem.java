@@ -2,6 +2,7 @@ package net.irisshaders.iris.mixin;
 
 import com.mojang.blaze3d.shaders.ShaderType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import net.irisshaders.iris.Iris;
@@ -29,7 +30,7 @@ public class MixinRenderSystem {
 	}
 
 	@Inject(method = "setShaderTexture", at = @At(value = "RETURN"))
-	private static void _setShaderTexture(int i, GpuTextureView gpuTextureView, CallbackInfo ci) {
+	private static void _setShaderTexture(int i, GpuTextureView gpuTextureView, GpuSampler gpuSampler, CallbackInfo ci) {
 		if (gpuTextureView != null) {
 			//gpuTexture.setTextureFilter(FilterMode.NEAREST, false);
 		}

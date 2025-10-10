@@ -3,6 +3,7 @@ package net.irisshaders.iris.targets;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import net.irisshaders.iris.gl.GLDebug;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.sampler.GlSampler;
 import net.irisshaders.iris.gl.texture.InternalTextureFormat;
 import net.irisshaders.iris.gl.texture.PixelFormat;
 import net.irisshaders.iris.gl.texture.PixelType;
@@ -24,6 +25,7 @@ public class RenderTarget {
 	private int height;
 	private boolean isValid;
 	private String name;
+	private boolean allowsLinear;
 
 	public RenderTarget(Builder builder) {
 		this.isValid = true;
@@ -41,6 +43,7 @@ public class RenderTarget {
 		this.altTexture = GlStateManager._genTexture();
 
 		boolean isPixelFormatInteger = builder.internalFormat.getPixelFormat().isInteger();
+		this.allowsLinear = !isPixelFormatInteger;
 		setupTexture(mainTexture, builder.width, builder.height, !isPixelFormatInteger, false);
 		setupTexture(altTexture, builder.width, builder.height, !isPixelFormatInteger, true);
 
@@ -122,6 +125,10 @@ public class RenderTarget {
 		if (!isValid) {
 			throw new IllegalStateException("Attempted to use a deleted composite render target");
 		}
+	}
+
+	public GlSampler sampler() {
+		return allowsLinear ? GlSampler.LINEAR : GlSampler.NEAREST;
 	}
 
 	public static class Builder {

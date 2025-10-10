@@ -35,7 +35,7 @@ public class MixinBiomeAmbientSoundsHandler implements BiomeAmbienceInterface {
 		if (j > 0) {
 			this.constantMoodiness -= (float) j / (float) 15 * 0.001F;
 		} else {
-			this.constantMoodiness -= (float) (this.player.level().getBrightness(LightLayer.BLOCK, blockPos) - 1) / (float) ambientMoodSettings.getTickDelay();
+			this.constantMoodiness -= (float) (this.player.level().getBrightness(LightLayer.BLOCK, blockPos) - 1) / (float) ambientMoodSettings.tickDelay();
 		}
 
 		this.constantMoodiness = Mth.clamp(constantMoodiness, 0.0f, 1.0f);

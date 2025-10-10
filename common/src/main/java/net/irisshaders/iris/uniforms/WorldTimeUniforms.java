@@ -23,7 +23,7 @@ public final class WorldTimeUniforms {
 		uniforms
 			.uniform1i(PER_TICK, "worldTime", WorldTimeUniforms::getWorldDayTime)
 			.uniform1i(PER_TICK, "worldDay", WorldTimeUniforms::getWorldDay)
-			.uniform1i(PER_TICK, "moonPhase", () -> getWorld().getMoonPhase());
+			.uniform1i(PER_TICK, "moonPhase", () -> getWorld().getMoonPhase().index());
 	}
 
 	static int getWorldDayTime() {

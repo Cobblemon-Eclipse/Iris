@@ -26,7 +26,7 @@ public class MixinTerrainParticle {
 	private void iris$resolveTranslucency(ClientLevel level, double x, double y, double z, double velocityX, double velocityY, double velocityZ, BlockState blockState, BlockPos blockPos, CallbackInfo ci) {
 		ChunkSectionLayer type = ItemBlockRenderTypes.getChunkRenderType(blockState);
 
-		if (type == ChunkSectionLayer.SOLID || type == ChunkSectionLayer.CUTOUT || type == ChunkSectionLayer.CUTOUT_MIPPED) {
+		if (type == ChunkSectionLayer.SOLID || type == ChunkSectionLayer.CUTOUT) {
 			isOpaque = true;
 		}
 	}

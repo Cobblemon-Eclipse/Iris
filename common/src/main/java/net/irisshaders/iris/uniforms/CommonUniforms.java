@@ -76,7 +76,7 @@ public final class CommonUniforms {
 		// after the texture is changed and before rendering starts.
 		uniforms.uniform2i("atlasSize", () -> {
 			if (RenderSystem.getShaderTexture(0) == null) return ZERO_VECTOR_2i;
-			int glId = RenderSystem.getShaderTexture(0).texture().iris$getGlId();
+			int glId = RenderSystem.getShaderTexture(0).view().texture().iris$getGlId();
 
 			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
 			if (texture instanceof TextureAtlas atlas) {
@@ -220,7 +220,7 @@ public final class CommonUniforms {
 			return ZERO_VECTOR_3d;
 		}
 
-		int skyColor = client.level.getSkyColor(client.getCameraEntity().position(),
+		int skyColor = client.level.getSkyColor(client.gameRenderer.getMainCamera(),
 			CapturedRenderingState.INSTANCE.getTickDelta());
 
 		return new Vector3d(ARGB.redFloat(skyColor), ARGB.greenFloat(skyColor), ARGB.blueFloat(skyColor));

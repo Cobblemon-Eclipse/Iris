@@ -10,8 +10,4 @@ public interface GpuTextureInterface {
     default void iris$markMipmapNonLinear() {
 		throw new AssertionError("Not accessible.");
 	}
-
-	default void iris$copyStateTo(GpuTexture texture) {
-		throw new AssertionError("Not accessible.");
-	}
 }

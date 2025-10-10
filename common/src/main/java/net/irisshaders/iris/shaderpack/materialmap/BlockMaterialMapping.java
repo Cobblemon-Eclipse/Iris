@@ -127,7 +127,7 @@ public class BlockMaterialMapping {
 		return switch (type) {
 			case SOLID -> ChunkSectionLayer.SOLID;
 			case CUTOUT -> ChunkSectionLayer.CUTOUT;
-			case CUTOUT_MIPPED -> ChunkSectionLayer.CUTOUT_MIPPED;
+			case CUTOUT_MIPPED -> ChunkSectionLayer.CUTOUT;
 			case TRANSLUCENT -> ChunkSectionLayer.TRANSLUCENT;
 		};
 	}

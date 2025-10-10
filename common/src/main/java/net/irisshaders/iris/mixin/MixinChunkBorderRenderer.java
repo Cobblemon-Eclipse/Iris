@@ -23,6 +23,11 @@ public class MixinChunkBorderRenderer {
 		}
 
 		@Override
+		public VertexConsumer setColor(int i) {
+			return this;
+		}
+
+		@Override
 		public VertexConsumer setUv(float u, float v) {
 			return this;
 		}
@@ -39,6 +44,11 @@ public class MixinChunkBorderRenderer {
 
 		@Override
 		public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
+			return this;
+		}
+
+		@Override
+		public VertexConsumer setLineWidth(float f) {
 			return this;
 		}
 	};

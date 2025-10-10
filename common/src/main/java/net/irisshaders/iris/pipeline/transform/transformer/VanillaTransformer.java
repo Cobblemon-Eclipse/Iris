@@ -53,9 +53,9 @@ public class VanillaTransformer {
 			    vec4 ColorModulator;
 			    vec3 ModelOffset;
 			    mat4 TextureMat;
-			    float LineWidth;
 			} iris_transforms;
 			""",
+			"in float LineWidth;",
 			"""
 				layout(std140) uniform iris_Projection {
 				    mat4 iris_ProjMat;
@@ -197,7 +197,7 @@ public class VanillaTransformer {
 						"vec3 ndc1 = linePosStart.xyz / linePosStart.w;" +
 						"vec3 ndc2 = linePosEnd.xyz / linePosEnd.w;" +
 						"vec2 lineScreenDirection = normalize((ndc2.xy - ndc1.xy) * iris_globalInfo.ScreenSize);" +
-						"vec2 lineOffset = vec2(-lineScreenDirection.y, lineScreenDirection.x) * iris_transforms.LineWidth / iris_globalInfo.ScreenSize;"
+						"vec2 lineOffset = vec2(-lineScreenDirection.y, lineScreenDirection.x) * LineWidth / iris_globalInfo.ScreenSize;"
 						+
 						"if (lineOffset.x < 0.0) {" +
 						"    lineOffset *= -1.0;" +

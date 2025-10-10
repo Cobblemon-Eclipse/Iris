@@ -84,7 +84,7 @@ public class IrisExclusiveUniforms {
 	private static boolean isHeavyFog() {
 		if (Minecraft.getInstance().level != null) {
 			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-			return Minecraft.getInstance().level.effects().isFoggyAt(camera.getBlockPosition().getX(), camera.getBlockPosition().getZ())
+			return Minecraft.getInstance().level.effects().isFoggyAt(camera.blockPosition().getX(), camera.blockPosition().getZ())
 				|| Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
 		}
 
@@ -108,7 +108,7 @@ public class IrisExclusiveUniforms {
 		HitResult hitResult = Minecraft.getInstance().hitResult;
 		if (Minecraft.getInstance().level != null && ((GameRendererAccessor) Minecraft.getInstance().gameRenderer).shouldRenderBlockOutlineA() && hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
 			BlockPos blockPos4 = ((BlockHitResult) hitResult).getBlockPos();
-			return blockPos4.getCenter().subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).toVector3f();
+			return blockPos4.getCenter().subtract(Minecraft.getInstance().gameRenderer.getMainCamera().position()).toVector3f();
 		}
 
 		return new Vector3f(-256.0f);

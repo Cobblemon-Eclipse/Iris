@@ -27,6 +27,7 @@ import net.irisshaders.iris.gl.program.ComputeProgram;
 import net.irisshaders.iris.gl.program.ProgramBuilder;
 import net.irisshaders.iris.gl.program.ProgramImages;
 import net.irisshaders.iris.gl.program.ProgramSamplers;
+import net.irisshaders.iris.gl.sampler.GlSampler;
 import net.irisshaders.iris.gl.sampler.SamplerHolder;
 import net.irisshaders.iris.gl.sampler.SamplerLimits;
 import net.irisshaders.iris.gl.shader.ShaderCompileException;
@@ -192,13 +193,14 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	private boolean isRenderingWorld;
 	private boolean isMainBound;
 	private boolean shouldBindPBR;
-	private int currentNormalTexture;
-	private int currentSpecularTexture;
+	private AbstractTexture currentNormalTexture;
+	private AbstractTexture currentSpecularTexture;
 	private ColorSpace currentColorSpace;
 	private GlFramebuffer defaultFB;
 	private GlFramebuffer defaultFBAlt;
 	private GlFramebuffer defaultFBShadow;
 	private final boolean supportsEndFlash;
+	private GlSampler normalSampler = GlSampler.MIPPED_NEAREST, specularSampler = GlSampler.MIPPED_NEAREST;
 
 	public IrisRenderingPipeline(ProgramSet programSet) {
 		ShaderPrinter.resetPrintState();
@@ -816,29 +818,33 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 	@Override
 	public int getCurrentNormalTexture() {
-		return currentNormalTexture;
+		return currentNormalTexture == null ? 0 : currentNormalTexture.getTexture().iris$getGlId();
+	}
+
+	public GlSampler getNormalSampler() {
+		return normalSampler;
+	}
+
+	public GlSampler getSpecularSampler() {
+		return specularSampler;
 	}
 
 	@Override
 	public int getCurrentSpecularTexture() {
-		return currentSpecularTexture;
+		return currentNormalTexture == null ? 0 : currentSpecularTexture.getTexture().iris$getGlId();
 	}
 
 	@Override
 	public void onSetShaderTexture(GpuTextureView id) {
 		if (shouldBindPBR && isRenderingWorld && id != null) {
 			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id.texture().iris$getGlId());
-			id.texture().iris$copyStateTo(pbrHolder.normalTexture().getTexture());
-			id.texture().iris$copyStateTo(pbrHolder.specularTexture().getTexture());
-			currentNormalTexture = pbrHolder.normalTexture().getTexture().iris$getGlId();
-			currentSpecularTexture = pbrHolder.specularTexture().getTexture().iris$getGlId();
+			currentNormalTexture = pbrHolder.normalTexture();
+			currentSpecularTexture = pbrHolder.specularTexture();
 
 			TextureFormat textureFormat = TextureFormatLoader.getFormat();
 			if (textureFormat != null) {
-				int previousBinding = GlStateManagerAccessor.getTEXTURES()[GlStateManagerAccessor.getActiveTexture()].binding;
-				textureFormat.setupTextureParameters(PBRType.NORMAL, pbrHolder.normalTexture());
-				textureFormat.setupTextureParameters(PBRType.SPECULAR, pbrHolder.specularTexture());
-				GlStateManager._bindTexture(previousBinding);
+				this.normalSampler = textureFormat.canInterpolateValues(PBRType.NORMAL) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
+				this.specularSampler = textureFormat.canInterpolateValues(PBRType.SPECULAR) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
 			}
 
 			PBRTextureManager.notifyPBRTexturesChanged();
@@ -1195,7 +1201,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 		for (int i = 0; i < 12; i++) {
 			// Clear all shader textures
-			RenderSystem.setShaderTexture(i, null);
+			RenderSystem.setShaderTexture(i, null, null);
 		}
 
 		if (shadowCompositeRenderer != null) {

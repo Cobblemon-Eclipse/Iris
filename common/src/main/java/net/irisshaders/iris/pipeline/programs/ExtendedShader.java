@@ -197,8 +197,8 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 		}
 
 		if (intensitySwizzle) {
-			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).texture().iris$getGlId());
-			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).texture().iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
+			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).view().texture().iris$getGlId());
+			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).view().texture().iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
 				new int[]{GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED});
 		}
 

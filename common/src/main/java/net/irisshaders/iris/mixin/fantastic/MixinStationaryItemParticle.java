@@ -25,7 +25,7 @@ public class MixinStationaryItemParticle {
 	private void iris$resolveTranslucency(ClientLevel clientLevel, double d, double e, double f, BlockState blockState, CallbackInfo ci) {
 		ChunkSectionLayer type = ItemBlockRenderTypes.getChunkRenderType(blockState);
 
-		if (type == ChunkSectionLayer.SOLID || type == ChunkSectionLayer.CUTOUT || type == ChunkSectionLayer.CUTOUT_MIPPED) {
+		if (type == ChunkSectionLayer.SOLID || type == ChunkSectionLayer.CUTOUT) {
 			isOpaque = true;
 		}
 	}

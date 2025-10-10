@@ -151,7 +151,6 @@ public class CustomTextureManager {
 					if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 						int tex = GlStateManagerAccessor.getActiveTexture();
 						int binding = GlStateManagerAccessor.getTEXTURES()[tex].binding;
-						texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 						GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
 						GlStateManager._bindTexture(binding);
 					}
@@ -168,7 +167,6 @@ public class CustomTextureManager {
 						if (texture instanceof TextureAtlas || texture instanceof PBRAtlasTexture) {
 							int tex = GlStateManagerAccessor.getActiveTexture();
 							int binding = GlStateManagerAccessor.getTEXTURES()[tex].binding;
-							texture.setFilter(false, Minecraft.getInstance().options.mipmapLevels().get() > 0);
 							GlStateManager._activeTexture(GL46C.GL_TEXTURE0 + tex);
 							GlStateManager._bindTexture(binding);
 						}

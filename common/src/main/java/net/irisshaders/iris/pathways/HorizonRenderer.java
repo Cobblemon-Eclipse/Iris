@@ -171,16 +171,16 @@ public class HorizonRenderer {
 
 		RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
 		GpuBuffer indexBuffer = indices.getBuffer(indexCount);
-		GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(modelView, fogColor, new Vector3f(), RenderSystem.getTextureMatrix(), RenderSystem.getShaderLineWidth());
+		GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(modelView, fogColor, new Vector3f(), RenderSystem.getTextureMatrix());
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Sky", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty(),
 			Minecraft.getInstance().getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty())) {
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", gpuBufferSlice);
 
 			for(int i = 0; i < 12; ++i) {
-				GpuTextureView gpuTextureView3 = RenderSystem.getShaderTexture(i);
+				RenderSystem.TextureAndSampler gpuTextureView3 = RenderSystem.getShaderTexture(i);
 				if (gpuTextureView3 != null) {
-					pass.bindSampler("Sampler" + i, gpuTextureView3);
+					pass.bindTexture("Sampler" + i, gpuTextureView3.view(), gpuTextureView3.sampler());
 				}
 			}
 
