@@ -25,7 +25,6 @@ public class ShaderSynthesizer {
 			    vec4 ColorModulator;
 			    vec3 ModelOffset;
 			    mat4 TextureMat;
-			    float LineWidth;
 			};
 			""");
 		shader.append("""
@@ -47,6 +46,7 @@ public class ShaderSynthesizer {
 		}
 
 		if (inputs.isNewLines()) {
+			shader.append("in float LineWidth;\n");
 			shader.append("const float VIEW_SHRINK = 1.0 - (1.0 / 256.0);\n" +
 				"const mat4 VIEW_SCALE = mat4(\n" +
 				"    VIEW_SHRINK, 0.0, 0.0, 0.0,\n" +

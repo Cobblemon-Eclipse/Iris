@@ -224,7 +224,7 @@ public class IrisSamplers {
 	}
 
 	public static void addCustomTextures(SamplerHolder samplers, Object2ObjectMap<String, TextureAccess> irisCustomTextures) {
-		irisCustomTextures.forEach((name, texture) -> samplers.addDynamicSampler(texture.getType(), texture.getTextureId(), () -> GlSampler.NEAREST_REPEAT, name));
+		irisCustomTextures.forEach((name, texture) -> samplers.addDynamicSampler(texture.getType(), texture.getTextureId(), () -> texture.getSampling(), name));
 	}
 
 	public static void addCustomImages(SamplerHolder images, Set<GlImage> customImages) {

@@ -52,7 +52,6 @@ public class VanillaCoreTransformer {
 			    vec4 ColorModulator;
 			    vec3 ModelOffset;
 			    mat4 TextureMat;
-			    float LineWidth;
 			} iris_transforms;
 			""",
 			"""
