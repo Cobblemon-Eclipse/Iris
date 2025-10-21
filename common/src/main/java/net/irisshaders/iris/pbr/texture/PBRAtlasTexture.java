@@ -185,7 +185,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 				SpriteContentsTickerAccessor tickerAccessor = (SpriteContentsTickerAccessor) targetTicker;
 				SpriteContentsAnimatedTextureAccessor infoAccessor = (SpriteContentsAnimatedTextureAccessor) tickerAccessor.getAnimationInfo();
 
-				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture, 2);
+				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture);
 				return;
 			}
 		}

@@ -835,7 +835,7 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	}
 
 	@Override
-	public void onSetShaderTexture(GpuTextureView id) {
+	public void onSetAlbedoTex(GpuTextureView id) {
 		if (shouldBindPBR && isRenderingWorld && id != null) {
 			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id.texture().iris$getGlId());
 			currentNormalTexture = pbrHolder.normalTexture();
@@ -1198,11 +1198,6 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 		//
 		// This seems to be what most code expects. It's a sane default in any case.
 		GlStateManager._activeTexture(GL20C.GL_TEXTURE0);
-
-		for (int i = 0; i < 12; i++) {
-			// Clear all shader textures
-			RenderSystem.setShaderTexture(i, null, null);
-		}
 
 		if (shadowCompositeRenderer != null) {
 			shadowCompositeRenderer.destroy();

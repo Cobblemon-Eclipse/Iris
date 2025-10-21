@@ -7,7 +7,7 @@ import net.irisshaders.iris.layer.OuterWrappedRenderType;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.font.GlyphRenderTypes;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(GlyphRenderTypes.class)

@@ -2,7 +2,7 @@ package net.irisshaders.iris.platform;
 
 import net.irisshaders.iris.shaderpack.materialmap.BlockMaterialMapping;
 import net.irisshaders.iris.shaderpack.materialmap.BlockRenderType;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import org.spongepowered.asm.mixin.Unique;
 

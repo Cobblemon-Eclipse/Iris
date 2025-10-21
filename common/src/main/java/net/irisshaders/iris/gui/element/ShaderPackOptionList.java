@@ -26,7 +26,7 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
@@ -278,7 +278,8 @@ public class ShaderPackOptionList extends IrisContainerObjectSelectionList<Shade
 			Font font = Minecraft.getInstance().font;
 
 			// Draw header text
-			renderScrollingString(guiGraphics, font, text, x + (int) (entryWidth * 0.5), x + 5, y + 5, ((x + entryWidth) - 10) - utilityButtons.getWidth(), y + 15, 0xFFFFFFFF);
+			// TODO
+			guiGraphics.textRenderer().acceptScrolling(text, x + (int) (entryWidth * 0.5), x + 5, ((x + entryWidth) - 10) - utilityButtons.getWidth(), y + 5, y + 15);
 
 			GuiUtil.bindIrisWidgetsTexture();
 

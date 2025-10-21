@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.opengl.Uniform;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.compat.SkipList;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -101,7 +102,7 @@ public class FallbackShader extends GlProgram implements IrisProgram {
 	}
 
 	@Override
-	public void iris$setupState() {
+	public void iris$setupState(GpuTextureView albedoTex) {
 		isSetUp = true;
 		DepthColorStorage.unlockDepthColor();
 

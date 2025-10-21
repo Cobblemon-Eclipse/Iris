@@ -75,8 +75,8 @@ public final class CommonUniforms {
 		// the shader will always be setup (and therefore uniforms will be re-uploaded)
 		// after the texture is changed and before rendering starts.
 		uniforms.uniform2i("atlasSize", () -> {
-			if (RenderSystem.getShaderTexture(0) == null) return ZERO_VECTOR_2i;
-			int glId = RenderSystem.getShaderTexture(0).view().texture().iris$getGlId();
+			int glId = GlStateManagerAccessor.getTEXTURES()[GlStateManagerAccessor.getActiveTexture()].binding;
+			if (glId == 0) return ZERO_VECTOR_2i;
 
 			AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
 			if (texture instanceof TextureAtlas atlas) {

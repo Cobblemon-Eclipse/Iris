@@ -4,7 +4,7 @@ import net.irisshaders.iris.shaderpack.materialmap.BlockMaterialMapping;
 import net.irisshaders.iris.shaderpack.materialmap.BlockRenderType;
 import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;

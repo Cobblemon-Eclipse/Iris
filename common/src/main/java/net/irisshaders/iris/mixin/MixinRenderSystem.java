@@ -28,12 +28,4 @@ public class MixinRenderSystem {
 		IrisSamplers.initRenderer();
 		Iris.onRenderSystemInit();
 	}
-
-	@Inject(method = "setShaderTexture", at = @At(value = "RETURN"))
-	private static void _setShaderTexture(int i, GpuTextureView gpuTextureView, GpuSampler gpuSampler, CallbackInfo ci) {
-		if (gpuTextureView != null) {
-			//gpuTexture.setTextureFilter(FilterMode.NEAREST, false);
-		}
-		TextureTracker.INSTANCE.onSetShaderTexture(i, gpuTextureView);
-	}
 }

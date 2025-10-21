@@ -8,10 +8,11 @@ import net.irisshaders.iris.layer.OuterWrappedRenderType;
 import net.irisshaders.iris.uniforms.SystemTimeUniforms;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.AbstractEndPortalRenderer;
 import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
 import net.minecraft.client.renderer.blockentity.state.EndPortalRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
@@ -50,7 +51,7 @@ public class MixinTheEndPortalRenderer {
 	@Inject(method = "renderType", at = @At("HEAD"), cancellable = true)
 	private static void iris$renderType(CallbackInfoReturnable<RenderType> cir) {
 		if (Iris.getCurrentPack().isPresent()) {
-			cir.setReturnValue(RenderType.entitySolid(TheEndPortalRenderer.END_PORTAL_LOCATION));
+			cir.setReturnValue(RenderTypes.entitySolid(TheEndPortalRenderer.END_PORTAL_LOCATION));
 		}
 	}
 

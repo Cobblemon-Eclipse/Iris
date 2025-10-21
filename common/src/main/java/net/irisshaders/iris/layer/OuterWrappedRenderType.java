@@ -5,26 +5,27 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.mixin.rendertype.RenderTypeAccessor;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
 
 public class OuterWrappedRenderType extends RenderType {
-	private final RenderStateShard extra;
+	private static final RenderSetup FAKE_SETUP = RenderSetup.builder(RenderPipelines.GUI_TEXTURED).createRenderSetup();
+	private final RenderingWrapper extra;
 	private final RenderType wrapped;
 
-	public OuterWrappedRenderType(String name, RenderType wrapped, RenderStateShard extra) {
-		super(name, wrapped.bufferSize(),
-			wrapped.affectsCrumbling(), shouldSortOnUpload(wrapped), wrapped::setupRenderState, wrapped::clearRenderState);
+	public OuterWrappedRenderType(String name, RenderType wrapped, RenderingWrapper extra) {
+		super(name, FAKE_SETUP);
 
 		this.extra = extra;
 		this.wrapped = wrapped;
 	}
 
-	public static OuterWrappedRenderType wrapExactlyOnce(String name, RenderType wrapped, RenderStateShard extra) {
+	public static OuterWrappedRenderType wrapExactlyOnce(String name, RenderType wrapped, RenderingWrapper extra) {
 		while (wrapped instanceof OuterWrappedRenderType) {
 			wrapped = ((OuterWrappedRenderType) wrapped).unwrap();
 		}
@@ -34,24 +35,6 @@ public class OuterWrappedRenderType extends RenderType {
 
 	private RenderType unwrap() {
 		return wrapped;
-	}
-
-	private static boolean shouldSortOnUpload(RenderType type) {
-		return ((RenderTypeAccessor) type).shouldSortOnUpload();
-	}
-
-	@Override
-	public void setupRenderState() {
-		extra.setupRenderState();
-
-		super.setupRenderState();
-	}
-
-	@Override
-	public void clearRenderState() {
-		super.clearRenderState();
-
-		extra.clearRenderState();
 	}
 
 	@Override
@@ -71,9 +54,9 @@ public class OuterWrappedRenderType extends RenderType {
 
 	@Override
 	public void draw(MeshData meshData) {
-		extra.setupRenderState();
+		extra.setup();
 		wrapped.draw(meshData);
-		extra.clearRenderState();
+		extra.clear();
 	}
 
 	@Override
@@ -130,6 +113,8 @@ public class OuterWrappedRenderType extends RenderType {
 
 		return Objects.equals(this.wrapped, other.wrapped) && Objects.equals(this.extra, other.extra);
 	}
+
+
 
 	@Override
 	public int hashCode() {

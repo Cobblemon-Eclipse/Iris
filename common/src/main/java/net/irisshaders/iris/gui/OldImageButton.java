@@ -5,7 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -78,7 +78,7 @@ public class OldImageButton extends Button {
 	}
 
 	@Override
-	public void renderWidget(GuiGraphics pImageButton0, int pInt1, int pInt2, float pFloat3) {
+	public void renderContents(GuiGraphics pImageButton0, int pInt1, int pInt2, float pFloat3) {
 		this.renderTexture(
 			pImageButton0,
 			this.resourceLocation,

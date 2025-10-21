@@ -16,7 +16,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.renderer.state.CameraRenderState;
 
-import java.util.List;
 import java.util.OptionalInt;
 
 public interface WorldRenderingPipeline {
@@ -40,7 +39,7 @@ public interface WorldRenderingPipeline {
 
 	int getCurrentSpecularTexture();
 
-	void onSetShaderTexture(GpuTextureView id);
+	void onSetAlbedoTex(GpuTextureView id);
 
 	void beginHand();
 

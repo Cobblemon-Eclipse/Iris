@@ -14,6 +14,7 @@ import net.irisshaders.iris.pbr.texture.PBRSpriteHolder;
 import net.irisshaders.iris.pbr.texture.PBRType;
 import net.irisshaders.iris.pbr.texture.SpriteContentsExtension;
 import net.irisshaders.iris.pbr.util.ImageManipulationUtil;
+import net.minecraft.client.renderer.texture.MipmapStrategy;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -177,7 +178,7 @@ public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
 		protected final PBRType pbrType;
 
 		public PBRSpriteContents(ResourceLocation name, FrameSize size, NativeImage image, ResourceMetadata metadata, PBRType pbrType) {
-			super(name, size, image, metadata.getSection(AnimationMetadataSection.TYPE), List.of(), false);
+			super(name, size, image, metadata.getSection(AnimationMetadataSection.TYPE), List.of(), MipmapStrategy.AUTO);
 			this.pbrType = pbrType;
 		}
 

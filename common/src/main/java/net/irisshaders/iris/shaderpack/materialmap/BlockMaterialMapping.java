@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;

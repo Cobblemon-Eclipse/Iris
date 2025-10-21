@@ -13,7 +13,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.blending.DepthColorStorage;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ExtendedShader;
 import net.irisshaders.iris.pipeline.programs.IrisProgram;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
@@ -174,10 +176,10 @@ public class MixinGlCommandEncoder {
 	private void iris$setupState(GlRenderPass glRenderPass, Collection<String> collection, CallbackInfoReturnable<Boolean> cir) {
 		if (glRenderPass.pipeline.program() instanceof IrisProgram is && !is.iris$isSetUp()) {
 			GlRenderPass.TextureViewAndSampler sam = glRenderPass.samplers.get("Sampler0");
-			if (sam != null) {
-				RenderSystem.setShaderTexture(0, sam.view(), sam.sampler());
+			if (sam != null && Iris.getPipelineManager().getPipelineNullable() instanceof IrisRenderingPipeline irp) {
+				irp.onSetAlbedoTex(sam.view());
 			}
-			is.iris$setupState();
+			is.iris$setupState(sam == null ? null : sam.view());
 			programsToClear.add(is);
 		}
 	}

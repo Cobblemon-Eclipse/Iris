@@ -13,6 +13,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -171,18 +172,11 @@ public class HorizonRenderer {
 
 		RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
 		GpuBuffer indexBuffer = indices.getBuffer(indexCount);
-		GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(modelView, fogColor, new Vector3f(), RenderSystem.getTextureMatrix());
+		GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().writeTransform(modelView, fogColor, new Vector3f(), new Matrix4f());
 		try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "Sky", Minecraft.getInstance().getMainRenderTarget().getColorTextureView(), OptionalInt.empty(),
 			Minecraft.getInstance().getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty())) {
 			RenderSystem.bindDefaultUniforms(pass);
 			pass.setUniform("DynamicTransforms", gpuBufferSlice);
-
-			for(int i = 0; i < 12; ++i) {
-				RenderSystem.TextureAndSampler gpuTextureView3 = RenderSystem.getShaderTexture(i);
-				if (gpuTextureView3 != null) {
-					pass.bindTexture("Sampler" + i, gpuTextureView3.view(), gpuTextureView3.sampler());
-				}
-			}
 
 			pass.setVertexBuffer(0, buffer);
 			pass.setIndexBuffer(indexBuffer, indices.type());

@@ -17,6 +17,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContex
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
+import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -162,7 +163,9 @@ public class SodiumShader implements ChunkShaderInterface {
 		DepthColorStorage.unlockDepthColor();
 
 		applyBlendModes();
-		RenderSystem.setShaderTexture(0, pass.getAtlas(), RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST));
+		if (Iris.getPipelineManager().getPipelineNullable() instanceof IrisRenderingPipeline irp) {
+			irp.onSetAlbedoTex(pass.getAtlas());
+		}
 		updateUniforms();
 		images.update();
 

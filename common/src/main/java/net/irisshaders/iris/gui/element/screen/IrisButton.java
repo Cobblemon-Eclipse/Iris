@@ -25,7 +25,12 @@ public class IrisButton extends Button {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int pInt1, int pInt2, float pFloat3) {
+	public float getAlpha() {
+		return this.alphaSupplier.getAsFloat();
+	}
+
+	@Override
+	protected void renderContents(GuiGraphics guiGraphics, int pInt1, int pInt2, float pFloat3) {
 		Minecraft lvMinecraft5 = Minecraft.getInstance();
 		//guiGraphics.flush();
 		// TODO 1.21.6
@@ -37,7 +42,7 @@ public class IrisButton extends Button {
 		//guiGraphics.flush();
 		//RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alphaSupplier.getAsFloat());
 		int lvInt6 = this.active ? 16777215 : 10526880;
-		this.renderString(guiGraphics, lvMinecraft5.font, lvInt6 | Mth.ceil(this.alphaSupplier.getAsFloat() * 255.0F) << 24);
+		this.renderDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
 		//guiGraphics.flush();
 		//RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 

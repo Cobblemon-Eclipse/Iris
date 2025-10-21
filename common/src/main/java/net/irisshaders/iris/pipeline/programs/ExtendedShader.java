@@ -6,6 +6,7 @@ import com.mojang.blaze3d.opengl.Uniform;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -169,7 +170,7 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 	private float[] tempF = new float[9];
 
 	@Override
-	public void iris$setupState() {
+	public void iris$setupState(GpuTextureView albedoTex) {
 		isSetup = true;
 		DepthColorStorage.unlockDepthColor();
 
@@ -196,9 +197,9 @@ public class ExtendedShader extends GlProgram implements IrisProgram {
 			IrisRenderSystem.uniformMatrix4fv(projectionInverse, false, (ShadowRenderingState.areShadowsCurrentlyBeingRendered() ? ShadowRenderer.PROJECTION : CapturedRenderingState.INSTANCE.getGbufferProjection()).invert(tempMatrix4f).get(tempFloats));
 		}
 
-		if (intensitySwizzle) {
-			IrisRenderSystem.addUnswizzle(RenderSystem.getShaderTexture(0).view().texture().iris$getGlId());
-			IrisRenderSystem.texParameteriv(RenderSystem.getShaderTexture(0).view().texture().iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
+		if (intensitySwizzle && albedoTex != null) {
+			IrisRenderSystem.addUnswizzle(albedoTex.texture().iris$getGlId());
+			IrisRenderSystem.texParameteriv(albedoTex.texture().iris$getGlId(), TextureType.TEXTURE_2D.getGlType(), ARBTextureSwizzle.GL_TEXTURE_SWIZZLE_RGBA,
 				new int[]{GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED, GL30C.GL_RED});
 		}
 

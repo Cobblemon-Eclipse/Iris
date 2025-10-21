@@ -10,6 +10,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameType;
@@ -84,8 +85,7 @@ public class IrisExclusiveUniforms {
 	private static boolean isHeavyFog() {
 		if (Minecraft.getInstance().level != null) {
 			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-			return Minecraft.getInstance().level.effects().isFoggyAt(camera.blockPosition().getX(), camera.blockPosition().getZ())
-				|| Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
+			return camera.attributeProbe().getValue(EnvironmentAttributes.EXTRA_FOG, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) || Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
 		}
 
 		return false;
@@ -200,7 +200,7 @@ public class IrisExclusiveUniforms {
 			});
 			uniforms.uniform1f(UniformUpdateFrequency.PER_FRAME, "cloudHeight", () -> {
 				if (level != null) {
-					return level.dimensionType().cloudHeight().orElse(-1);
+					return Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(EnvironmentAttributes.CLOUD_HEIGHT, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
 				} else {
 					return 192.0;
 				}

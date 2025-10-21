@@ -9,7 +9,7 @@ import net.irisshaders.iris.layer.OuterWrappedRenderType;
 import net.irisshaders.iris.mixinterface.ModelStorage;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -25,7 +25,7 @@ import java.util.List;
 
 @Mixin(SubmitNodeCollection.class)
 public class MixinModelStorageTrigger {
-	@WrapOperation(method = "submitModel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelSubmit;)V"))
+	@WrapOperation(method = "submitModel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelSubmit;)V"))
 	private <E> void iris$capture(ModelFeatureRenderer.Storage instance, RenderType renderType, SubmitNodeStorage.ModelSubmit<?> e, Operation<Void> original) {
 		((ModelStorage) (Object) e).iris$capture();
 
@@ -50,7 +50,7 @@ public class MixinModelStorageTrigger {
 		original.call(poseStack, renderType, customGeometryRenderer);
 	}
 
-	@WrapOperation(method = "submitModelPart", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelPartSubmit;)V"))
+	@WrapOperation(method = "submitModelPart", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/ModelPartFeatureRenderer$Storage;add(Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeStorage$ModelPartSubmit;)V"))
 	private <E> void iris$capture3(ModelPartFeatureRenderer.Storage instance, RenderType renderType, SubmitNodeStorage.ModelPartSubmit e, Operation<Void> original) {
 		((ModelStorage) (Object) e).iris$capture();
 

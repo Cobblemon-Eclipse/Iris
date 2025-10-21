@@ -5,6 +5,7 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pbr.SpriteContentsExtension;
 import net.irisshaders.iris.pbr.mipmap.CustomMipmapGenerator;
 import net.minecraft.client.renderer.texture.MipmapGenerator;
+import net.minecraft.client.renderer.texture.MipmapStrategy;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteTicker;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +22,8 @@ public class MixinSpriteContents implements SpriteContentsExtension {
 	@Nullable
 	private SpriteContents.Ticker createdTicker;
 
-	@Redirect(method = "increaseMipLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/MipmapGenerator;generateMipLevels([Lcom/mojang/blaze3d/platform/NativeImage;IZ)[Lcom/mojang/blaze3d/platform/NativeImage;"))
-	private NativeImage[] iris$redirectMipmapGeneration(NativeImage[] nativeImages, int mipLevel, boolean bl) {
+	@Redirect(method = "increaseMipLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/MipmapGenerator;generateMipLevels([Lcom/mojang/blaze3d/platform/NativeImage;ILnet/minecraft/client/renderer/texture/MipmapStrategy;)[Lcom/mojang/blaze3d/platform/NativeImage;"))
+	private NativeImage[] iris$redirectMipmapGeneration(NativeImage[] nativeImages, int mipLevel, MipmapStrategy strategy) {
 		if (this instanceof CustomMipmapGenerator.Provider provider) {
 			CustomMipmapGenerator generator = provider.getMipmapGenerator();
 			if (generator != null) {
@@ -33,7 +34,7 @@ public class MixinSpriteContents implements SpriteContentsExtension {
 				}
 			}
 		}
-		return MipmapGenerator.generateMipLevels(nativeImages, mipLevel, bl);
+		return MipmapGenerator.generateMipLevels(nativeImages, mipLevel, strategy);
 	}
 
 	@Inject(method = "createTicker()Lnet/minecraft/client/renderer/texture/SpriteTicker;", at = @At("RETURN"))

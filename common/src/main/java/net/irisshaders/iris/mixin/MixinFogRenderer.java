@@ -32,9 +32,10 @@ public class MixinFogRenderer {
 				density -= localPlayer.getWaterVision() * localPlayer.getWaterVision() * 0.03F;
 				Holder<Biome> biome = localPlayer.level().getBiome(localPlayer.blockPosition());
 
-				if (biome.is(BiomeTags.HAS_CLOSER_WATER_FOG)) {
-					density += 0.005F;
-				}
+				// TODO: not supported (1.21.11+)
+				//if (biome.is(BiomeTags.HAS_CLOSER_WATER_FOG)) {
+				//	density += 0.005F;
+				//}
 			}
 
 			CapturedRenderingState.INSTANCE.setFogDensity(density);

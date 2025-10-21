@@ -1,7 +1,9 @@
 package net.irisshaders.iris.pipeline.programs;
 
+import com.mojang.blaze3d.textures.GpuTextureView;
+
 public interface IrisProgram {
-	void iris$setupState();
+	void iris$setupState(GpuTextureView albedoTex);
 
 	void iris$clearState();
 

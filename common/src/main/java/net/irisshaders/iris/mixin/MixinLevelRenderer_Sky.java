@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
@@ -51,8 +52,7 @@ public class MixinLevelRenderer_Sky {
 
 			boolean isSubmersed = camera.getFluidInCamera() != FogType.NONE;
 			boolean blockSky = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).invokeDoesMobEffectBlockSky(camera);
-			boolean useThickFog = Minecraft.getInstance().level.effects().isFoggyAt(Mth.floor(cameraPosition.x()),
-				Mth.floor(cameraPosition.y())) || Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
+			boolean useThickFog = Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(EnvironmentAttributes.EXTRA_FOG, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) || Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
 
 			if (isSubmersed || blockSky || useThickFog) {
 				ci.cancel();

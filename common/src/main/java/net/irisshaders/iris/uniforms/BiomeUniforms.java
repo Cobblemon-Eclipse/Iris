@@ -81,10 +81,10 @@ public class BiomeUniforms {
 			return BiomeCategories.DESERT;
 		} else if (holder.is(BiomeTags.IS_RIVER)) {
 			return BiomeCategories.RIVER;
-		} else if (holder.is(BiomeTags.HAS_CLOSER_WATER_FOG)) {
+		} else if (holder.is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)) {
 			return BiomeCategories.SWAMP;
-		} else if (holder.is(BiomeTags.PLAYS_UNDERWATER_MUSIC)) {
-			return BiomeCategories.UNDERGROUND;
+		//} else if (holder.is(BiomeTags.PLAYS_UNDERWATER_MUSIC)) {
+		//	return BiomeCategories.UNDERGROUND; TODO 1.21.11: no good way to do this???
 		} else if (holder.is(BiomeTags.WITHOUT_ZOMBIE_SIEGES)) {
 			return BiomeCategories.MUSHROOM;
 		} else if (holder.is(BiomeTags.IS_MOUNTAIN)) {

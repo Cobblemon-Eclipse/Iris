@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -41,7 +41,7 @@ public final class GuiUtil {
 	 * used for succeeding draw calls.
 	 */
 	public static void bindIrisWidgetsTexture() {
-		RenderSystem.setShaderTexture(0, Minecraft.getInstance().getTextureManager().getTexture(IRIS_WIDGETS_TEX).getTextureView(), RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST));
+		//RenderSystem.setShaderTexture(0, Minecraft.getInstance().getTextureManager().getTexture(IRIS_WIDGETS_TEX).getTextureView(), RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST));
 	}
 
 	/**

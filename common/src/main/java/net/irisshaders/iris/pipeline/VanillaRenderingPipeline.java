@@ -87,7 +87,7 @@ public class VanillaRenderingPipeline implements WorldRenderingPipeline {
 	}
 
 	@Override
-	public void onSetShaderTexture(GpuTextureView id) {
+	public void onSetAlbedoTex(GpuTextureView id) {
 
 	}
 

@@ -58,15 +58,6 @@ public class HardcodedCustomUniforms {
 		holder.uniform1f(UniformUpdateFrequency.PER_FRAME, "eyeBrightnessM", new SmoothedFloat(5, 5, HardcodedCustomUniforms::getEyeBrightnessM, updateNotifier));
 		holder.uniform1f(UniformUpdateFrequency.PER_FRAME, "rainFactor", rainStrengthS);
 
-		// The following uniforms are Sildur's specific.
-		holder.uniform1f(UniformUpdateFrequency.PER_FRAME, "inSwamp", new SmoothedFloat(5, 5, () -> {
-			if (storedBiome == null) {
-				return 0;
-			} else {
-				// Easiest way to check for "swamp" on 1.19.
-				return storedBiome.is(BiomeTags.HAS_CLOSER_WATER_FOG) ? 1 : 0;
-			}
-		}, updateNotifier));
 		holder.uniform1f(UniformUpdateFrequency.PER_FRAME, "BiomeTemp", () -> {
 			if (storedBiome == null) {
 				return 0;

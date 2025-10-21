@@ -1,6 +1,8 @@
 package net.irisshaders.iris.gui;
 
+import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.TextAlignment;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.screens.Screen;
@@ -28,8 +30,9 @@ public class FeatureMissingErrorScreen extends Screen {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
 		this.renderBackground(guiGraphics, mouseX, mouseY, delta);
+		ActiveTextCollector activeTextCollector = guiGraphics.textRenderer();
 		guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 90, 0xFFFFFFFF);
-		message.render(guiGraphics, MultiLineLabel.Align.CENTER,  this.width / 2, 110, 9, false, 0xFFFFFFFF);
+		message.visitLines(TextAlignment.CENTER,  this.width / 2, 110, 9, activeTextCollector);
 		super.render(guiGraphics, mouseX, mouseY, delta);
 	}
 }
