@@ -63,4 +63,11 @@ public class MixinModelStorageTrigger {
 
 		return original.call(instance, e);
 	}
+
+	@WrapOperation(method = "submitText", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
+	private <E> boolean iris$capture5(List instance, E e, Operation<Boolean> original) {
+		((ModelStorage) e).iris$capture();
+
+		return original.call(instance, e);
+	}
 }

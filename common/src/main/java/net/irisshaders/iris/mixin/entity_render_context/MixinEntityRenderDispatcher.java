@@ -12,11 +12,14 @@ import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.ZombieVillagerRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -59,10 +62,23 @@ public class MixinEntityRenderDispatcher {
 
 		// TODO: Add special types
 
-		intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
-			ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
-			return new NamespacedId(entityId.getNamespace(), entityId.getPath());
-		}));
+		if (entity instanceof ZombieVillagerRenderState zombie && zombie.isConverting && WorldRenderingSettings.INSTANCE.hasVillagerConversionId()) {
+			intId = entityIds.applyAsInt(CONVERTING_VILLAGER);
+		} else if (entity instanceof AvatarRenderState ars && Minecraft.getInstance().getCameraEntity() instanceof AbstractClientPlayer acs && acs.getId() == ars.id) {
+			if (entityIds.containsKey(CURRENT_PLAYER)) {
+				intId = entityIds.getInt(CURRENT_PLAYER);
+			} else {
+				intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
+					ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
+					return new NamespacedId(entityId.getNamespace(), entityId.getPath());
+				}));
+			}
+		} else {
+			intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
+				ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
+				return new NamespacedId(entityId.getNamespace(), entityId.getPath());
+			}));
+		}
 
 		CapturedRenderingState.INSTANCE.setCurrentEntity(intId);
 	}
