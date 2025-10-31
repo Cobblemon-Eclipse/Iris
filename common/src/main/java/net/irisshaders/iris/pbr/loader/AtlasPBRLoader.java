@@ -1,9 +1,11 @@
 package net.irisshaders.iris.pbr.loader;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.GpuTexture;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.texture.AnimationMetadataSectionAccessor;
 import net.irisshaders.iris.mixin.texture.TextureAtlasAccessor;
+import net.irisshaders.iris.mixin.texture.TextureAtlasSpriteAccessor;
 import net.irisshaders.iris.pbr.format.TextureFormat;
 import net.irisshaders.iris.pbr.format.TextureFormatLoader;
 import net.irisshaders.iris.pbr.mipmap.ChannelMipmapGenerator;
@@ -45,13 +47,13 @@ public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
 		TextureAtlasAccessor atlasAccessor = (TextureAtlasAccessor) atlas;
 		int atlasWidth = atlasAccessor.callGetWidth();
 		int atlasHeight = atlasAccessor.callGetHeight();
-		int mipLevel = atlasAccessor.getMipLevel();
+		int maxLevel = atlasAccessor.getMaxLevel();
 
 		PBRAtlasTexture normalAtlas = null;
 		PBRAtlasTexture specularAtlas = null;
 		for (TextureAtlasSprite sprite : ((TextureAtlasAccessor) atlas).getTexturesByName().values()) {
-			PBRTextureAtlasSprite normalSprite = createPBRSprite(sprite, resourceManager, atlas, atlasWidth, atlasHeight, mipLevel, PBRType.NORMAL);
-			PBRTextureAtlasSprite specularSprite = createPBRSprite(sprite, resourceManager, atlas, atlasWidth, atlasHeight, mipLevel, PBRType.SPECULAR);
+			PBRTextureAtlasSprite normalSprite = createPBRSprite(sprite, resourceManager, atlas, atlasWidth, atlasHeight, maxLevel, PBRType.NORMAL);
+			PBRTextureAtlasSprite specularSprite = createPBRSprite(sprite, resourceManager, atlas, atlasWidth, atlasHeight, maxLevel, PBRType.SPECULAR);
 			if (normalSprite != null) {
 				if (normalAtlas == null) {
 					normalAtlas = new PBRAtlasTexture(atlas, PBRType.NORMAL);
@@ -71,12 +73,12 @@ public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
 		}
 
 		if (normalAtlas != null) {
-			if (normalAtlas.tryUpload(atlasWidth, atlasHeight, mipLevel)) {
+			if (normalAtlas.tryUpload(atlasWidth, atlasHeight, maxLevel)) {
 				pbrTextureConsumer.acceptNormalTexture(normalAtlas);
 			}
 		}
 		if (specularAtlas != null) {
-			if (specularAtlas.tryUpload(atlasWidth, atlasHeight, mipLevel)) {
+			if (specularAtlas.tryUpload(atlasWidth, atlasHeight, maxLevel)) {
 				pbrTextureConsumer.acceptSpecularTexture(specularAtlas);
 			}
 		}
@@ -197,10 +199,18 @@ public class AtlasPBRLoader implements PBRTextureLoader<TextureAtlas> {
 
 	public static class PBRTextureAtlasSprite extends TextureAtlasSprite {
 		protected final TextureAtlasSprite baseSprite;
+		private SpriteContents pbrContents;
 
 		protected PBRTextureAtlasSprite(ResourceLocation location, PBRSpriteContents contents, int atlasWidth, int atlasHeight, int x, int y, TextureAtlasSprite baseSprite) {
-			super(location, contents, atlasWidth, atlasHeight, x, y);
+			super(location, contents, atlasWidth, atlasHeight, x, y, ((TextureAtlasSpriteAccessor) baseSprite).getPadding());
 			this.baseSprite = baseSprite;
+			this.pbrContents = contents;
+		}
+
+		@Override
+		public void uploadFirstFrame(GpuTexture texture, int mipLevel) {
+			// Upload PBR texture data instead of base texture data
+			this.pbrContents.uploadFirstFrame(texture, mipLevel);
 		}
 
 		public TextureAtlasSprite getBaseSprite() {

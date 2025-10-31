@@ -22,7 +22,7 @@ public interface SamplerHolder {
 		return addDefaultSampler(TextureType.TEXTURE_2D, sampler, null, null, names);
 	}
 
-	boolean addDefaultSampler(TextureType type, IntSupplier texture, ValueUpdateNotifier notifier, GlSampler sampler, String... names);
+	boolean addDefaultSampler(TextureType type, IntSupplier texture, ValueUpdateNotifier notifier, Supplier<GlSampler> sampler, String... names);
 
 
 	default boolean addDynamicSampler(IntSupplier texture, GlSampler sampler, String... names) {

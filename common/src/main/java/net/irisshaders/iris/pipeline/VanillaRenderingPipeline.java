@@ -238,4 +238,9 @@ public class VanillaRenderingPipeline implements WorldRenderingPipeline {
 	public boolean supportsEndFlash() {
 		return false;
 	}
+
+	@Override
+	public int getAlbedoTex() {
+		return 0;
+	}
 }

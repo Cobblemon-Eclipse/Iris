@@ -1,32 +1,40 @@
 package net.irisshaders.iris.pbr.texture;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.mixin.texture.SpriteContentsAnimatedTextureAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsFrameInfoAccessor;
 import net.irisshaders.iris.mixin.texture.SpriteContentsTickerAccessor;
-import net.irisshaders.iris.pbr.TextureTracker;
-import net.irisshaders.iris.pbr.format.TextureFormatLoader;
 import net.irisshaders.iris.pbr.loader.AtlasPBRLoader.PBRTextureAtlasSprite;
 import net.irisshaders.iris.pbr.util.TextureManipulationUtil;
 import net.irisshaders.iris.platform.IrisPlatformHelpers;
-import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.ReportedException;
+import net.irisshaders.iris.vertices.ImmediateState;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteContents.FrameInfo;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,24 +42,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalInt;
 
 public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	protected final TextureAtlas atlasTexture;
 	protected final PBRType type;
-	protected final ResourceLocation id;
-	protected final Map<ResourceLocation, PBRTextureAtlasSprite> texturesByName = new HashMap<>();
-	protected final List<TextureAtlasSprite.Ticker> animatedTextures = new ArrayList<>();
+	protected final ResourceLocation location;
+	private List<PBRTextureAtlasSprite> sprites = List.of();
+	protected final Map<ResourceLocation, PBRTextureAtlasSprite> texturesByNameToAdd = new HashMap<>();
+	protected Map<ResourceLocation, PBRTextureAtlasSprite> texturesByName = new HashMap<>();
+	private List<SpriteContents.AnimationState> animatedTexturesStates = List.of();
 	protected int width;
 	protected int height;
-	protected int mipLevel;
+	private GpuBuffer spriteUbos;
+	private int mipLevelCount;
+	private GpuTextureView[] mipViews = new GpuTextureView[0];
+	private int maxMipLevel;
+	private TextureAtlasSprite missingSprite;
 
 	public PBRAtlasTexture(TextureAtlas atlasTexture, PBRType type) {
 		this.atlasTexture = atlasTexture;
 		this.type = type;
-		id = ResourceLocation.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
+		location = ResourceLocation.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
 	}
 
-	public static void syncAnimation(SpriteContents.Ticker source, SpriteContents.Ticker target) {
+	public static void syncAnimation(SpriteContents.AnimatedTexture source, SpriteContents.AnimationState target) {
 		SpriteContentsTickerAccessor sourceAccessor = (SpriteContentsTickerAccessor) source;
 		List<FrameInfo> sourceFrames = ((SpriteContentsAnimatedTextureAccessor) sourceAccessor.getAnimationInfo()).getFrames();
 
@@ -102,11 +117,11 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	public ResourceLocation getAtlasId() {
-		return id;
+		return location;
 	}
 
 	public void addSprite(PBRTextureAtlasSprite sprite) {
-		texturesByName.put(sprite.contents().name(), sprite);
+		texturesByNameToAdd.put(sprite.contents().name(), sprite);
 	}
 
 	@Nullable
@@ -114,37 +129,91 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		return texturesByName.get(id);
 	}
 
-	public void clear() {
-		animatedTextures.forEach(TextureAtlasSprite.Ticker::close);
-		texturesByName.clear();
-		animatedTextures.clear();
+	public boolean tryUpload(int atlasWidth, int atlasHeight, int mipLevel) {
+		try {
+			upload(atlasWidth, atlasHeight, mipLevel);
+			return true;
+		} catch (Throwable t) {
+			if (IrisPlatformHelpers.getInstance().isDevelopmentEnvironment()) {
+				t.printStackTrace();
+			}
+			return false;
+		}
+	}
+
+	private void createTexture(int i, int j, int k) {
+		Iris.logger.info("Created: {}x{}x{} {}-atlas", i, j, k, this.location);
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		this.close();
+		this.texture = gpuDevice.createTexture(this.location::toString, 15, TextureFormat.RGBA8, i, j, 1, k + 1);
+		this.textureView = gpuDevice.createTextureView(this.texture);
+		this.width = i;
+		this.height = j;
+		this.maxMipLevel = k;
+		this.mipLevelCount = k + 1;
+		this.mipViews = new GpuTextureView[this.mipLevelCount];
+		TextureManipulationUtil.fillWithColor(texture.iris$getGlId(), maxMipLevel, type.getDefaultValue());
+
+		for (int l = 0; l <= this.maxMipLevel; l++) {
+			this.mipViews[l] = gpuDevice.createTextureView(this.texture, l, 1);
+		}
+	}
+
+	public void clearTextureData() {
+		this.sprites.forEach(TextureAtlasSprite::close);
+		this.sprites = List.of();
+		this.animatedTexturesStates = List.of();
+		this.texturesByName = Map.of();
+		this.missingSprite = null;
 	}
 
 	public void upload(int atlasWidth, int atlasHeight, int mipLevel) {
-		if (this.texture != null) {
-			this.texture.close();
+		this.createTexture(atlasWidth, atlasHeight, mipLevel);
+		this.clearTextureData();
+		this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+		this.texturesByName = Map.copyOf(texturesByNameToAdd);
+		this.missingSprite = null;
+		List<PBRTextureAtlasSprite> list = new ArrayList();
+		List<SpriteContents.AnimationState> list2 = new ArrayList();
+		int i = (int)texturesByName.values().stream().filter(TextureAtlasSprite::isAnimated).count();
+		int j = Mth.roundToward(SpriteContents.UBO_SIZE, RenderSystem.getDevice().getUniformOffsetAlignment());
+		int k = j * this.mipLevelCount;
+		ByteBuffer byteBuffer = MemoryUtil.memAlloc(i * k);
+		int l = 0;
+
+		for (TextureAtlasSprite textureAtlasSprite : texturesByName.values()) {
+			if (textureAtlasSprite.isAnimated()) {
+				textureAtlasSprite.uploadSpriteUbo(byteBuffer, l * k, this.maxMipLevel, this.width, this.height, j);
+				l++;
+			}
 		}
 
-		this.texture = RenderSystem.getDevice().createTexture(getAtlasId().toString(), GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING, TextureFormat.RGBA8, atlasWidth, atlasHeight, 1, mipLevel + 1);
-		if (TextureFormatLoader.getFormat() != null && !TextureFormatLoader.getFormat().canInterpolateValues(type)) {
-			texture.iris$markMipmapNonLinear();
+		GpuBuffer gpuBuffer = l > 0 ? RenderSystem.getDevice().createBuffer(() -> this.location + " sprite UBOs", 128, byteBuffer) : null;
+		l = 0;
+
+		for (PBRTextureAtlasSprite textureAtlasSprite2 : texturesByName.values()) {
+			list.add(textureAtlasSprite2);
+			if (textureAtlasSprite2.isAnimated() && gpuBuffer != null) {
+				SpriteContents.AnimationState animationState = textureAtlasSprite2.createAnimationState(gpuBuffer.slice(l * k, k), j);
+				l++;
+				if (animationState != null) {
+					list2.add(animationState);
+				}
+			}
 		}
 
-		TextureManipulationUtil.fillWithColor(texture.iris$getGlId(), mipLevel, type.getDefaultValue());
-		TextureTracker.INSTANCE.trackTexture(this.texture.iris$getGlId(), (AbstractTexture) (Object) this);
-		width = atlasWidth;
-		height = atlasHeight;
-		this.mipLevel = mipLevel;
+		this.spriteUbos = gpuBuffer;
+		this.sprites = list;
+		this.animatedTexturesStates = List.copyOf(list2);
+		this.uploadInitialContents();
+		if (SharedConstants.DEBUG_DUMP_TEXTURE_ATLAS) {
+			Path path = TextureUtil.getDebugTexturePath();
 
-		for (PBRTextureAtlasSprite sprite : texturesByName.values()) {
 			try {
-				uploadSprite(sprite);
-			} catch (Throwable throwable) {
-				CrashReport crashReport = CrashReport.forThrowable(throwable, "Stitching texture atlas");
-				CrashReportCategory crashReportCategory = crashReport.addCategory("Texture being stitched together");
-				crashReportCategory.setDetail("Atlas path", id);
-				crashReportCategory.setDetail("Sprite", sprite);
-				throw new ReportedException(crashReport);
+				Files.createDirectories(path);
+				this.dumpContents(this.location, path);
+			} catch (IOException var13) {
+				Iris.logger.warn("Failed to dump atlas contents to {}", path);
 			}
 		}
 
@@ -160,42 +229,82 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		}
 	}
 
-	public boolean tryUpload(int atlasWidth, int atlasHeight, int mipLevel) {
-		try {
-			upload(atlasWidth, atlasHeight, mipLevel);
-			return true;
-		} catch (Throwable t) {
-			if (IrisPlatformHelpers.getInstance().isDevelopmentEnvironment()) {
-				t.printStackTrace();
+	private void uploadInitialContents() {
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		int i = Mth.roundToward(SpriteContents.UBO_SIZE, RenderSystem.getDevice().getUniformOffsetAlignment());
+		int j = i * this.mipLevelCount;
+		GpuSampler gpuSampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+		List<PBRTextureAtlasSprite> list = this.sprites.stream().filter(textureAtlasSprite -> !textureAtlasSprite.isAnimated()).toList();
+		List<GpuTextureView[]> list2 = new ArrayList<>();
+		ByteBuffer byteBuffer = MemoryUtil.memAlloc(list.size() * j);
+
+		for (int k = 0; k < list.size(); k++) {
+			TextureAtlasSprite textureAtlasSprite = list.get(k);
+			textureAtlasSprite.uploadSpriteUbo(byteBuffer, k * j, this.maxMipLevel, this.width, this.height, i);
+			GpuTexture gpuTexture = gpuDevice.createTexture(
+				() -> textureAtlasSprite.contents().name().toString(),
+				5,
+				TextureFormat.RGBA8,
+				textureAtlasSprite.contents().width(),
+				textureAtlasSprite.contents().height(),
+				1,
+				this.mipLevelCount
+			);
+			GpuTextureView[] gpuTextureViews = new GpuTextureView[this.mipLevelCount];
+
+			for (int l = 0; l <= this.maxMipLevel; l++) {
+				textureAtlasSprite.uploadFirstFrame(gpuTexture, l);
+				gpuTextureViews[l] = gpuDevice.createTextureView(gpuTexture);
 			}
-			return false;
+
+			list2.add(gpuTextureViews);
 		}
-	}
 
-	protected void uploadSprite(PBRTextureAtlasSprite sprite) {
-		TextureAtlasSprite.Ticker spriteTicker = sprite.createTicker();
-		if (spriteTicker != null) {
-			animatedTextures.add(spriteTicker);
+		try (GpuBuffer gpuBuffer = gpuDevice.createBuffer(() -> "SpriteAnimationInfo", 128, byteBuffer)) {
+			for (int m = 0; m < this.mipLevelCount; m++) {
+				try (RenderPass renderPass = RenderSystem.getDevice()
+					.createCommandEncoder()
+					.createRenderPass(() -> "Animate " + this.location, this.mipViews[m], OptionalInt.empty())) {
+					renderPass.setPipeline(RenderPipelines.ANIMATE_SPRITE_BLIT);
 
-			SpriteContents.Ticker sourceTicker = ((net.irisshaders.iris.pbr.SpriteContentsExtension) sprite.getBaseSprite().contents()).getCreatedTicker();
-			SpriteContents.Ticker targetTicker = ((net.irisshaders.iris.pbr.SpriteContentsExtension) sprite.contents()).getCreatedTicker();
-			if (sourceTicker != null && targetTicker != null) {
-				syncAnimation(sourceTicker, targetTicker);
-
-				SpriteContentsTickerAccessor tickerAccessor = (SpriteContentsTickerAccessor) targetTicker;
-				SpriteContentsAnimatedTextureAccessor infoAccessor = (SpriteContentsAnimatedTextureAccessor) tickerAccessor.getAnimationInfo();
-
-				infoAccessor.invokeUploadFrame(sprite.getX(), sprite.getY(), ((SpriteContentsFrameInfoAccessor) (Object) infoAccessor.getFrames().get(tickerAccessor.getFrame())).getIndex(), texture);
-				return;
+					for (int n = 0; n < list.size(); n++) {
+						renderPass.bindTexture("Sprite", ((GpuTextureView[])list2.get(n))[m], gpuSampler);
+						renderPass.setUniform("SpriteAnimationInfo", gpuBuffer.slice(n * j + m * i, SpriteContents.UBO_SIZE));
+						renderPass.draw(0, 6);
+					}
+				}
 			}
 		}
 
-		sprite.uploadFirstFrame(texture);
+		for (GpuTextureView[] gpuTextureViews2 : list2) {
+			for (GpuTextureView gpuTextureView : gpuTextureViews2) {
+				gpuTextureView.close();
+				gpuTextureView.texture().close();
+			}
+		}
+
+		MemoryUtil.memFree(byteBuffer);
 	}
 
 	public void cycleAnimationFrames() {
-		for (TextureAtlasSprite.Ticker ticker : animatedTextures) {
-			ticker.tickAndUpload(texture);
+		if (this.texture != null) {
+			for (SpriteContents.AnimationState animationState : this.animatedTexturesStates) {
+				animationState.tick();
+			}
+
+			if (this.animatedTexturesStates.stream().anyMatch(SpriteContents.AnimationState::needsToDraw)) {
+				for (int i = 0; i <= this.maxMipLevel; i++) {
+					try (RenderPass renderPass = RenderSystem.getDevice()
+						.createCommandEncoder()
+						.createRenderPass(() -> "Animate " + this.location, this.mipViews[i], OptionalInt.empty())) {
+						for (SpriteContents.AnimationState animationState2 : this.animatedTexturesStates) {
+							if (animationState2.needsToDraw()) {
+								animationState2.drawToAtlas(renderPass, animationState2.getDrawUbo(i));
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -212,18 +321,32 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 					break;
 			}
 		}
-		clear();
+
+		super.close();
+
+		for (GpuTextureView gpuTextureView : this.mipViews) {
+			gpuTextureView.close();
+		}
+
+		for (SpriteContents.AnimationState animationState : this.animatedTexturesStates) {
+			animationState.close();
+		}
+
+		if (this.spriteUbos != null) {
+			this.spriteUbos.close();
+			this.spriteUbos = null;
+		}
 	}
 
 	@Override
 	public void dumpContents(ResourceLocation id, Path path) {
-		String fileName = id.toDebugFileName();
-		TextureUtil.writeAsPNG(path, fileName, texture, mipLevel, i -> i);
-		dumpSpriteNames(path, fileName, texturesByName);
+		String string = id.toDebugFileName();
+		TextureUtil.writeAsPNG(path, string, this.getTexture(), this.maxMipLevel, i -> i);
+		dumpSpriteNames(path, string, this.texturesByName);
 	}
 
 	@Override
 	public ResourceLocation getDefaultDumpLocation() {
-		return id;
+		return location;
 	}
 }

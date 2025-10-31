@@ -53,6 +53,7 @@ public abstract class MixinShaderManager_Overrides {
 	@Inject(method = "getOrCompilePipeline", at = @At(value = "HEAD"), cancellable = true)
 	private void redirectIrisProgram(RenderPipeline renderPipeline, CallbackInfoReturnable<GlRenderPipeline> cir) {
 		if (renderPipeline == CompositeRenderer.COMPOSITE_PIPELINE) return;
+		if (renderPipeline == RenderPipelines.ANIMATE_SPRITE_BLIT || renderPipeline == RenderPipelines.ANIMATE_SPRITE_INTERPOLATE) return;
 
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 

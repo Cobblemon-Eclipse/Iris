@@ -26,6 +26,8 @@ public class RenderTarget {
 	private boolean isValid;
 	private String name;
 	private boolean allowsLinear;
+	private boolean mipmapsOnAlt;
+	private boolean mipmapsOnMain;
 
 	public RenderTarget(Builder builder) {
 		this.isValid = true;
@@ -127,8 +129,34 @@ public class RenderTarget {
 		}
 	}
 
-	public GlSampler sampler() {
+	public GlSampler getAltSampler() {
+		if (mipmapsOnAlt) {
+			return allowsLinear ? GlSampler.MIPPED_LINEAR : GlSampler.MIPPED_NEAREST;
+		}
 		return allowsLinear ? GlSampler.LINEAR : GlSampler.NEAREST;
+	}
+
+	public GlSampler getMainSampler() {
+		if (mipmapsOnMain) {
+			return allowsLinear ? GlSampler.MIPPED_LINEAR : GlSampler.MIPPED_NEAREST;
+		}
+		return allowsLinear ? GlSampler.LINEAR : GlSampler.NEAREST;
+	}
+
+	public void turnOnMips(boolean alt) {
+		if (alt) {
+			this.mipmapsOnAlt = true;
+		} else {
+			this.mipmapsOnMain = true;
+		}
+	}
+
+	public void turnOffMips(boolean alt) {
+		if (alt) {
+			this.mipmapsOnAlt = false;
+		} else {
+			this.mipmapsOnMain = false;
+		}
 	}
 
 	public static class Builder {

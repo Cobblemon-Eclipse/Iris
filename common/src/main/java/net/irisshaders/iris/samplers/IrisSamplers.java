@@ -65,7 +65,11 @@ public class IrisSamplers {
 				ImmutableSet<Integer> flippedBuffers = flipped.get();
 				RenderTarget target = renderTargets.getOrCreate(index);
 
-				return target.sampler();
+				if (flippedBuffers.contains(index)) {
+					return target.getAltSampler();
+				} else {
+					return target.getMainSampler();
+				}
 			};
 
 			final String name = "colortex" + i;
@@ -81,9 +85,9 @@ public class IrisSamplers {
 
 				// colortex0 is the default sampler in fullscreen passes
 				if (i == 0 && isFullscreenPass) {
-					samplers.addDefaultSampler(TextureType.TEXTURE_2D, texture, null, null, name, legacyName);
+					samplers.addDefaultSampler(TextureType.TEXTURE_2D, texture, null, sampler, name, legacyName);
 				} else {
-					samplers.addDynamicSampler(TextureType.TEXTURE_2D, texture, null, name, legacyName);
+					samplers.addDynamicSampler(TextureType.TEXTURE_2D, texture, sampler, name, legacyName);
 				}
 			} else {
 				if (samplers.hasSampler(name)) {

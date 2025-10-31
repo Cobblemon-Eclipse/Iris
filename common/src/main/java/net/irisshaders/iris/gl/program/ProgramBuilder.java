@@ -122,7 +122,7 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 	}
 
 	@Override
-	public boolean addDefaultSampler(TextureType type, IntSupplier texture, ValueUpdateNotifier notifier, GlSampler sampler, String... names) {
+	public boolean addDefaultSampler(TextureType type, IntSupplier texture, ValueUpdateNotifier notifier, Supplier<GlSampler> sampler, String... names) {
 		return samplers.addDefaultSampler(type, texture, notifier, sampler, names);
 	}
 

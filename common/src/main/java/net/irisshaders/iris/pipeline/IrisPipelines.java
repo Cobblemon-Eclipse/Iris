@@ -22,11 +22,10 @@ public class IrisPipelines {
 	private static final Function<IrisRenderingPipeline, ShaderKey> FAKE_FUNCTION = p -> null;
 
 	static {
-		assignToMain(RenderPipelines.SOLID, p -> ShaderKey.TERRAIN_SOLID);
-		assignToMain(RenderPipelines.CUTOUT, p -> ShaderKey.TERRAIN_CUTOUT);
-		assignToMain(RenderPipelines.TRANSLUCENT, p -> ShaderKey.TERRAIN_TRANSLUCENT);
+		assignToMain(RenderPipelines.SOLID_BLOCK, p -> ShaderKey.TERRAIN_SOLID);
+		assignToMain(RenderPipelines.CUTOUT_BLOCK, p -> ShaderKey.TERRAIN_CUTOUT);
 		assignToMain(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.MOVING_BLOCK);
-		assignToMain(RenderPipelines.TRIPWIRE, p -> ShaderKey.TERRAIN_TRANSLUCENT);
+		assignToMain(RenderPipelines.TRIPWIRE_BLOCK, p -> ShaderKey.TERRAIN_TRANSLUCENT);
 		assignToMain(RenderPipelines.WORLD_BORDER, p -> ShaderKey.TEXTURED);
 		assignToMain(RenderPipelines.ENTITY_CUTOUT, p -> getCutout(p));
 		assignToMain(RenderPipelines.ENTITY_CUTOUT_NO_CULL, p -> getCutout(p));
@@ -79,11 +78,10 @@ public class IrisPipelines {
 		assignToMain(RenderPipelines.CLOUDS, p -> ShaderKey.CLOUDS);
 		assignToMain(RenderPipelines.FLAT_CLOUDS, p -> ShaderKey.CLOUDS);
 
-		assignToShadow(RenderPipelines.SOLID, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-		assignToShadow(RenderPipelines.CUTOUT, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
-		assignToShadow(RenderPipelines.TRANSLUCENT, p -> ShaderKey.SHADOW_TRANSLUCENT);
+		assignToShadow(RenderPipelines.SOLID_BLOCK, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
+		assignToShadow(RenderPipelines.CUTOUT_BLOCK, p -> ShaderKey.SHADOW_TERRAIN_CUTOUT);
 		assignToShadow(RenderPipelines.TRANSLUCENT_MOVING_BLOCK, p -> ShaderKey.SHADOW_TRANSLUCENT);
-		assignToShadow(RenderPipelines.TRIPWIRE, p -> ShaderKey.SHADOW_TRANSLUCENT);
+		assignToShadow(RenderPipelines.TRIPWIRE_BLOCK, p -> ShaderKey.SHADOW_TRANSLUCENT);
 		assignToShadow(RenderPipelines.ENTITY_CUTOUT, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
 		assignToShadow(RenderPipelines.ARMOR_CUTOUT_NO_CULL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);
 		assignToShadow(RenderPipelines.ITEM_ENTITY_TRANSLUCENT_CULL, p -> ShaderKey.SHADOW_ENTITIES_CUTOUT);

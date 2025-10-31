@@ -22,8 +22,6 @@ public abstract class MixinTextureAtlas extends AbstractTexture implements Textu
 	@Shadow
 	@Final
 	private ResourceLocation location;
-	@Shadow
-	private int mipLevel;
 	@Unique
 	private PBRAtlasHolder pbrHolder;
 

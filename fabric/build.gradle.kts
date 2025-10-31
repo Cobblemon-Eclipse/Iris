@@ -111,6 +111,7 @@ loom {
             ideConfigGenerated(true)
             runDir("run")
             environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
+            vmArgs("-DMC_DEBUG_ENABLED=true", "-DMC_DEBUG_DUMP_TEXTURE_ATLAS=true")
             programArgs("--renderDebugLabels")
         }
     }

@@ -98,4 +98,6 @@ public interface WorldRenderingPipeline {
     void onBeginClear();
 
     boolean supportsEndFlash();
+
+	int getAlbedoTex();
 }

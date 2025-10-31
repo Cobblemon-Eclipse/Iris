@@ -3,6 +3,9 @@ package net.irisshaders.iris.shadows;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.AddressMode;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.caffeinemc.mods.sodium.client.render.chunk.ChunkRenderMatrices;
@@ -381,6 +384,7 @@ public class ShadowRenderer {
 			return;
 		}
 
+		GpuSampler theSampler = RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST);
 		levelRenderState.cameraRenderState.blockPos = renderState.blockPos;
 		levelRenderState.cameraRenderState.pos = renderState.pos;
 		levelRenderState.cameraRenderState.orientation = renderState.orientation;
@@ -493,14 +497,14 @@ public class ShadowRenderer {
 		// TODO: Better way of preventing light from leaking into places where it shouldn't
 		GlStateManager._disableCull();
 
-		ChunkSectionsToRender sections = new ChunkSectionsToRender(null, 0, null);
+		ChunkSectionsToRender sections = new ChunkSectionsToRender(null, null, 0, null);
 		((SodiumChunkSection) (Object) sections).sodium$setRendering(((LevelRendererExtension) levelRenderer).sodium$getWorldRenderer(),
 			((LevelRendererExtension) levelRenderer).sodium$getMatrices(), cameraX, cameraY, cameraZ);
 
 		// Render all opaque terrain unless pack requests not to
 		if (shouldRenderTerrain) {
 			pipeline.setPhase(WorldRenderingPhase.TERRAIN_SOLID);
-			sections.renderGroup(ChunkSectionLayerGroup.OPAQUE);
+			sections.renderGroup(ChunkSectionLayerGroup.OPAQUE, theSampler);
 			pipeline.setPhase(WorldRenderingPhase.NONE);
 		}
 		pipeline.setPhase(WorldRenderingPhase.ENTITIES);
@@ -580,7 +584,7 @@ public class ShadowRenderer {
 		// Just something to watch out for, however...
 		if (shouldRenderTranslucent) {
 			pipeline.setPhase(WorldRenderingPhase.TERRAIN_TRANSLUCENT);
-			sections.renderGroup(ChunkSectionLayerGroup.TRANSLUCENT);
+			sections.renderGroup(ChunkSectionLayerGroup.TRANSLUCENT, theSampler);
 			pipeline.setPhase(WorldRenderingPhase.NONE);
 		}
 

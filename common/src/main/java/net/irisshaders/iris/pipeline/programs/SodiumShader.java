@@ -7,6 +7,7 @@ import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import net.caffeinemc.mods.sodium.client.gl.device.GLRenderDevice;
 import net.caffeinemc.mods.sodium.client.gl.shader.uniform.GlUniformFloat2v;
@@ -128,6 +129,11 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
+	public void setCurrentTime(int i) {
+
+	}
+
+	@Override
 	public void setModelViewMatrix(Matrix4fc matrix) {
 		if (uniformModelViewMatrix != null) {
 			uniformModelViewMatrix.set(matrix);
@@ -159,7 +165,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
-	public void setupState(TerrainRenderPass pass, FogParameters fogParameters) {
+	public void setupState(TerrainRenderPass pass, GpuSampler gpuSampler, FogParameters fogParameters) {
 		DepthColorStorage.unlockDepthColor();
 
 		applyBlendModes();
@@ -190,7 +196,7 @@ public class SodiumShader implements ChunkShaderInterface {
 				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetHeight()) / subTexelPrecision)))
 			);
 		}
-		bindTextures(pass.getAtlas(), (GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST));
+		bindTextures(pass.getAtlas(), (GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST)); // oh no
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;
@@ -222,7 +228,6 @@ public class SodiumShader implements ChunkShaderInterface {
 		uniforms.update();
 		customUniforms.push(this);
 	}
-
 	@Override
 	public void resetState() {
 		ProgramUniforms.clearActiveUniforms();

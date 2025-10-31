@@ -6,6 +6,7 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuSampler;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -30,7 +31,7 @@ public abstract class MixinShaderChunkRenderer {
 	protected abstract GlProgram<ChunkShaderInterface> compileProgram(ChunkShaderOptions options);
 
 	@Inject(method = "begin", at = @At("HEAD"))
-	private void iris$resetState(TerrainRenderPass pass, FogParameters parameters, CallbackInfo ci) {
+	private void iris$resetState(TerrainRenderPass pass, GpuSampler sampler, FogParameters parameters, CallbackInfo ci) {
 		BlendModeOverride.restore();
 	}
 

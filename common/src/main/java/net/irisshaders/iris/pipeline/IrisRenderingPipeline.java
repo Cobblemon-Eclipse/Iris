@@ -202,6 +202,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	private final boolean supportsEndFlash;
 	private GlSampler normalSampler = GlSampler.MIPPED_NEAREST, specularSampler = GlSampler.MIPPED_NEAREST;
 
+	private int albedoTex;
+
 	public IrisRenderingPipeline(ProgramSet programSet) {
 		ShaderPrinter.resetPrintState();
 
@@ -836,18 +838,25 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 
 	@Override
 	public void onSetAlbedoTex(GpuTextureView id) {
-		if (shouldBindPBR && isRenderingWorld && id != null) {
-			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id.texture().iris$getGlId());
-			currentNormalTexture = pbrHolder.normalTexture();
-			currentSpecularTexture = pbrHolder.specularTexture();
+		if (id != null) {
+			albedoTex = id.texture().iris$getGlId();
 
-			TextureFormat textureFormat = TextureFormatLoader.getFormat();
-			if (textureFormat != null) {
-				this.normalSampler = textureFormat.canInterpolateValues(PBRType.NORMAL) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
-				this.specularSampler = textureFormat.canInterpolateValues(PBRType.SPECULAR) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
+			if (shouldBindPBR && isRenderingWorld) {
+				PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id.texture().iris$getGlId());
+				currentNormalTexture = pbrHolder.normalTexture();
+				currentSpecularTexture = pbrHolder.specularTexture();
+
+				TextureFormat textureFormat = TextureFormatLoader.getFormat();
+				if (textureFormat != null) {
+					this.normalSampler = textureFormat.canInterpolateValues(PBRType.NORMAL) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
+					this.specularSampler = textureFormat.canInterpolateValues(PBRType.SPECULAR) ? GlSampler.MIPPED_NEAREST : GlSampler.MIPPED_NEAREST_NEAREST;
+				} else {
+					this.normalSampler = GlSampler.MIPPED_NEAREST;
+					this.specularSampler = GlSampler.MIPPED_NEAREST;
+				}
+
+				PBRTextureManager.notifyPBRTexturesChanged();
 			}
-
-			PBRTextureManager.notifyPBRTexturesChanged();
 		}
 	}
 
@@ -913,6 +922,8 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 				}
 			}
 		}
+
+		PBRTextureManager.INSTANCE.onNewFrame();
 
 		// NB: execute this before resizing / clearing so that the center depth sample is retrieved properly.
 		updateNotifier.onNewFrame();
@@ -1293,6 +1304,11 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	@Override
 	public boolean supportsEndFlash() {
 		return supportsEndFlash;
+	}
+
+	@Override
+	public int getAlbedoTex() {
+		return albedoTex;
 	}
 
 	public Optional<ProgramSource> getDHTerrainShader() {

@@ -94,9 +94,19 @@ public class MixinGlCommandEncoder {
 	@Redirect(method = {
 		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/nio/ByteBuffer;Lcom/mojang/blaze3d/platform/NativeImage$Format;IIIIII)V",
 		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;IIIIIIII)V",
-		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;)V"
 	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z"))
 	private boolean ignore2(GlCommandEncoder instance) {
+		if (ImmediateState.temporarilyIgnorePass) {
+			return false;
+		} else {
+			return this.inRenderPass;
+		}
+	}
+
+	@Redirect(method = {
+		"createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;"
+	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z", ordinal = 0))
+	private boolean ignore3(GlCommandEncoder instance) {
 		if (ImmediateState.temporarilyIgnorePass) {
 			return false;
 		} else {

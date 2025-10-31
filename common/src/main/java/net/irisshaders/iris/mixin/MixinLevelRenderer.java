@@ -9,6 +9,7 @@ import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
@@ -214,10 +215,10 @@ public class MixinLevelRenderer {
 	}
 
 
-	@WrapOperation(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;)V"))
-	private void iris$beginTerrainLayer(ChunkSectionsToRender instance, ChunkSectionLayerGroup chunkSectionLayerGroup, Operation<Void> original) {
+	@WrapOperation(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V"))
+	private void iris$beginTerrainLayer(ChunkSectionsToRender instance, ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, Operation<Void> original) {
 		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(chunkSectionLayerGroup));
-		original.call(instance, chunkSectionLayerGroup);
+		original.call(instance, chunkSectionLayerGroup, gpuSampler);
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 

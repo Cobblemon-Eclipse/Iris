@@ -121,6 +121,7 @@
     "texture.SpriteContentsAccessor",
     "texture.SpriteContentsAnimatedTextureAccessor",
     "texture.SpriteContentsFrameInfoAccessor",
+    "texture.TextureAtlasSpriteAccessor",
     "texture.SpriteContentsTickerAccessor",
     "texture.TextureAtlasAccessor",
     "texture.pbr.MixinDirectoryLister",

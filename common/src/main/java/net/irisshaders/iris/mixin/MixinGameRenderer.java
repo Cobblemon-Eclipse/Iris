@@ -63,7 +63,7 @@ public class MixinGameRenderer {
 		Iris.logger.info("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.version") + ")");
 	}
 
-	@ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;I)V"))
+	@ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlobalSettingsUniform;update(IIDJLnet/minecraft/client/DeltaTracker;ILnet/minecraft/client/Camera;)V"))
 	private void iris$modifyBlur(Args args) {
 		if (this.minecraft.screen instanceof ShaderPackScreen sps) {
 			// TODO 1.21.6

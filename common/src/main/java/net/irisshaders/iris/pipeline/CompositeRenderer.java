@@ -238,12 +238,7 @@ public class CompositeRenderer {
 		// unlikely that this issue occurs in practice with most shader packs.
 		IrisRenderSystem.generateMipmaps(texture, GL20C.GL_TEXTURE_2D);
 
-		int filter = GL20C.GL_LINEAR_MIPMAP_LINEAR;
-		if (target.getInternalFormat().getPixelFormat().isInteger()) {
-			filter = GL20C.GL_NEAREST_MIPMAP_NEAREST;
-		}
-
-		IrisRenderSystem.texParameteri(texture, GL20C.GL_TEXTURE_2D, GL20C.GL_TEXTURE_MIN_FILTER, filter);
+		target.turnOnMips(readFromAlt);
 	}
 
 	public ImmutableSet<Integer> getFlippedAtLeastOnceFinal() {

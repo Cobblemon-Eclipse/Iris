@@ -85,7 +85,7 @@ public class IrisExclusiveUniforms {
 	private static boolean isHeavyFog() {
 		if (Minecraft.getInstance().level != null) {
 			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-			return camera.attributeProbe().getValue(EnvironmentAttributes.EXTRA_FOG, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) || Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
+			return  Minecraft.getInstance().gui.getBossOverlay().shouldCreateWorldFog();
 		}
 
 		return false;

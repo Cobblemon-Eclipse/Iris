@@ -12,7 +12,4 @@ import java.util.List;
 public interface SpriteContentsAnimatedTextureAccessor {
 	@Accessor("frames")
 	List<SpriteContents.FrameInfo> getFrames();
-
-	@Invoker("uploadFrame")
-	void invokeUploadFrame(int x, int y, int frameIndex, GpuTexture texture);
 }
