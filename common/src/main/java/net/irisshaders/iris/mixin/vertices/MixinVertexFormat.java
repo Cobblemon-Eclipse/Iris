@@ -28,14 +28,14 @@ public abstract class MixinVertexFormat implements VertexFormatExtension {
 	public abstract List<String> getElementAttributeNames();
 
 	@Unique
-	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2");
+	private static final ImmutableSet<String> ATTRIBUTE_LIST = ImmutableSet.of("Position", "Color", "Normal", "UV0", "UV1", "UV2", "LineWidth");
 
 	@Override
 	public void bindAttributesIris(boolean isFallback, int i) {
 		int j = 0;
 
 		for (String string : this.getElementAttributeNames()) {
-			//Iris.logger.warn("Binding " + string + " to " + j);
+			Iris.logger.warn("Binding " + string + " to " + j);
 			GlStateManager._glBindAttribLocation(i, j, ATTRIBUTE_LIST.contains(string) && !isFallback ? "iris_" + string : string);
 			j++;
 		}

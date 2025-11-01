@@ -55,7 +55,6 @@ public class VanillaTransformer {
 			    mat4 TextureMat;
 			} iris_transforms;
 			""",
-			"in float LineWidth;",
 			"""
 				layout(std140) uniform iris_Projection {
 				    mat4 iris_ProjMat;
@@ -63,16 +62,20 @@ public class VanillaTransformer {
 				""",
 			"""
 				layout(std140) uniform iris_Globals {
-				    vec2 ScreenSize;
-				    float GlintAlpha;
-				    float GameTime;
-				    int MenuBlurRadius;
+    ivec3 CameraBlockPos;
+    vec3 CameraOffset;
+    vec2 ScreenSize;
+    float GlintAlpha;
+    float GameTime;
+    int MenuBlurRadius;
 				} iris_globalInfo;
 				""");
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
 			// Alias of gl_MultiTexCoord1 on 1.15+ for OptiFine
 			// See https://github.com/IrisShaders/Iris/issues/1149
 			root.rename("gl_MultiTexCoord2", "gl_MultiTexCoord1");
+			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS,
+				"in float iris_LineWidth;");
 
 			if (parameters.inputs.hasTex() && !parameters.isClouds()) {
 				root.replaceReferenceExpressions(t, "gl_MultiTexCoord0",
@@ -197,7 +200,7 @@ public class VanillaTransformer {
 						"vec3 ndc1 = linePosStart.xyz / linePosStart.w;" +
 						"vec3 ndc2 = linePosEnd.xyz / linePosEnd.w;" +
 						"vec2 lineScreenDirection = normalize((ndc2.xy - ndc1.xy) * iris_globalInfo.ScreenSize);" +
-						"vec2 lineOffset = vec2(-lineScreenDirection.y, lineScreenDirection.x) * LineWidth / iris_globalInfo.ScreenSize;"
+						"vec2 lineOffset = vec2(-lineScreenDirection.y, lineScreenDirection.x) * iris_LineWidth / iris_globalInfo.ScreenSize;"
 						+
 						"if (lineOffset.x < 0.0) {" +
 						"    lineOffset *= -1.0;" +

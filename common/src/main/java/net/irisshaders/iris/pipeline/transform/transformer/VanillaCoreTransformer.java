@@ -61,10 +61,12 @@ public class VanillaCoreTransformer {
 				""",
 			"""
 				layout(std140) uniform iris_Globals {
-				    vec2 ScreenSize;
-				    float GlintAlpha;
-				    float GameTime;
-				    int MenuBlurRadius;
+    ivec3 CameraBlockPos;
+    vec3 CameraOffset;
+    vec2 ScreenSize;
+    float GlintAlpha;
+    float GameTime;
+    int MenuBlurRadius;
 				} iris_globalInfo;
 				""");
 
