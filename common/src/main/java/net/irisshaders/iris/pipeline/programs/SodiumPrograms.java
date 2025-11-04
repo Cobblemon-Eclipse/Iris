@@ -32,7 +32,7 @@ import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.irisshaders.iris.targets.RenderTargets;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.sodium.terrain.FormatAnalyzer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL43C;
 
 import java.util.ArrayList;
@@ -99,7 +99,7 @@ public class SodiumPrograms {
 		for (Map.Entry<PatchShaderType, String> entry : transformed.entrySet()) {
 			if (entry.getValue() == null) continue;
 			newMap.put(entry.getKey(), new GlShader(ShaderType.fromGlShaderType(entry.getKey().glShaderType.id),
-				ResourceLocation.fromNamespaceAndPath("iris", "sodium-shader-" + passName), new ShaderParser.ParsedShader(entry.getValue(), new String[0])));
+				Identifier.fromNamespaceAndPath("iris", "sodium-shader-" + passName), new ShaderParser.ParsedShader(entry.getValue(), new String[0])));
 		}
 		return newMap;
 	}
@@ -115,7 +115,7 @@ public class SodiumPrograms {
 														 AlphaTest alphaTest,
 														 CustomUniforms customUniforms, Supplier<ImmutableSet<Integer>> flipState,
 														 Map<PatchShaderType, GlShader> transformed) {
-		GlProgram.Builder builder = GlProgram.builder(ResourceLocation.fromNamespaceAndPath("sodium", "chunk_shader_for_" + pass.name().toLowerCase(Locale.ROOT)));
+		GlProgram.Builder builder = GlProgram.builder(Identifier.fromNamespaceAndPath("sodium", "chunk_shader_for_" + pass.name().toLowerCase(Locale.ROOT)));
 
 		for (GlShader shader : transformed.values()) {
 			builder.attachShader(shader);

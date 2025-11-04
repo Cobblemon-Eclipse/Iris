@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SolidBucketItem;
@@ -45,7 +45,7 @@ public class ItemStackStateLayerMixin {
 	}
 
 	@Unique
-	private void iris$setupId(Item item, ResourceLocation modelId) {
+	private void iris$setupId(Item item, Identifier modelId) {
 		if (WorldRenderingSettings.INSTANCE.getItemIds() == null) return;
 
 		if (item instanceof BlockItem blockItem && !(item instanceof SolidBucketItem)) {
@@ -56,7 +56,7 @@ public class ItemStackStateLayerMixin {
 			//System.out.println(WorldRenderingSettings.INSTANCE.getBlockStateIds().getInt(blockItem.getBlock().defaultBlockState()));
 			CapturedRenderingState.INSTANCE.setCurrentRenderedItem(WorldRenderingSettings.INSTANCE.getBlockStateIds().getOrDefault(blockItem.getBlock().defaultBlockState(), 0));
 		} else {
-			ResourceLocation location = modelId != null ? modelId : BuiltInRegistries.ITEM.getKey(item);
+			Identifier location = modelId != null ? modelId : BuiltInRegistries.ITEM.getKey(item);
 
 			CapturedRenderingState.INSTANCE.setCurrentRenderedItem(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(new NamespacedId(location.getNamespace(), location.getPath())));
 		}

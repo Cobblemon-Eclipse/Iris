@@ -114,7 +114,7 @@
     "texture.AnimationMetadataSectionAccessor",
     "texture.MixinAbstractTexture",
     "texture.MixinGlStateManager",
-    "texture.MixinResourceLocation",
+    "texture.MixinIdentifier",
     "texture.MixinSpriteContents",
     "texture.MixinTextureManager",
     "texture.ReloadableTextureAccessor",

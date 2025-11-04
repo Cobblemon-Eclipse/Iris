@@ -149,7 +149,7 @@ public class HardcodedCustomUniforms {
 	private static int getWorldDayTime() {
 		Level level = Minecraft.getInstance().level;
 		long timeOfDay = level.getDayTime();
-		long dayTime = level.dimensionType().fixedTime().orElse(timeOfDay % 24000L);
+		long dayTime = level.dimensionType().hasFixedTime() ? 0 : (timeOfDay % 24000L);
 
 		return (int) dayTime;
 	}
@@ -163,7 +163,7 @@ public class HardcodedCustomUniforms {
 	}
 
 	private static float getShadowFade() {
-		return (float) Math.clamp(0.0, 1.0, 1.0 - (java.lang.Math.abs(java.lang.Math.abs(CelestialUniforms.getSunAngle() - 0.5) - 0.25) - 0.23) * 100.0);
+		return (float) Math.clamp(0.0, 1.0, 1.0 - (java.lang.Math.abs(java.lang.Math.abs(CelestialUniforms.getSunAngle(CelestialUniforms.isDay()) - 0.5) - 0.25) - 0.23) * 100.0);
 	}
 
 	private static SmoothedFloat rainStrengthS(FrameUpdateNotifier updateNotifier, float halfLifeUp, float halfLifeDown) {
@@ -209,6 +209,6 @@ public class HardcodedCustomUniforms {
 
 
 	private static float getShdFade() {
-		return (float) Math.clamp(0.0, 1.0, 1.0 - (Math.abs(Math.abs(CelestialUniforms.getSunAngle() - 0.5) - 0.25) - 0.225) * 40.0);
+		return (float) Math.clamp(0.0, 1.0, 1.0 - (Math.abs(Math.abs(CelestialUniforms.getSunAngle(true) - 0.5) - 0.25) - 0.225) * 40.0);
 	}
 }

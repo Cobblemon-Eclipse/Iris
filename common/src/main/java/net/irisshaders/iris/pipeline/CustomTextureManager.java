@@ -22,13 +22,13 @@ import net.irisshaders.iris.shaderpack.texture.CustomTextureData;
 import net.irisshaders.iris.shaderpack.texture.TextureStage;
 import net.irisshaders.iris.targets.backed.NativeImageBackedCustomTexture;
 import net.irisshaders.iris.targets.backed.NativeImageBackedNoiseTexture;
-import net.minecraft.ResourceLocationException;
+import net.minecraft.IdentifierException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.io.FilenameUtils;
 import org.lwjgl.opengl.GL46C;
 
@@ -59,7 +59,7 @@ public class CustomTextureManager {
 			customTextureStageDataMap.forEach((samplerName, textureData) -> {
 				try {
 					customTextureIds.put(samplerName, createCustomTexture(textureData));
-				} catch (IOException | ResourceLocationException e) {
+				} catch (IOException | IdentifierException e) {
 					Iris.logger.error("Unable to parse the image data for the custom texture on stage "
 						+ textureStage + ", sampler " + samplerName, e);
 				}
@@ -92,7 +92,7 @@ public class CustomTextureManager {
 		}
 	}
 
-	private TextureAccess createCustomTexture(CustomTextureData textureData) throws IOException, ResourceLocationException {
+	private TextureAccess createCustomTexture(CustomTextureData textureData) throws IOException, IdentifierException {
 		if (textureData instanceof CustomTextureData.PngData) {
 			NativeImageBackedCustomTexture texture = new NativeImageBackedCustomTexture((CustomTextureData.PngData) textureData);
 			ownedTextures.add(texture);
@@ -139,7 +139,7 @@ public class CustomTextureManager {
 			TextureManager textureManager = Minecraft.getInstance().getTextureManager();
 
 			if (pbrType == null) {
-				ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(namespace, location);
+				Identifier textureLocation = Identifier.fromNamespaceAndPath(namespace, location);
 
 				// NB: We have to re-query the TextureManager for the texture object every time. This is because the
 				//     AbstractTexture object could be removed / deleted from the TextureManager on resource reloads,
@@ -158,7 +158,7 @@ public class CustomTextureManager {
 				}, TextureType.TEXTURE_2D);
 			} else {
 				location = location.substring(0, extensionIndex - pbrType.getSuffix().length()) + location.substring(extensionIndex);
-				ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(namespace, location);
+				Identifier textureLocation = Identifier.fromNamespaceAndPath(namespace, location);
 
 				return new TextureWrapper(() -> {
 					AbstractTexture texture = textureManager.getTexture(textureLocation);

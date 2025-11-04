@@ -2,7 +2,7 @@ package net.irisshaders.iris.mixin.entity_render_context;
 
 import net.irisshaders.iris.mixinterface.ItemContextState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -15,10 +15,10 @@ public class ItemStackStateMixin implements ItemContextState {
 	@Unique
 	private Item iris_displayStack;
 	@Unique
-	private ResourceLocation iris_displayModelId;
+	private Identifier iris_displayModelId;
 
 	@Override
-	public void setDisplayItem(Item itemStack, ResourceLocation modelId) {
+	public void setDisplayItem(Item itemStack, Identifier modelId) {
 		this.iris_displayStack = itemStack;
 		this.iris_displayModelId = modelId;
 	}
@@ -27,7 +27,7 @@ public class ItemStackStateMixin implements ItemContextState {
 	public Item getDisplayItem() {
 		return iris_displayStack;
 	}
-	public ResourceLocation getDisplayItemModel() {
+	public Identifier getDisplayItemModel() {
 		return iris_displayModelId;
 	}
 

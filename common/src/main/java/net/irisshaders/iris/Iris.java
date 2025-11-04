@@ -38,14 +38,14 @@ import net.irisshaders.iris.vertices.sodium.IrisEntityToTerrainVertexSerializer;
 import net.irisshaders.iris.vertices.sodium.ModelToEntityVertexSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -99,7 +99,7 @@ public class Iris {
 	private static IrisConfig irisConfig;
 	private static FileSystem zipFileSystem;
 	private static KeyMapping reloadKeybind;
-	private static final KeyMapping.Category irisKeybindCategory = KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath("iris", "keybinds"));
+	private static final KeyMapping.Category irisKeybindCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("iris", "keybinds"));
 	private static KeyMapping toggleShadersKeybind;
 	private static KeyMapping shaderpackScreenKeybind;
 	private static KeyMapping wireframeKeybind;
@@ -614,7 +614,7 @@ public class Iris {
 		ClientLevel level = Minecraft.getInstance().level;
 
 		if (level != null) {
-			NamespacedId dimensionId = new NamespacedId(level.dimension().location().getNamespace(), level.dimension().location().getPath());
+			NamespacedId dimensionId = new NamespacedId(level.dimension().identifier().getNamespace(), level.dimension().identifier().getPath());
 
 			ShaderPack pack = getCurrentPack().orElse(null);
 
@@ -628,13 +628,13 @@ public class Iris {
 			// The appropriate shader for the dimension should be used by default in order to prevent buggy results.
 			// More information at https://minecraft.wiki/w/Dimension_type
 			// https://github.com/IrisShaders/Iris/issues/2200
-			ResourceLocation effects = level.dimensionType().effectsLocation();
+			Identifier effects = level.dimension().identifier();
 
-			if (Level.END.location().equals(effects)) {
+			if (Level.END.identifier().equals(effects)) {
 				return DimensionId.END;
 			}
 
-			if (Level.NETHER.location().equals(effects)) {
+			if (Level.NETHER.identifier().equals(effects)) {
 				return DimensionId.NETHER;
 			}
 

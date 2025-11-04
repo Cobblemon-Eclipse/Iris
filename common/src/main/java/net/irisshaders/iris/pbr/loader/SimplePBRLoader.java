@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.texture.ReloadableTexture;
 import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.client.renderer.texture.TextureContents;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.io.IOException;
 public class SimplePBRLoader implements PBRTextureLoader<SimpleTexture> {
 	@Override
 	public void load(SimpleTexture texture, ResourceManager resourceManager, PBRTextureConsumer pbrTextureConsumer) {
-		ResourceLocation location = ((ReloadableTextureAccessor) texture).getLocation();
+		Identifier location = ((ReloadableTextureAccessor) texture).getLocation();
 
 		AbstractTexture normalTexture = createPBRTexture(location, resourceManager, PBRType.NORMAL);
 		AbstractTexture specularTexture = createPBRTexture(location, resourceManager, PBRType.SPECULAR);
@@ -31,8 +31,8 @@ public class SimplePBRLoader implements PBRTextureLoader<SimpleTexture> {
 	}
 
 	@Nullable
-	protected AbstractTexture createPBRTexture(ResourceLocation imageLocation, ResourceManager resourceManager, PBRType pbrType) {
-		ResourceLocation pbrImageLocation = imageLocation.withPath(pbrType::appendSuffix);
+	protected AbstractTexture createPBRTexture(Identifier imageLocation, ResourceManager resourceManager, PBRType pbrType) {
+		Identifier pbrImageLocation = imageLocation.withPath(pbrType::appendSuffix);
 
 		ImmediateState.temporarilyIgnorePass = true;
 		SimpleTexture pbrTexture = new SimpleTexture(pbrImageLocation);

@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.Items;
@@ -45,7 +45,7 @@ public abstract class MixinElytraLayer<S extends HumanoidRenderState, M extends 
 			return;
 		}
 
-		ResourceLocation location = BuiltInRegistries.ITEM.getKey(Items.ELYTRA);
+		Identifier location = BuiltInRegistries.ITEM.getKey(Items.ELYTRA);
 
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(WorldRenderingSettings.INSTANCE.getItemIds().applyAsInt(new NamespacedId(location.getNamespace(), location.getPath())));
 	}

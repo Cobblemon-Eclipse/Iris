@@ -187,7 +187,7 @@ public class IdMap {
 			for (String part : value.split("\\s+")) {
 				if (part.contains("=")) {
 					// Avoid tons of logspam for now
-					Iris.logger.warn("Failed to parse an ResourceLocation in " + fileName + " for the key " + key + ": state properties are currently not supported: " + part);
+					Iris.logger.warn("Failed to parse an Identifier in " + fileName + " for the key " + key + ": state properties are currently not supported: " + part);
 					continue;
 				}
 
@@ -195,7 +195,7 @@ public class IdMap {
 				duplicateTracker.checkAndRecord(part, key, part);
 
 				// Note: NamespacedId performs no validation on the content. That will need to be done by whatever is
-				//       converting these things to ResourceLocations.
+				//       converting these things to Identifiers.
 				idMap.put(new NamespacedId(part), intId);
 			}
 		});
@@ -306,7 +306,7 @@ public class IdMap {
 				duplicateTracker.checkAndRecord(part, key, part);
 
 				// Note: NamespacedId performs no validation on the content. That will need to be done by whatever is
-				//       converting these things to ResourceLocations.
+				//       converting these things to Identifiers.
 				overrides.put(new NamespacedId(part), renderType);
 			}
 		});

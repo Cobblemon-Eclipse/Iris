@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinSkyRenderer {
 	@Inject(method = "renderSkyDisc",
 		at = @At(value = "HEAD"))
-	private void iris$renderSky$beginNormalSky(float f, float g, float h, CallbackInfo ci) {
+	private void iris$renderSky$beginNormalSky(int i, CallbackInfo ci) {
 		// None of the vanilla sky is rendered until after this call, so if anything is rendered before, it's
 		// CUSTOM_SKY.
 		setPhase(WorldRenderingPhase.SKY);
@@ -68,8 +68,8 @@ public class MixinSkyRenderer {
 		setPhase(WorldRenderingPhase.VOID);
 	}
 
-	@Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 1))
-	private void iris$renderSky$tiltSun(PoseStack poseStack, float f, MoonPhase moonPhase, float g, float h, CallbackInfo ci) {
+	@Inject(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 0, shift = At.Shift.AFTER))
+	private void iris$renderSky$tiltSun(PoseStack poseStack, float f, float g, float h, MoonPhase moonPhase, float i, float j, CallbackInfo ci) {
 		poseStack.mulPose(Axis.ZP.rotationDegrees(getSunPathRotation()));
 	}
 

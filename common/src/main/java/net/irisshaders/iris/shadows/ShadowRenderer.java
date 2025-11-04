@@ -58,6 +58,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.TickRateManager;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -195,28 +196,24 @@ public class ShadowRenderer {
 		return Objects.requireNonNull(Minecraft.getInstance().level);
 	}
 
-	private static float getSkyAngle() {
-		return getLevel().getTimeOfDay(CapturedRenderingState.INSTANCE.getTickDelta());
-	}
+	public static float getSunAngle(boolean sun) {
+		float currentAngle = Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(sun ? EnvironmentAttributes.SUN_ANGLE : EnvironmentAttributes.MOON_ANGLE, CapturedRenderingState.INSTANCE.getTickDelta());
 
-	private static float getSunAngle() {
-		float skyAngle = getSkyAngle();
+		float c = currentAngle + 90.0f;
 
-		if (skyAngle < 0.75F) {
-			return skyAngle + 0.25F;
-		} else {
-			return skyAngle - 0.75F;
+		if (c < 0) {
+			c += 360;
+		} else if (c > 360) {
+			c -= 360;
 		}
+
+		return c;
 	}
 
 	private static float getShadowAngle() {
-		float shadowAngle = getSunAngle();
+		float shadowAngle = getSunAngle(CelestialUniforms.isDay());
 
-		if (!CelestialUniforms.isDay()) {
-			shadowAngle -= 0.5F;
-		}
-
-		return shadowAngle;
+		return shadowAngle / 360.0f;
 	}
 
 	public void setUsesImages(boolean usesImages) {
@@ -384,7 +381,7 @@ public class ShadowRenderer {
 			return;
 		}
 
-		GpuSampler theSampler = RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST);
+		GpuSampler theSampler = RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, true);
 		levelRenderState.cameraRenderState.blockPos = renderState.blockPos;
 		levelRenderState.cameraRenderState.pos = renderState.pos;
 		levelRenderState.cameraRenderState.orientation = renderState.orientation;
@@ -683,7 +680,7 @@ public class ShadowRenderer {
 		for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
 			if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRender(entity, frustum, d, e, f) || entity.hasIndirectPassenger(Minecraft.getInstance().player)) {
 				BlockPos blockPos = entity.blockPosition();
-				if ((Minecraft.getInstance().level.isOutsideBuildHeight(blockPos.getY()) || Minecraft.getInstance().levelRenderer.isSectionCompiled(blockPos))) {
+				if ((Minecraft.getInstance().level.isOutsideBuildHeight(blockPos.getY()) || Minecraft.getInstance().levelRenderer.isSectionCompiledAndVisible(blockPos))) {
 					if (entity.tickCount == 0) {
 						entity.xOld = entity.getX();
 						entity.yOld = entity.getY();

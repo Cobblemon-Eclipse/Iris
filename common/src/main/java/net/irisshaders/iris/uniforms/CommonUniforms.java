@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -221,7 +222,7 @@ public final class CommonUniforms {
 			return ZERO_VECTOR_3d;
 		}
 
-		int skyColor = client.level.getSkyColor(client.gameRenderer.getMainCamera(),
+		int skyColor = client.gameRenderer.getMainCamera().attributeProbe().getValue(EnvironmentAttributes.SKY_COLOR,
 			CapturedRenderingState.INSTANCE.getTickDelta());
 
 		return new Vector3d(ARGB.redFloat(skyColor), ARGB.greenFloat(skyColor), ARGB.blueFloat(skyColor));

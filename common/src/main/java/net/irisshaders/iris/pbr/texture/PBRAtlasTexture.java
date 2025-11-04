@@ -27,7 +27,7 @@ import net.minecraft.client.renderer.texture.SpriteContents.FrameInfo;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
@@ -47,10 +47,10 @@ import java.util.OptionalInt;
 public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	protected final TextureAtlas atlasTexture;
 	protected final PBRType type;
-	protected final ResourceLocation location;
+	protected final Identifier location;
 	private List<PBRTextureAtlasSprite> sprites = List.of();
-	protected final Map<ResourceLocation, PBRTextureAtlasSprite> texturesByNameToAdd = new HashMap<>();
-	protected Map<ResourceLocation, PBRTextureAtlasSprite> texturesByName = new HashMap<>();
+	protected final Map<Identifier, PBRTextureAtlasSprite> texturesByNameToAdd = new HashMap<>();
+	protected Map<Identifier, PBRTextureAtlasSprite> texturesByName = new HashMap<>();
 	private List<SpriteContents.AnimationState> animatedTexturesStates = List.of();
 	protected int width;
 	protected int height;
@@ -63,7 +63,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	public PBRAtlasTexture(TextureAtlas atlasTexture, PBRType type) {
 		this.atlasTexture = atlasTexture;
 		this.type = type;
-		location = ResourceLocation.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
+		location = Identifier.fromNamespaceAndPath(atlasTexture.location().getNamespace(), atlasTexture.location().getPath().replace(".png", "") + type.getSuffix() + ".png");
 	}
 
 	public static void syncAnimation(SpriteContents.AnimatedTexture source, SpriteContents.AnimationState target) {
@@ -100,10 +100,10 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		targetAccessor.setSubFrame(ticks + sourceAccessor.getSubFrame());
 	}
 
-	protected static void dumpSpriteNames(Path dir, String fileName, Map<ResourceLocation, PBRTextureAtlasSprite> sprites) {
+	protected static void dumpSpriteNames(Path dir, String fileName, Map<Identifier, PBRTextureAtlasSprite> sprites) {
 		Path path = dir.resolve(fileName + ".txt");
 		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-			for (Map.Entry<ResourceLocation, PBRTextureAtlasSprite> entry : sprites.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+			for (Map.Entry<Identifier, PBRTextureAtlasSprite> entry : sprites.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
 				PBRTextureAtlasSprite sprite = entry.getValue();
 				writer.write(String.format(Locale.ROOT, "%s\tx=%d\ty=%d\tw=%d\th=%d%n", entry.getKey(), sprite.getX(), sprite.getY(), sprite.contents().width(), sprite.contents().height()));
 			}
@@ -116,7 +116,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 		return type;
 	}
 
-	public ResourceLocation getAtlasId() {
+	public Identifier getAtlasId() {
 		return location;
 	}
 
@@ -125,7 +125,7 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	@Nullable
-	public PBRTextureAtlasSprite getSprite(ResourceLocation id) {
+	public PBRTextureAtlasSprite getSprite(Identifier id) {
 		return texturesByName.get(id);
 	}
 
@@ -339,14 +339,14 @@ public class PBRAtlasTexture extends AbstractTexture implements PBRDumpable {
 	}
 
 	@Override
-	public void dumpContents(ResourceLocation id, Path path) {
+	public void dumpContents(Identifier id, Path path) {
 		String string = id.toDebugFileName();
 		TextureUtil.writeAsPNG(path, string, this.getTexture(), this.maxMipLevel, i -> i);
 		dumpSpriteNames(path, string, this.texturesByName);
 	}
 
 	@Override
-	public ResourceLocation getDefaultDumpLocation() {
+	public Identifier getDefaultDumpLocation() {
 		return location;
 	}
 }

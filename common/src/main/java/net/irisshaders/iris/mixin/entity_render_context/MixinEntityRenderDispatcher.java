@@ -22,7 +22,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.ZombieVillagerRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.ZombieVillager;
@@ -69,13 +69,13 @@ public class MixinEntityRenderDispatcher {
 				intId = entityIds.getInt(CURRENT_PLAYER);
 			} else {
 				intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
-					ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
+					Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
 					return new NamespacedId(entityId.getNamespace(), entityId.getPath());
 				}));
 			}
 		} else {
 			intId = entityIds.applyAsInt(ENTITY_IDS.computeIfAbsent(entity.entityType, k -> {
-				ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
+				Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.entityType);
 				return new NamespacedId(entityId.getNamespace(), entityId.getPath());
 			}));
 		}

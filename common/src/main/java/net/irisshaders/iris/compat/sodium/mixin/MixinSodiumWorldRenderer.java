@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -44,7 +45,7 @@ public class MixinSodiumWorldRenderer {
 			remap = false))
 	private boolean iris$forceChunkGraphRebuildInShadowPass(RenderSectionManager instance) {
 		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
-			float sunAngle = Minecraft.getInstance().level.getSunAngle(CapturedRenderingState.INSTANCE.getTickDelta());
+			float sunAngle = Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(EnvironmentAttributes.SUN_ANGLE, CapturedRenderingState.INSTANCE.getTickDelta());
 			if (lastSunAngle != sunAngle) {
 				lastSunAngle = sunAngle;
 				return true;

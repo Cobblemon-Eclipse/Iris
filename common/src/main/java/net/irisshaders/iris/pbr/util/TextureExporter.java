@@ -2,7 +2,7 @@ package net.irisshaders.iris.pbr.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.io.FilenameUtils;
 

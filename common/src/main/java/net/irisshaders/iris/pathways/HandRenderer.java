@@ -71,7 +71,7 @@ public class HandRenderer {
 	private boolean canRender(Camera camera, GameRenderer gameRenderer) {
 		return !(camera.isDetached()
 			|| !(camera.entity() instanceof Player)
-			|| ((GameRendererAccessor) gameRenderer).getPanoramicMode()
+			|| (gameRenderer).isPanoramicMode()
 			|| Minecraft.getInstance().options.hideGui
 			|| (camera.entity() instanceof LivingEntity && ((LivingEntity) camera.entity()).isSleeping())
 			|| Minecraft.getInstance().gameMode.getPlayerMode() == GameType.SPECTATOR);

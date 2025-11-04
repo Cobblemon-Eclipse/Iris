@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -80,7 +80,7 @@ public class BlockMaterialMapping {
 
 						if (property == null) {
 							Iris.logger.warn("Error while parsing the block ID map entry for tag \"" + "block." + intId + "\":");
-							Iris.logger.warn("- The block " + block.unwrapKey().get().location() + " has no property with the name " + key + ", ignoring!");
+							Iris.logger.warn("- The block " + block.unwrapKey().get().identifier() + " has no property with the name " + key + ", ignoring!");
 
 							return;
 						}
@@ -109,9 +109,9 @@ public class BlockMaterialMapping {
 		Map<Block, BlockRenderType> blockTypeIds = new Reference2ReferenceOpenHashMap<>();
 
 		blockPropertiesMap.forEach((id, blockType) -> {
-			ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getName());
+			Identifier identifier = Identifier.fromNamespaceAndPath(id.getNamespace(), id.getName());
 
-			Block block = BuiltInRegistries.BLOCK.get(resourceLocation).map(Holder::value).orElse(Blocks.AIR);
+			Block block = BuiltInRegistries.BLOCK.get(identifier).map(Holder::value).orElse(Blocks.AIR);
 
 			blockTypeIds.put(block, blockType);
 		});
@@ -134,14 +134,14 @@ public class BlockMaterialMapping {
 
 	private static void addBlockStates(BlockEntry entry, Object2IntMap<BlockState> idMap, int intId) {
 		NamespacedId id = entry.id();
-		ResourceLocation resourceLocation;
+		Identifier identifier;
 		try {
-			resourceLocation = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getName());
+			identifier = Identifier.fromNamespaceAndPath(id.getNamespace(), id.getName());
 		} catch (Exception exception) {
 			throw new IllegalStateException("Failed to get entry for " + intId, exception);
 		}
 
-		Block block = BuiltInRegistries.BLOCK.get(resourceLocation).map(Holder::value).orElse(Blocks.AIR);
+		Block block = BuiltInRegistries.BLOCK.get(identifier).map(Holder::value).orElse(Blocks.AIR);
 
 		if (block == Blocks.AIR) {
 			return;
@@ -172,7 +172,7 @@ public class BlockMaterialMapping {
 
 			if (property == null) {
 				Iris.logger.warn("Error while parsing the block ID map entry for \"" + "block." + intId + "\":");
-				Iris.logger.warn("- The block " + resourceLocation + " has no property with the name " + key + ", ignoring!");
+				Iris.logger.warn("- The block " + identifier + " has no property with the name " + key + ", ignoring!");
 
 				return;
 			}

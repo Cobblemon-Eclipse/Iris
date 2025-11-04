@@ -35,7 +35,6 @@ public abstract class MixinVertexFormat implements VertexFormatExtension {
 		int j = 0;
 
 		for (String string : this.getElementAttributeNames()) {
-			Iris.logger.warn("Binding " + string + " to " + j);
 			GlStateManager._glBindAttribLocation(i, j, ATTRIBUTE_LIST.contains(string) && !isFallback ? "iris_" + string : string);
 			j++;
 		}

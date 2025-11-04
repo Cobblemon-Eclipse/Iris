@@ -1,6 +1,7 @@
 package net.irisshaders.iris.pipeline.programs;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.opengl.GlBuffer;
 import com.mojang.blaze3d.opengl.GlSampler;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.opengl.GlTexture;
@@ -129,7 +130,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
-	public void setCurrentTime(int i) {
+	public void setChunkData(net.caffeinemc.mods.sodium.client.gl.buffer.GlBuffer glBuffer, int i) {
 
 	}
 
@@ -196,7 +197,7 @@ public class SodiumShader implements ChunkShaderInterface {
 				(float) (subTexelOffset - (((1.0D / ((TextureAtlasAccessor) textureAtlas).callGetHeight()) / subTexelPrecision)))
 			);
 		}
-		bindTextures(pass.getAtlas(), (GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST)); // oh no
+		bindTextures(pass.getAtlas(), (GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, true)); // oh no
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;
