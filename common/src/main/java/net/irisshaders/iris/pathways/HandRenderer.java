@@ -113,12 +113,9 @@ public class HandRenderer {
 		RenderSystem.getModelViewStack().pushMatrix();
 		RenderSystem.getModelViewStack().set(poseStack.last().pose());
 
-		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), this.submitNodeCollector, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.entity(), tickDelta));
+		gameRenderer.itemInHandRenderer.iris$renderHandsWithCustomRenderer(this, tickDelta, new PoseStack(), this.submitNodeCollector, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.entity(), tickDelta));
 
 		Profiler.get().pop();
-
-		featureRenderDispatcher.renderAllFeatures();
-		bufferSource.bufferSource().endBatch();
 
 		RenderSystem.restoreProjectionMatrix();
 
@@ -134,6 +131,7 @@ public class HandRenderer {
 
 	public void renderTranslucent(Matrix4fc modelMatrix, float tickDelta, Camera camera, GameRenderer gameRenderer, WorldRenderingPipeline pipeline) {
 		if (!canRender(camera, gameRenderer) || !isAnyHandTranslucent() || !Iris.isPackInUseQuick()) {
+			submitNodeCollector.endFrame();
 			return;
 		}
 
@@ -152,13 +150,12 @@ public class HandRenderer {
 		RenderSystem.getModelViewStack().pushMatrix();
 		RenderSystem.getModelViewStack().set(poseStack.last().pose());
 
-		gameRenderer.itemInHandRenderer.renderHandsWithItems(tickDelta, new PoseStack(), submitNodeCollector, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.entity(), tickDelta));
+		gameRenderer.itemInHandRenderer.iris$renderHandsWithCustomRenderer(this, tickDelta, new PoseStack(), submitNodeCollector, Minecraft.getInstance().player, Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(camera.entity(), tickDelta));
 
 		poseStack.popPose();
 
 		Profiler.get().pop();
-		featureRenderDispatcher.renderAllFeatures();
-		bufferSource.bufferSource().endBatch();
+		submitNodeCollector.endFrame();
 
 		RenderSystem.restoreProjectionMatrix();
 
@@ -179,5 +176,10 @@ public class HandRenderer {
 
 	public void destroy() {
 
+	}
+
+	public void endRender() {
+		featureRenderDispatcher.renderAllFeatures();
+		bufferSource.bufferSource().endBatch();
 	}
 }
