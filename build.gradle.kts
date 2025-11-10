@@ -1,15 +1,15 @@
 
 plugins {
     id("java")
-    id("fabric-loom") version("1.13.3") apply(false)
+    id("net.fabricmc.fabric-loom-no-remap") version "1.14.0-alpha.20" apply false
 }
 
-val MINECRAFT_VERSION by extra { "25w45a" }
+val MINECRAFT_VERSION by extra { "25w45a_unobfuscated" }
 val NEOFORGE_VERSION by extra { "21.9.0-alpha.1.21.9-rc1.20250928.195244" }
-val FABRIC_LOADER_VERSION by extra { "0.17.3" }
-val FABRIC_API_VERSION by extra { "0.136.2+1.21.11" }
+val FABRIC_LOADER_VERSION by extra { "0.18.0" }
+val FABRIC_API_VERSION by extra { "0.138.3+1.21.11_unobfuscated" }
 
-val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.7.2-snapshot+mc25w45a-local.jar"))}
+val SODIUM_DEPENDENCY_FABRIC by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-fabric-0.7.2-snapshot+mc25w45a_unobfuscated-local.jar"))}
 val SODIUM_DEPENDENCY_NEO by extra { files(rootDir.resolve("custom_sodium").resolve("sodium-neoforge-0.7.0-snapshot+mc1.21.9-rc1-local.jar"))}
 
 // This value can be set to null to disable Parchment.
@@ -77,10 +77,6 @@ subprojects {
         options.encoding = "UTF-8"
         options.release.set(21)
     }
-
-    // Disables Gradle's custom module metadata from being published to maven. The
-    // metadata includes mapped dependencies which are not reasonably consumable by
-    // other mod developers.
     tasks.withType<GenerateModuleMetadata>().configureEach {
         enabled = false
     }

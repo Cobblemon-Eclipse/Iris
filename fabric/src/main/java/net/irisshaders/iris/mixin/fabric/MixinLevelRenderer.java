@@ -54,7 +54,7 @@ public abstract class MixinLevelRenderer {
 		((PhasedParticleEngine) minecraft.particleEngine).setParticleRenderingPhase(ParticleRenderingPhase.EVERYTHING);
 	}
 
-	@Inject(method = { "method_62214" }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderBuffers;bufferSource()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderBuffers;bufferSource()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;"))
 	private void iris$renderOpaqueParticles(GpuBufferSlice gpuBufferSlice, DeltaTracker deltaTracker, Camera camera, ProfilerFiller profilerFiller, Matrix4f matrix4f, ResourceHandle resourceHandle, ResourceHandle resourceHandle2, LevelRenderState levelRenderState, boolean bl, Frustum frustum, ResourceHandle resourceHandle3, ResourceHandle resourceHandle4, CallbackInfo ci) {
 		Profiler.get().popPush("opaque_particles");
 
@@ -70,7 +70,7 @@ public abstract class MixinLevelRenderer {
 		}
 	}
 
-	@WrapOperation(method = "method_62213", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"))
+	@WrapOperation(method = MojangLambdas.MOJANG_PARTICLE, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"))
 	private void iris$renderTranslucentAfterDeferred(ParticleEngine instance, Camera camera, float f, MultiBufferSource.BufferSource bufferSource, Operation<Void> original) {
 		ParticleRenderingSettings settings = getRenderingSettings();
 

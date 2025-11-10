@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.MojangLambdas;
 import net.irisshaders.iris.NeoLambdas;
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -188,7 +189,7 @@ public class MixinLevelRenderer {
 		return false;
 	}
 
-	@Inject(method = { "method_62215", NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "HEAD"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_SKY, NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "HEAD"))
 	private static void iris$beginSky(CallbackInfo ci) {
 		// Use CUSTOM_SKY until levelFogColor is called as a heuristic to catch FabricSkyboxes.
 		Iris.getPipelineManager().getPipeline().ifPresent(p -> p.setPhase(WorldRenderingPhase.CUSTOM_SKY));
@@ -198,51 +199,51 @@ public class MixinLevelRenderer {
 		// TODO: Move the injection instead
 	}
 
-	@Inject(method = { "method_62215", NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "RETURN"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_SKY, NeoLambdas.NEO_RENDER_SKY }, require = 1, at = @At(value = "RETURN"))
 	private static void iris$endSky(CallbackInfo ci) {
 		Iris.getPipelineManager().getPipeline().ifPresent(p -> p.setPhase(WorldRenderingPhase.NONE));
 	}
 
-	@Inject(method = { "method_62205", NeoLambdas.NEO_RENDER_CLOUDS }, require = 1, at = @At(value = "HEAD"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_CLOUDS, NeoLambdas.NEO_RENDER_CLOUDS }, require = 1, at = @At(value = "HEAD"))
 	private void iris$beginClouds(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.CLOUDS);
 	}
 
-	@Inject(method = { "method_62205", NeoLambdas.NEO_RENDER_CLOUDS }, require = 1, at = @At("RETURN"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_CLOUDS, NeoLambdas.NEO_RENDER_CLOUDS }, require = 1, at = @At("RETURN"))
 	private void iris$endClouds(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 
 
-	@WrapOperation(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V"))
+	@WrapOperation(method = { MojangLambdas.MOJANG_RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V"))
 	private void iris$beginTerrainLayer(ChunkSectionsToRender instance, ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, Operation<Void> original) {
 		pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(chunkSectionLayerGroup));
 		original.call(instance, chunkSectionLayerGroup, gpuSampler);
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 
-	@Inject(method = { "method_62216", NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "HEAD"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_WEATHER, NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "HEAD"))
 	private void iris$beginWeather(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.RAIN_SNOW);
 	}
 
 
-	@Inject(method = { "method_62216", NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldBorderRenderer;render(Lnet/minecraft/client/renderer/state/WorldBorderRenderState;Lnet/minecraft/world/phys/Vec3;DD)V"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_WEATHER, NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldBorderRenderer;render(Lnet/minecraft/client/renderer/state/WorldBorderRenderState;Lnet/minecraft/world/phys/Vec3;DD)V"))
 	private void iris$beginWorldBorder(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.WORLD_BORDER);
 	}
 
-	@Inject(method = { "method_62216", NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "RETURN"))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_WEATHER, NeoLambdas.NEO_RENDER_WEATHER }, require = 1, at = @At(value = "RETURN"))
 	private void iris$endWeather(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
 
-//	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "deb"))
+//	@Inject(method = { MojangLambdas.MOJANG_RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "deb"))
 	private void iris$setDebugRenderStage(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.DEBUG);
 	}
 
-//	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDDZ)V", shift = At.Shift.AFTER))
+//	@Inject(method = { MojangLambdas.MOJANG_RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDDZ)V", shift = At.Shift.AFTER))
 	private void iris$resetDebugRenderStage(CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.NONE);
 	}
@@ -254,7 +255,7 @@ public class MixinLevelRenderer {
 	}
 
 	// TODO this needs to be more consistent.
-	@Inject(method = { "method_62214", NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endBatch()V", ordinal = 1))
+	@Inject(method = { MojangLambdas.MOJANG_RENDER_MAIN_PASS, NeoLambdas.NEO_RENDER_MAIN_PASS }, require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endBatch()V", ordinal = 1))
 	private void iris$beginTranslucents(CallbackInfo ci,  @Local(ordinal = 0, argsOnly = true) Matrix4f modelMatrix) {
 		pipeline.beginHand();
 		HandRenderer.INSTANCE.renderSolid(modelMatrix, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true), Minecraft.getInstance().gameRenderer.getMainCamera(), Minecraft.getInstance().gameRenderer, pipeline);

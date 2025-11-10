@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version "1.13.3"
+    id("net.fabricmc.fabric-loom-no-remap") version "1.14.0-alpha.20"
     id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
 
@@ -49,21 +49,14 @@ buildConfig {
 dependencies {
     minecraft(group = "com.mojang", name = "minecraft", version = MINECRAFT_VERSION)
 
-    mappings(loom.layered() {
-        officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
-        }
-    })
+    implementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
-    modImplementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
+    compileOnly("net.fabricmc.fabric-api:fabric-renderer-api-v1:3.2.9+1172e897d7")
 
-    modCompileOnly("net.fabricmc.fabric-api:fabric-renderer-api-v1:3.2.9+1172e897d7")
-
-    modImplementation(SODIUM_DEPENDENCY_FABRIC)
-    modCompileOnly("org.antlr:antlr4-runtime:4.13.1")
-    modCompileOnly("io.github.douira:glsl-transformer:3.0.0-pre3")
-    modCompileOnly("org.anarres:jcpp:1.4.14")
+    implementation(SODIUM_DEPENDENCY_FABRIC)
+    compileOnly("org.antlr:antlr4-runtime:4.13.1")
+    compileOnly("io.github.douira:glsl-transformer:3.0.0-pre3")
+    compileOnly("org.anarres:jcpp:1.4.14")
 
     compileOnly(files(rootDir.resolve("DHApi.jar")))
 }
@@ -118,19 +111,10 @@ sourceSets {
 }
 
 loom {
-    mixin {
-        defaultRefmapName = "iris.refmap.json"
-        useLegacyMixinAp = false
-    }
+
 
     accessWidenerPath = file("src/main/resources/iris.accesswidener")
 
-    mods {
-        val main by creating { // to match the default mod generated for Forge
-            sourceSet("vendored")
-            sourceSet("main")
-        }
-    }
 }
 
 tasks {
@@ -167,3 +151,43 @@ tasks {
 tasks.configureEach {
     group = null
 }
+
+
+fun exportSourceSetJava(name: String, sourceSet: SourceSet) {
+    val configuration = configurations.create("${name}Java") {
+        isCanBeResolved = true
+        isCanBeConsumed = true
+    }
+
+    val compileTask = tasks.getByName<JavaCompile>(sourceSet.compileJavaTaskName)
+    artifacts.add(configuration.name, compileTask.destinationDirectory) {
+        builtBy(compileTask)
+    }
+}
+
+fun exportSourceSetResources(name: String, sourceSet: SourceSet) {
+    val configuration = configurations.create("${name}Resources") {
+        isCanBeResolved = true
+        isCanBeConsumed = true
+    }
+
+    val compileTask = tasks.getByName<ProcessResources>(sourceSet.processResourcesTaskName)
+    compileTask.apply {
+    }
+
+    artifacts.add(configuration.name, compileTask.destinationDir) {
+        builtBy(compileTask)
+    }
+}
+
+// Exports the compiled output of the source set to the named configuration.
+fun exportSourceSet(name: String, sourceSet: SourceSet) {
+    exportSourceSetJava(name, sourceSet)
+    exportSourceSetResources(name, sourceSet)
+}
+
+exportSourceSet("commonMain", sourceSets["main"])
+exportSourceSet("commonApi", sourceSets["api"])
+exportSourceSet("commonVendored", sourceSets["vendored"])
+exportSourceSet("commonDesktop", sourceSets["desktop"])
+exportSourceSet("commonHeaders", sourceSets["headers"])

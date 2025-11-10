@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version ("1.13.3")
+    id("net.fabricmc.fabric-loom-no-remap") version "1.14.0-alpha.20"
 }
 
 val MINECRAFT_VERSION: String by rootProject.extra
@@ -29,30 +29,33 @@ repositories {
 base {
     archivesName.set("iris-fabric")
 }
-
+val configurationCommonModJava: Configuration = configurations.create("commonJava") {
+    isCanBeResolved = true
+}
+val configurationHeadersModJava: Configuration = configurations.create("headersJava") {
+    isCanBeResolved = true
+}
+val configurationCommonModResources: Configuration = configurations.create("commonResources") {
+    isCanBeResolved = true
+}
 dependencies {
     minecraft("com.mojang:minecraft:${MINECRAFT_VERSION}")
-    mappings(loom.layered {
-        officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
-        }
-    })
-    modImplementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
+
+    implementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
     fun addRuntimeFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modRuntimeOnly(module)
+        runtimeOnly(module)
     }
 
     fun addEmbeddedFabricModule(name: String) {
         val module = fabricApi.module(name, FABRIC_API_VERSION)
-        modImplementation(module)
+        implementation(module)
         include(module)
     }
 
     fun implementAndInclude(name: String) {
-        modImplementation(name)
+        implementation(name)
         include(name)
     }
 
@@ -65,19 +68,29 @@ dependencies {
     addRuntimeFabricModule("fabric-lifecycle-events-v1")
     addRuntimeFabricModule("fabric-renderer-api-v1")
 
-    modImplementation(SODIUM_DEPENDENCY_FABRIC)
+    implementation(SODIUM_DEPENDENCY_FABRIC)
     implementAndInclude("org.antlr:antlr4-runtime:4.13.1")
     implementAndInclude("io.github.douira:glsl-transformer:3.0.0-pre3")
     implementAndInclude("org.anarres:jcpp:1.4.14")
 
-    implementation(project.project(":common").sourceSets.getByName("vendored").output)
-    implementation(project.project(":common").sourceSets.getByName("api").output)
-    compileOnly(project.project(":common").sourceSets.getByName("headers").output)
-    implementation(project.project(":common").sourceSets.getByName("main").output)
+    configurationCommonModJava(project(path = ":common", configuration = "commonMainJava"))
+    configurationCommonModJava(project(path = ":common", configuration = "commonApiJava"))
+    configurationCommonModJava(project(path = ":common", configuration = "commonVendoredJava"))
+    configurationHeadersModJava(project(path = ":common", configuration = "commonHeadersJava"))
+
+    configurationCommonModResources(project(path = ":common", configuration = "commonMainResources"))
+    configurationCommonModResources(project(path = ":common", configuration = "commonApiResources"))
+    configurationCommonModResources(project(path = ":common", configuration = "commonVendoredResources"))
 
     compileOnly(files(rootDir.resolve("DHApi.jar")))
 }
-
+sourceSets.apply {
+    main {
+        compileClasspath += configurationCommonModJava
+        compileClasspath += configurationHeadersModJava
+        runtimeClasspath += configurationCommonModJava
+    }
+}
 tasks.named("compileTestJava").configure {
     enabled = false
 }
@@ -89,12 +102,6 @@ tasks.named("test").configure {
 loom {
     if (project(":common").file("src/main/resources/iris.accesswidener").exists())
         accessWidenerPath.set(project(":common").file("src/main/resources/iris.accesswidener"))
-
-    @Suppress("UnstableApiUsage")
-    mixin {
-        defaultRefmapName.set("iris-fabric.refmap.json")
-        useLegacyMixinAp = false
-    }
 
     runs {
         named("client") {
@@ -118,8 +125,8 @@ loom {
 }
 
 tasks {
-    processResources {
-        from(project.project(":common").sourceSets.main.get().resources)
+    jar {
+        from(configurationCommonModJava)
         inputs.property("version", project.version)
 
         filesMatching("fabric.mod.json") {
@@ -128,12 +135,10 @@ tasks {
     }
 
     jar {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        from(zipTree(project.project(":common").tasks.jar.get().archiveFile))
-
-        manifest.attributes["Main-Class"] = "net.irisshaders.iris.LaunchWarn"
+        destinationDirectory.set(file(rootProject.layout.buildDirectory).resolve("mods"))
     }
 
-    remapJar.get().destinationDirectory = rootDir.resolve("build").resolve("libs")
+    processResources {
+        from(configurationCommonModResources)
+    }
 }
