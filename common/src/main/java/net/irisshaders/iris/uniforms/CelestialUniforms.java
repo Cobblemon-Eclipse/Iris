@@ -142,7 +142,7 @@ public final class CelestialUniforms {
 	}
 
 	private Vector4f getCelestialPositionInWorldSpace(boolean sun, float y) {
-		Vector4f position = new Vector4f(0.0F, y, 0.0F, 0.0F);
+		Vector4f position = new Vector4f(0.0F, 100.0f, 0.0F, 0.0F);
 
 		// TODO: Deduplicate / remove this function.
 		Matrix4f celestial = new Matrix4f();
@@ -161,7 +161,7 @@ public final class CelestialUniforms {
 	}
 
 	private Vector4f getCelestialPosition(boolean sun, float y) {
-		Vector4f position = new Vector4f(0.0F, y, 0.0F, 0.0F);
+		Vector4f position = new Vector4f(0.0F, 100.0f, 0.0F, 1.0F);
 
 		Matrix4f celestial = new Matrix4f(CapturedRenderingState.INSTANCE.getGbufferModelView());
 
@@ -172,7 +172,6 @@ public final class CelestialUniforms {
 		float currentAngle = Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(sun ? EnvironmentAttributes.SUN_ANGLE : EnvironmentAttributes.MOON_ANGLE, CapturedRenderingState.INSTANCE.getTickDelta());
 
 		celestial.rotate(Axis.XP.rotationDegrees(currentAngle));
-
 		position = celestial.transform(position);
 
 		return position;
