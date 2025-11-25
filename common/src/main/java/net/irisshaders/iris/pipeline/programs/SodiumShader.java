@@ -166,7 +166,7 @@ public class SodiumShader implements ChunkShaderInterface {
 	}
 
 	@Override
-	public void setupState(TerrainRenderPass pass, GpuSampler gpuSampler, FogParameters fogParameters) {
+	public void setupState(TerrainRenderPass pass, FogParameters fogParameters, GpuSampler gpuSampler) {
 		DepthColorStorage.unlockDepthColor();
 
 		applyBlendModes();

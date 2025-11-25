@@ -8,6 +8,7 @@
   "client": [
     "BlockRendererAccessor",
     "MixinAbstractBlockRenderContext",
+    "MixinSodiumOptions",
     "MixinBlockRenderer",
     "MixinChunkVertexConsumer",
     "MixinChunkMeshBuildTask",
@@ -21,9 +22,7 @@
     "MixinRenderSectionManager",
     "MixinRenderSectionManagerShadow",
     "MixinShaderChunkRenderer",
-    "MixinSodiumGameOptionPages",
     "MixinSodiumGameOptions",
-    "MixinSodiumOptionsGUI",
     "MixinSodiumWorldRenderer"
   ],
   "injectors": {
