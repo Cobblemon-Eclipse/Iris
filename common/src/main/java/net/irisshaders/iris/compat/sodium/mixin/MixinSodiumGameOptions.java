@@ -16,10 +16,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.IOException;
 
-/**
- * Ensures that the Iris config file is written whenever Sodium options are changed, in case the user changed the
- * Max Shadow Distance setting.
- */
 @Mixin(VideoSettingsScreen.class)
 public class MixinSodiumGameOptions {
 	@WrapOperation(method = "renderIconWithSpacing(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/resources/Identifier;IZIIII)I", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V"))
