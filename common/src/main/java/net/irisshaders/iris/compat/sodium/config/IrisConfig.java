@@ -7,19 +7,23 @@ import net.caffeinemc.mods.sodium.api.config.option.OptionImpact;
 import net.caffeinemc.mods.sodium.api.config.option.Range;
 import net.caffeinemc.mods.sodium.api.config.structure.ColorThemeBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.ConfigBuilder;
+import net.caffeinemc.mods.sodium.api.config.structure.OptionBuilder;
 import net.caffeinemc.mods.sodium.api.config.structure.PageBuilder;
 import net.caffeinemc.mods.sodium.client.config.builder.ColorThemeBuilderImpl;
 import net.caffeinemc.mods.sodium.client.gui.ColorTheme;
 import net.caffeinemc.mods.sodium.client.gui.options.control.ControlValueFormatterImpls;
 import net.irisshaders.iris.Iris;
+import net.irisshaders.iris.features.FeatureFlags;
 import net.irisshaders.iris.gui.option.IrisVideoSettings;
 import net.irisshaders.iris.gui.screen.ShaderPackScreen;
 import net.irisshaders.iris.pathways.colorspace.ColorSpace;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
+import java.util.Locale;
 
 public class IrisConfig implements ConfigEntryPoint {
 	public static final Identifier MONO = Identifier.fromNamespaceAndPath("iris", "textures/gui/config-icon-mono.png");
@@ -27,9 +31,10 @@ public class IrisConfig implements ConfigEntryPoint {
 	@Override
 	public void registerConfigLate(ConfigBuilder builder) {
 		builder.registerOwnModOptions().setName("Iris").setIcon(MONO).setColorTheme(builder.createColorTheme().setBaseThemeRGB(0xFFf556e2))
-			.addPage(builder.createExternalPage().setName(Component.translatable("options.iris.shaderPackSelection.title")).setScreenProvider(i -> Minecraft.getInstance().setScreen(new ShaderPackScreen(i))))
+			.setVersion(Iris.getVersionSimple())
+			.addPage(builder.createExternalPage().setName(Component.translatable("options.iris.shaderPackSelection.title")).setScreenConsumer(i -> Minecraft.getInstance().setScreen(new ShaderPackScreen(i))))
 			.addPage(builder.createOptionPage().setName(Component.literal("Settings")).addOptionGroup(builder.createOptionGroup().addOption(builder.createExternalButtonOption(Identifier.fromNamespaceAndPath("iris", "settings")).setTooltip(Component.empty()).setName(Component.translatable("options.iris.shaderPackList"))
-				.setScreenProvider(i -> Minecraft.getInstance().setScreen(new ShaderPackScreen(i)))))
+				.setScreenConsumer(i -> Minecraft.getInstance().setScreen(new ShaderPackScreen(i)))))
 				.addOptionGroup(builder.createOptionGroup().addOption(builder.createEnumOption(Identifier.fromNamespaceAndPath("iris", "colorSpace"), ColorSpace.class)
 					.setBinding(i -> {
 						IrisVideoSettings.colorSpace = i;
@@ -69,7 +74,32 @@ public class IrisConfig implements ConfigEntryPoint {
 						.setImpact(OptionImpact.HIGH)
 					)
 				)
-			)
+			).registerOptionOverlay(Identifier.parse("sodium:quality.filtering_mode"), builder.createEnumOption(Identifier.parse("sodium:quality.filtering_mode"), TextureFilteringMethod.class)
+				.setTooltip(i -> {
+					if (Iris.getCurrentPack().isPresent() && !Iris.getCurrentPack().get().hasFeature(FeatureFlags.TEXTURE_FILTERING)) {
+						return Component.literal("Your currently active shader pack does not support this.");
+					} else {
+						return Component.translatable("options.textureFiltering." + i.name().toLowerCase(Locale.ROOT) + ".tooltip");
+					}
+				})
+				.setEnabledProvider(i -> {
+					return Iris.getCurrentPack().isEmpty() || Iris.getCurrentPack().get().hasFeature(FeatureFlags.TEXTURE_FILTERING);
+				}, ConfigState.UPDATE_ON_REBUILD)
+			).registerOptionOverlay(Identifier.parse("sodium:quality.graphics"), builder.createBooleanOption(Identifier.parse("sodium:quality.graphics"))
+				.setTooltip(i -> {
+					if (Iris.getCurrentPack().isPresent()) {
+						return Component.literal("This option is not relevant when a shader pack is active.");
+					} else {
+						return Component.translatable("options.improvedTransparency.tooltip");
+					}
+				})
+				.setEnabledProvider(i -> {
+					return Iris.getCurrentPack().isEmpty();
+				}, ConfigState.UPDATE_ON_REBUILD)
+			).registerOptionOverlay(Identifier.parse("sodium:quality.anisotropy_bit"), builder.createIntegerOption(Identifier.parse("sodium:quality.anisotropy_bit"))
+				.setEnabledProvider(i -> {
+					return Iris.getCurrentPack().isEmpty() || Iris.getCurrentPack().get().hasFeature(FeatureFlags.TEXTURE_FILTERING);
+				}, ConfigState.UPDATE_ON_REBUILD));
 		;
 	}
 }
