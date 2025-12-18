@@ -17,7 +17,7 @@ val SODIUM_DEPENDENCY_NEO by extra { "maven.modrinth:sodium:jv9JbDp8"}
 val PARCHMENT_VERSION by extra { null }
 
 // https://semver.org/
-val MOD_VERSION by extra { "1.8.11" }
+val MOD_VERSION by extra { "1.8.12" }
 
 allprojects {
     apply(plugin = "java")
