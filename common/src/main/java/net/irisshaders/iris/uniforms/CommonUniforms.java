@@ -33,6 +33,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
@@ -356,10 +357,10 @@ public final class CommonUniforms {
 		// after all, disabling the overlay results in the intended effect of it not really looking like you're
 		// underwater on most shaderpacks. For now, I will leave this as-is, but it is something to keep in mind.
 		FogType submersionType = client.gameRenderer.getMainCamera().getFluidInCamera();
-
+		boolean isSpectator = client.player != null && client.player.isSpectator();
 		if (submersionType == FogType.WATER) {
 			return 1;
-		} else if (submersionType == FogType.LAVA) {
+		} else if (!isSpectator && submersionType == FogType.LAVA) {
 			return 2;
 		} else if (submersionType == FogType.POWDER_SNOW) {
 			return 3;
