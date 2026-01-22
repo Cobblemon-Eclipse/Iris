@@ -43,6 +43,10 @@ public class GlSampler extends GlResource {
 		}
 	}
 
+	public GlSampler(int sampler) {
+		super(sampler);
+	}
+
 	@Override
 	protected void destroyInternal() {
 		IrisRenderSystem.destroySampler(getGlId());

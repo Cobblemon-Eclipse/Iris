@@ -42,7 +42,7 @@ import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -222,7 +222,10 @@ public class SodiumShader implements ChunkShaderInterface {
 			);
 		}
 
-		bindTextures(pass.getAtlas(), anisotropySupported ? (GlSampler) gpuSampler : (GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, true)); // oh no
+		int maxAnisotropy = Minecraft.getInstance().options.textureFiltering().get() == TextureFilteringMethod.ANISOTROPIC
+			? Minecraft.getInstance().options.maxAnisotropyValue()
+			: 1;
+		bindTextures(pass.getAtlas(), (GlSampler) IrisSamplers.getTerrainCache(maxAnisotropy)); // oh no
 
 		if (containsTessellation) {
 			ImmediateState.usingTessellation = true;
