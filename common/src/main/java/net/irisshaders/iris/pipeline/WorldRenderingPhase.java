@@ -34,8 +34,6 @@ public enum WorldRenderingPhase {
 			return WorldRenderingPhase.TERRAIN_SOLID;
 		} else if (renderType == ChunkSectionLayerGroup.TRANSLUCENT) {
 			return WorldRenderingPhase.TERRAIN_TRANSLUCENT;
-		} else if (renderType == ChunkSectionLayerGroup.TRIPWIRE) {
-			return WorldRenderingPhase.TRIPWIRE;
 		} else {
 			throw new IllegalStateException("Illegal render type!");
 		}

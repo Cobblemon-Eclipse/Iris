@@ -67,7 +67,7 @@ public final class CelestialUniforms {
 		// Determine whether it is day or night based on the sky angle.
 		//
 		// World#isDay appears to do some nontrivial calculations that appear to not entirely work for us here.
-		int timeOfDay = Math.toIntExact((Minecraft.getInstance().level.getDayTime() % 24000));
+		int timeOfDay = Math.toIntExact((Minecraft.getInstance().level.getDefaultClockTime() % 24000));
 		return timeOfDay < 12751 || timeOfDay > 23219; // TODO
 	}
 

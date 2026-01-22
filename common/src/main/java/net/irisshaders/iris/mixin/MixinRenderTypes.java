@@ -1,23 +1,22 @@
 package net.irisshaders.iris.mixin;
 
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.WeatherEffectRenderer;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(RenderTypes.class)
+@Mixin(WeatherEffectRenderer.class)
 public class MixinRenderTypes {
-	@WrapMethod(method = "weather")
-	private static RenderType iris$writeRainAndSnowToDepthBuffer(Identifier identifier, boolean bl, Operation<RenderType> original) {
+	@Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;useShaderTransparency()Z"))
+	private static boolean iris$writeRainAndSnowToDepthBuffer() {
 		if (Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldWriteRainAndSnowToDepthBuffer).orElse(false)) {
-			return original.call(identifier, true);
+			return true;
 		}
 
-		return original.call(identifier, bl);
+		return Minecraft.useShaderTransparency();
 	}
 }

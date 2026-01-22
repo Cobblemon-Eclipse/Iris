@@ -22,7 +22,7 @@ public class MixinTextFeatureRenderer {
 	@Unique
 	private boolean hasBE = false;
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeStorage$TextSubmit;outlineColor()I", ordinal = 0))
+	@Inject(method = "renderTranslucent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeStorage$TextSubmit;outlineColor()I", ordinal = 0))
 	private void iris$set(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, CallbackInfo ci, @Local SubmitNodeStorage.TextSubmit modelSubmit) {
 		((ModelStorage) (Object) modelSubmit).iris$set();
 		if (((ModelStorage) (Object) modelSubmit).iris$wasBE()) {
@@ -34,7 +34,7 @@ public class MixinTextFeatureRenderer {
 		}
 	}
 
-	@Inject(method = "render", at = @At("RETURN"))
+	@Inject(method = "renderTranslucent", at = @At("RETURN"))
 	private void iris$clear(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);

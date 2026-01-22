@@ -6,7 +6,6 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.layer.BlockEntityRenderStateShard;
 import net.irisshaders.iris.layer.OuterWrappedRenderType;
 import net.irisshaders.iris.uniforms.SystemTimeUniforms;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.AbstractEndPortalRenderer;
@@ -15,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.state.EndPortalRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
@@ -56,7 +56,6 @@ public class MixinTheEndPortalRenderer {
 	}
 
 	@Inject(method = {
-		"method_73539",
 		"lambda$submit$0"
 	}, at = @At("HEAD"), cancellable = true, require = 1)
 	public <T extends TheEndPortalBlockEntity> void iris$onRender(EndPortalRenderState entity, PoseStack.Pose pose, VertexConsumer vertexConsumer, CallbackInfo ci) {
@@ -65,7 +64,7 @@ public class MixinTheEndPortalRenderer {
 		}
 
 		int overlay = OverlayTexture.NO_OVERLAY;
-		int light = LightTexture.FULL_BRIGHT;
+		int light = LightCoordsUtil.FULL_BRIGHT;
 
 		ci.cancel();
 

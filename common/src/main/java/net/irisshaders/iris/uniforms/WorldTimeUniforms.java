@@ -28,7 +28,7 @@ public final class WorldTimeUniforms {
 	}
 
 	static int getWorldDayTime() {
-		long timeOfDay = getWorld().getDayTime();
+		long timeOfDay = getWorld().getDefaultClockTime();
 
 		if (Iris.getCurrentDimension() == DimensionId.END || Iris.getCurrentDimension() == DimensionId.NETHER) {
 			// If the dimension is the nether or the end, don't override the fixed time.
@@ -43,7 +43,7 @@ public final class WorldTimeUniforms {
 	}
 
 	private static int getWorldDay() {
-		long timeOfDay = getWorld().getDayTime();
+		long timeOfDay = getWorld().getDefaultClockTime();
 		long day = timeOfDay / 24000L;
 
 		return (int) day;

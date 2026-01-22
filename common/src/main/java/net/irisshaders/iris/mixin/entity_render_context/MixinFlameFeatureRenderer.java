@@ -19,14 +19,14 @@ public class MixinFlameFeatureRenderer {
 	@Unique
 	private static final NamespacedId flameId = new NamespacedId("minecraft", "entity_flame");
 
-	@Inject(method = "render", at = @At("HEAD"))
+	@Inject(method = "renderSolid", at = @At("HEAD"))
 	private void iris$setFlame(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, AtlasManager atlasManager, CallbackInfo ci) {
 		if (WorldRenderingSettings.INSTANCE.getEntityIds() != null) {
 			CapturedRenderingState.INSTANCE.setCurrentEntity(WorldRenderingSettings.INSTANCE.getEntityIds().applyAsInt(flameId));
 		}
 	}
 
-	@Inject(method = "render", at = @At("RETURN"))
+	@Inject(method = "renderSolid", at = @At("RETURN"))
 	private void iris$setFlame2(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, AtlasManager atlasManager, CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 

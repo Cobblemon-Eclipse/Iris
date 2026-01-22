@@ -19,7 +19,7 @@ public class DebugTextWidget
 	private final Content content;
 
 	public DebugTextWidget(int i, int j, int k, int l, Font arg, Exception exception) {
-		super(i, j, k, l, Component.empty());
+		super(i, j, k, l, Component.empty(), defaultSettings(12));
 		this.font = arg;
 		this.content = this.buildContent(exception);
 	}
@@ -62,11 +62,6 @@ public class DebugTextWidget
 	@Override
 	protected int getInnerHeight() {
 		return this.content.container().getHeight();
-	}
-
-	@Override
-	protected boolean scrollbarVisible() {
-		return this.getInnerHeight() > this.height;
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("idea")
-    id("fabric-loom") version "1.14.4"
+    id("net.fabricmc.fabric-loom") version("1.15.1")
     id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
 
@@ -49,21 +49,14 @@ buildConfig {
 dependencies {
     minecraft(group = "com.mojang", name = "minecraft", version = MINECRAFT_VERSION)
 
-    mappings(loom.layered() {
-        officialMojangMappings()
-        if (PARCHMENT_VERSION != null) {
-            parchment("org.parchmentmc.data:parchment-${MINECRAFT_VERSION}:${PARCHMENT_VERSION}@zip")
-        }
-    })
+    implementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
 
-    modImplementation("net.fabricmc:fabric-loader:$FABRIC_LOADER_VERSION")
+    compileOnly("net.fabricmc.fabric-api:fabric-renderer-api-v1:3.2.9+1172e897d7")
 
-    modCompileOnly("net.fabricmc.fabric-api:fabric-renderer-api-v1:3.2.9+1172e897d7")
-
-    modImplementation(SODIUM_DEPENDENCY_FABRIC)
-    modCompileOnly("org.antlr:antlr4-runtime:4.13.1")
-    modCompileOnly("io.github.douira:glsl-transformer:3.0.0-pre3")
-    modCompileOnly("org.anarres:jcpp:1.4.14")
+    implementation(SODIUM_DEPENDENCY_FABRIC)
+    compileOnly("org.antlr:antlr4-runtime:4.13.1")
+    compileOnly("io.github.douira:glsl-transformer:3.0.0-pre3")
+    compileOnly("org.anarres:jcpp:1.4.14")
 
     compileOnly(files(rootDir.resolve("DHApi.jar")))
 }
@@ -72,6 +65,36 @@ afterEvaluate {
     tasks.withType<JavaCompile> {
         options.compilerArgs.add("-Xmaxerrs")
         options.compilerArgs.add("2000")
+    }
+}
+
+val vendoredJar by tasks.registering(Jar::class) {
+    from(sourceSets.getByName("vendored").output)
+    archiveClassifier.set("vendored")
+}
+
+val apiJar by tasks.registering(Jar::class) {
+    from(sourceSets.getByName("api").output)
+    archiveClassifier.set("api")
+}
+
+val headersJar by tasks.registering(Jar::class) {
+    from(sourceSets.getByName("headers").output)
+    archiveClassifier.set("headers")
+}
+
+configurations {
+    register("vendoredJar") {
+        isCanBeResolved = false
+        isCanBeConsumed = true
+    }
+    register("apiJar") {
+        isCanBeResolved = false
+        isCanBeConsumed = true
+    }
+    register("headersJar") {
+        isCanBeResolved = false
+        isCanBeConsumed = true
     }
 }
 
@@ -115,6 +138,12 @@ sourceSets {
             runtimeClasspath += vendored.output
         }
     }
+}
+
+artifacts {
+    add("vendoredJar", vendoredJar)
+    add("apiJar", apiJar)
+    add("headersJar", headersJar)
 }
 
 loom {

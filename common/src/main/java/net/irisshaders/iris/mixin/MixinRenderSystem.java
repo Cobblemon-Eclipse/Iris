@@ -2,6 +2,7 @@ package net.irisshaders.iris.mixin;
 
 import com.mojang.blaze3d.shaders.ShaderSource;
 import com.mojang.blaze3d.shaders.ShaderType;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -22,7 +23,7 @@ import java.util.function.BiFunction;
 @Mixin(RenderSystem.class)
 public class MixinRenderSystem {
 	@Inject(method = "initRenderer", at = @At("RETURN"), remap = false)
-	private static void iris$onRendererInit(long l, int i, boolean bl, ShaderSource shaderSource, boolean bl2, CallbackInfo ci) {
+	private static void iris$onRendererInit(GpuDevice device, CallbackInfo ci) {
 		Iris.duringRenderSystemInit();
 		GLDebug.reloadDebugState();
 		IrisRenderSystem.initRenderer();

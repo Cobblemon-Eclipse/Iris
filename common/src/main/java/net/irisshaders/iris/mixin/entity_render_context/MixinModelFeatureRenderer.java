@@ -29,8 +29,8 @@ public class MixinModelFeatureRenderer {
 		((ModelStorage) (Object) modelSubmit).iris$set();
 	}
 
-	@Inject(method = "render", at = @At("RETURN"))
-	private void iris$clear(SubmitNodeCollection submitNodeCollection, MultiBufferSource.BufferSource bufferSource, OutlineBufferSource outlineBufferSource, MultiBufferSource.BufferSource bufferSource2, CallbackInfo ci) {
+	@Inject(method = {"renderTranslucents", "renderBatch"}, at = @At("RETURN"))
+	private void iris$clear(CallbackInfo ci) {
 		CapturedRenderingState.INSTANCE.setCurrentRenderedItem(0);
 		CapturedRenderingState.INSTANCE.setCurrentEntity(0);
 		CapturedRenderingState.INSTANCE.setCurrentBlockEntity(0);

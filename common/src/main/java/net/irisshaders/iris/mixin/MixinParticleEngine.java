@@ -4,7 +4,6 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;
 import net.minecraft.client.Camera;
 import net.minecraft.client.particle.ParticleEngine;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.feature.ParticleFeatureRenderer;
@@ -23,7 +22,7 @@ public class MixinParticleEngine {
 	private WorldRenderingPhase lastPhase = WorldRenderingPhase.NONE;
 
 	@Inject(method = "render", at = @At("HEAD"))
-	private void iris$beginDrawingParticles(SubmitNodeCollection submitNodeCollection, CallbackInfo ci) {
+	private void iris$beginDrawingParticles(SubmitNodeCollection nodeCollection, boolean translucent, CallbackInfo ci) {
 		Iris.getPipelineManager().getPipeline().ifPresent(pipeline -> {
 			lastPhase = pipeline.getPhase();
 			pipeline.setPhase(WorldRenderingPhase.PARTICLES);
@@ -31,7 +30,7 @@ public class MixinParticleEngine {
 	}
 
 	@Inject(method = "render", at = @At("RETURN"))
-	private void iris$finishDrawingParticles(SubmitNodeCollection submitNodeCollection, CallbackInfo ci) {
+	private void iris$finishDrawingParticles(SubmitNodeCollection nodeCollection, boolean translucent, CallbackInfo ci) {
 		Iris.getPipelineManager().getPipeline().ifPresent(pipeline -> pipeline.setPhase(lastPhase));
 	}
 }

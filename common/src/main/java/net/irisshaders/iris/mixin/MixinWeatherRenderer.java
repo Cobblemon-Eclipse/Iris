@@ -7,7 +7,6 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.client.renderer.state.WeatherRenderState;
@@ -22,9 +21,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(WeatherEffectRenderer.class)
 public class MixinWeatherRenderer {
 	@WrapMethod(method = "render")
-	private void iris$disableWeather(MultiBufferSource multiBufferSource, Vec3 vec3, WeatherRenderState weatherRenderState, Operation<Void> original) {
+	private void iris$disableWeather(Vec3 cameraPos, WeatherRenderState renderState, Operation<Void> original) {
 		if (Iris.getPipelineManager().getPipeline().map(WorldRenderingPipeline::shouldRenderWeather).orElse(true)) {
-			original.call(multiBufferSource, vec3, weatherRenderState);
+			original.call(cameraPos, renderState);
 		}
 	}
 
