@@ -21,6 +21,7 @@ import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.uniforms.transforms.SmoothedFloat;
 import net.irisshaders.iris.uniforms.transforms.SmoothedVec2f;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -158,6 +159,13 @@ public final class CommonUniforms {
 			.uniform4f(ONCE, "entityColor", () -> new Vector4f(0, 0, 0, 0))
 			.uniform1i(ONCE, "blockEntityId", () -> -1)
 			.uniform1i(ONCE, "currentRenderedItemId", () -> -1)
+			.uniform1i(PER_FRAME, "anisotropicFiltering", () -> {
+				if (Minecraft.getInstance().options.textureFiltering().get() == TextureFilteringMethod.ANISOTROPIC) {
+					return Minecraft.getInstance().options.maxAnisotropyValue();
+				} else {
+					return 0;
+				}
+			})
 			.uniform1f(ONCE, "pi", () -> Math.PI)
 			.uniform1f(PER_TICK, "playerMood", CommonUniforms::getPlayerMood)
 			.uniform1f(PER_TICK, "constantMood", CommonUniforms::getConstantMood)
