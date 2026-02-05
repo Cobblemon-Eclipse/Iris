@@ -17,6 +17,7 @@ import com.mojang.math.Axis;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.NeoLambdas;
+import net.irisshaders.iris.api.v0.IrisApi;
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.layer.IsOutlineRenderStateShard;
@@ -109,7 +110,7 @@ public class MixinLevelRenderer {
 
 	@WrapOperation(method = "method_75413", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
 	private void skip(CommandEncoder instance, GpuTexture texture, double v, Operation<Void> original) {
-		if (!Minecraft.getInstance().hasAltDown()) {
+		if (!IrisApi.getInstance().isShaderPackInUse()) {
 			original.call(instance, texture, v);
 		}
 	}
