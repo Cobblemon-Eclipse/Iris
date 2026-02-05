@@ -2,6 +2,7 @@ package net.irisshaders.iris.gl;
 
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexSorting;
@@ -11,6 +12,7 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.sampler.SamplerLimits;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.mixin.GlStateManagerAccessor;
+import net.irisshaders.iris.mixin.GpuDeviceAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
@@ -557,7 +559,11 @@ public class IrisRenderSystem {
 		return GL46C.glGetAttribLocation(handle, irisNormal);
 	}
 
-	public interface DSAAccess {
+	public static GlDevice getGlDevice() {
+		return (GlDevice) ((GpuDeviceAccessor) RenderSystem.getDevice()).getBackend();
+	}
+
+    public interface DSAAccess {
 		void generateMipmaps(int texture, int target);
 
 		void texParameteri(int texture, int target, int pname, int param);

@@ -239,7 +239,7 @@ public class SodiumShader implements ChunkShaderInterface {
 		GlStateManager._texParameter(3553, 33085, atlas.baseMipLevel() + atlas.mipLevels() - 1);
 		GL33C.glBindSampler(0, sampler.getId());
 
-		GpuTextureView lightmap = Minecraft.getInstance().gameRenderer.lightTexture().getTextureView();
+		GpuTextureView lightmap = Minecraft.getInstance().gameRenderer.lightmap();
 		GL33C.glBindSampler(2, ((GlSampler) RenderSystem.getSamplerCache().getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.LINEAR, false)).getId());
 
 		IrisRenderSystem.bindTextureToUnit(GL20C.GL_TEXTURE_2D, 2, lightmap.texture().iris$getGlId());

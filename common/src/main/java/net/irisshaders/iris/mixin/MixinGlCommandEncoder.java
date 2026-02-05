@@ -55,7 +55,7 @@ public class MixinGlCommandEncoder {
 	private List<IrisProgram> programsToClear = new ArrayList<>();
 
 	// Do not change the viewport in the shadow pass.
-	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
+	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPassBackend;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_viewport(IIII)V"))
 	private void changeViewport(int i, int j, int k, int l) {
 		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
 			return;
@@ -65,7 +65,7 @@ public class MixinGlCommandEncoder {
 	}
 
 	// Do not change the viewport in the shadow pass.
-	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
+	@Redirect(method = "createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPassBackend;", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/opengl/GlStateManager;_glBindFramebuffer(II)V"))
 	private void changeFramebuffer(int i, int j) {
 		if (ShadowRenderingState.areShadowsCurrentlyBeingRendered() || ImmediateState.safeToMultiply) {
 			this.tempFBO = j;
@@ -82,37 +82,7 @@ public class MixinGlCommandEncoder {
 		}
 	}
 
-	@Redirect(method = "writeToBuffer", at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z"))
-	private boolean ignore(GlCommandEncoder instance) {
-		if (ImmediateState.temporarilyIgnorePass) {
-			return false;
-		} else {
-			return this.inRenderPass;
-		}
-	}
 
-	@Redirect(method = {
-		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Ljava/nio/ByteBuffer;Lcom/mojang/blaze3d/platform/NativeImage$Format;IIIIII)V",
-		"writeToTexture(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/platform/NativeImage;IIIIIIII)V",
-	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z"))
-	private boolean ignore2(GlCommandEncoder instance) {
-		if (ImmediateState.temporarilyIgnorePass) {
-			return false;
-		} else {
-			return this.inRenderPass;
-		}
-	}
-
-	@Redirect(method = {
-		"createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalInt;Lcom/mojang/blaze3d/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/blaze3d/systems/RenderPass;"
-	}, at = @At(value = "FIELD", target = "Lcom/mojang/blaze3d/opengl/GlCommandEncoder;inRenderPass:Z", ordinal = 0))
-	private boolean ignore3(GlCommandEncoder instance) {
-		if (ImmediateState.temporarilyIgnorePass) {
-			return false;
-		} else {
-			return this.inRenderPass;
-		}
-	}
 
 	@Unique
 	private static GlRenderPass lastPass;

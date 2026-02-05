@@ -10,6 +10,7 @@ import net.caffeinemc.mods.sodium.api.vertex.serializer.VertexSerializerRegistry
 import net.irisshaders.iris.compat.dh.DHCompat;
 import net.irisshaders.iris.config.IrisConfig;
 import net.irisshaders.iris.gl.GLDebug;
+import net.irisshaders.iris.gl.IrisRenderSystem;
 import net.irisshaders.iris.gl.buffer.ShaderStorageBufferHolder;
 import net.irisshaders.iris.gl.shader.ShaderCompileException;
 import net.irisshaders.iris.gl.shader.StandardMacros;
@@ -137,10 +138,10 @@ public class Iris {
 
 		PBRTextureManager.INSTANCE.init();
 
-		VertexSerializerRegistry.instance().registerSerializer(DefaultVertexFormat.NEW_ENTITY, IrisVertexFormats.TERRAIN, new EntityToTerrainVertexSerializer());
+		VertexSerializerRegistry.instance().registerSerializer(DefaultVertexFormat.ENTITY, IrisVertexFormats.TERRAIN, new EntityToTerrainVertexSerializer());
 		VertexSerializerRegistry.instance().registerSerializer(IrisVertexFormats.ENTITY, IrisVertexFormats.TERRAIN, new IrisEntityToTerrainVertexSerializer());
 		VertexSerializerRegistry.instance().registerSerializer(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, IrisVertexFormats.GLYPH, new GlyphExtVertexSerializer());
-		VertexSerializerRegistry.instance().registerSerializer(DefaultVertexFormat.NEW_ENTITY, IrisVertexFormats.ENTITY, new ModelToEntityVertexSerializer());
+		VertexSerializerRegistry.instance().registerSerializer(DefaultVertexFormat.ENTITY, IrisVertexFormats.ENTITY, new ModelToEntityVertexSerializer());
 
 		// Only load the shader pack when we can access OpenGL
 		if (!IrisPlatformHelpers.getInstance().isModLoaded("distanthorizons")) {
@@ -423,7 +424,7 @@ public class Iris {
 			success = GLDebug.setupDebugMessageCallback();
 		} else {
 			GLDebug.reloadDebugState();
-			GlDebug.enableDebugCallback(Minecraft.getInstance().options.glDebugVerbosity, false, new HashSet<>(((GlDevice) RenderSystem.getDevice()).getEnabledExtensions()));
+			GlDebug.enableDebugCallback(Minecraft.getInstance().options.glDebugVerbosity, false, new HashSet<>((IrisRenderSystem.getGlDevice()).getEnabledExtensions()));
 			success = 1;
 		}
 
@@ -501,7 +502,7 @@ public class Iris {
 						.filter(Files::isDirectory)
 						.anyMatch(path -> path.endsWith("shaders"));
 				}
-			} catch (ZipError zipError) {
+			} catch (ZipException zipError) {
 				// Java 8 seems to throw a ZipError instead of a subclass of IOException
 				Iris.logger.warn("The ZIP at " + pack + " is corrupt");
 			} catch (IOException ignored) {

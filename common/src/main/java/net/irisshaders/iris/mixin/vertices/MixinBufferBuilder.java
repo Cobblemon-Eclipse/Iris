@@ -103,7 +103,7 @@ public abstract class MixinBufferBuilder implements VertexConsumer, BlockSensiti
 			iris$isTerrain = true;
 			injectNormalAndUV1 = false;
 			return IrisVertexFormats.TERRAIN;
-		} else if (format == DefaultVertexFormat.NEW_ENTITY || format == IrisVertexFormats.ENTITY) {
+		} else if (format == DefaultVertexFormat.ENTITY || format == IrisVertexFormats.ENTITY) {
 			extending = true;
 			iris$isTerrain = false;
 			injectNormalAndUV1 = false;

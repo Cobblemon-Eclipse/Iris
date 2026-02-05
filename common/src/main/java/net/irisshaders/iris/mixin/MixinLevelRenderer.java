@@ -108,7 +108,7 @@ public class MixinLevelRenderer {
 		}
 	}
 
-	@WrapOperation(method = "method_75413", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
+	@WrapOperation(method = "lambda$addLateDebugPass$0", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
 	private void skip(CommandEncoder instance, GpuTexture texture, double v, Operation<Void> original) {
 		if (!IrisApi.getInstance().isShaderPackInUse()) {
 			original.call(instance, texture, v);

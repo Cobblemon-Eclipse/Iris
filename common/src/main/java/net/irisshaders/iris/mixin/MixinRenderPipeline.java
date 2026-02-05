@@ -31,7 +31,7 @@ public class MixinRenderPipeline {
 				cir.setReturnValue(IrisVertexFormats.TERRAIN);
 			} else if (vf == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP) {
 				cir.setReturnValue(IrisVertexFormats.GLYPH);
-			} else if (vf == DefaultVertexFormat.NEW_ENTITY) {
+			} else if (vf == DefaultVertexFormat.ENTITY) {
 				cir.setReturnValue(IrisVertexFormats.ENTITY);
 			}
 		}

@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ShadowRenderer {
+	public static int RESOLUTION;
 	public static boolean ACTIVE = false;
 	public static List<BlockEntity> visibleBlockEntities;
 	public static int renderDistance;
@@ -395,6 +396,7 @@ public class ShadowRenderer {
 
 		profiler.popPush("shadows");
 		ACTIVE = true;
+		RESOLUTION = resolution;
 
 		renderDistance = (int) ((halfPlaneLength * renderDistanceMultiplier) / 16);
 

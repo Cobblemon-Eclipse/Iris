@@ -133,7 +133,7 @@ public class StandardMacros {
 		}
 		String formattedVersion = formatVersionString(version);
 		if (formattedVersion == null) {
-			Iris.logger.error("Could not parse game version \"" + version + "\"");
+			throw new IllegalStateException("Could not parse game version \"" + version + "\"");
 		} else {
 			return formattedVersion;
 		}
