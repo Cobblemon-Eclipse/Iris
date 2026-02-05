@@ -8,8 +8,10 @@ import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.resource.ResourceHandle;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
@@ -102,6 +104,13 @@ public class MixinLevelRenderer {
 			f.prepare(vec3.x, vec3.y, vec3.z);
 
 			cir.setReturnValue(f);
+		}
+	}
+
+	@WrapOperation(method = "method_75413", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
+	private void skip(CommandEncoder instance, GpuTexture texture, double v, Operation<Void> original) {
+		if (!Minecraft.getInstance().hasAltDown()) {
+			original.call(instance, texture, v);
 		}
 	}
 	// Begin shader rendering after buffers have been cleared.
