@@ -24,12 +24,4 @@ public class MixinItemBlockRenderTypes {
 			LAYER_SET_VANILLA[i] = BlockMaterialMapping.convertBlockToRenderType(BlockRenderType.values()[i]);
 		}
 	}
-
-	@Inject(method = "getChunkRenderType", at = @At("HEAD"), cancellable = true)
-	private static void iris$setCustomRenderType(BlockState arg, CallbackInfoReturnable<ChunkSectionLayer> cir) {
-		BlockRenderType type = WorldRenderingSettings.INSTANCE.getBlockTypeIds().get(arg.getBlock());
-		if (type != null) {
-			cir.setReturnValue(LAYER_SET_VANILLA[type.ordinal()]);
-		}
-	}
 }

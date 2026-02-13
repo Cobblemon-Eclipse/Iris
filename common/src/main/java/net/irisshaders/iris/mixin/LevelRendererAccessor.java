@@ -32,12 +32,12 @@ public interface LevelRendererAccessor {
 	@Accessor("renderBuffers")
 	void setRenderBuffers(RenderBuffers buffers);
 
-	@Invoker
-	boolean invokeDoesMobEffectBlockSky(Camera mainCamera);
-
 	@Accessor
 	Long2ObjectMap<SortedSet<BlockDestructionProgress>> getDestructionProgress();
 
 	@Invoker("extractVisibleBlockEntities")
 	void invokeExtractBlockEntities(Camera camera, float f, LevelRenderState levelRenderState);
+
+	@Accessor
+	LevelRenderState getLevelRenderState();
 }

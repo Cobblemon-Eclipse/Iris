@@ -22,6 +22,7 @@
     "MixinBlockStateBehavior",
     "MixinBooleanState",
     "MixinByteBufferBuilder",
+    "MixinCamera",
     "MixinChainedJsonException",
     "MixinChunkBorderRenderer",
     "MixinClientLanguage",

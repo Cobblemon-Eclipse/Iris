@@ -24,9 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BlockRenderer.class)
 public class MixinBlockRenderer implements VertexEncoderInterface {
 	@Unique
-	private boolean hasOverride;
-
-	@Unique
 	private int blockId;
 
 	@Unique
@@ -40,25 +37,6 @@ public class MixinBlockRenderer implements VertexEncoderInterface {
 
 	@Unique
 	private int lastBlockId;
-
-	@Inject(method = "renderModel", at = @At("HEAD"))
-	private void iris$renderModelHead(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
-		if (WorldRenderingSettings.INSTANCE.getBlockTypeIds().containsKey(state.getBlock())) {
-			hasOverride = true;
-		}
-	}
-
-	@Inject(method = "renderModel", at = @At("TAIL"))
-	private void iris$renderModelTail(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci) {
-		hasOverride = false;
-	}
-
-	@WrapOperation(method = "bufferQuad", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;attemptPassDowngrade(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/caffeinemc/mods/sodium/client/render/chunk/terrain/TerrainRenderPass;)Lnet/caffeinemc/mods/sodium/client/render/chunk/terrain/TerrainRenderPass;"))
-	private TerrainRenderPass iris$skipPassDowngrade(BlockRenderer instance, TextureAtlasSprite textureAtlasSprite, TerrainRenderPass sprite, Operation<TerrainRenderPass> original) {
-		if (hasOverride) return null;
-
-		return original.call(instance, textureAtlasSprite, sprite);
-	}
 
 	@Override
 	public void beginBlock(int blockId, byte isFluid, byte lightEmission, int x, int y, int z) {
