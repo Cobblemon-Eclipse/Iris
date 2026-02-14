@@ -32,3 +32,4 @@ accessible method net/minecraft/client/renderer/rendertype/RenderType <init> (Lj
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite isAnimated ()Z
 accessible class com/mojang/blaze3d/opengl/GlDevice
 accessible class com/mojang/blaze3d/opengl/GlCommandEncoder
+accessible field com/mojang/blaze3d/opengl/GlBuffer handle I

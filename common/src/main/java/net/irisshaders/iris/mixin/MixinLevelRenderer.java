@@ -70,7 +70,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LevelRenderer.class)
-public class MixinLevelRenderer {
+public abstract class MixinLevelRenderer {
 	private static final String CLEAR = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V";
 	private static final String RENDER_SKY = "Lnet/minecraft/client/renderer/LevelRenderer;renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V";
 	private static final String RENDER_CLOUDS = "Lnet/minecraft/client/renderer/LevelRenderer;renderClouds(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FDDD)V";
@@ -95,6 +95,10 @@ public class MixinLevelRenderer {
 	@Shadow
 	@Final
 	private LevelRenderState levelRenderState;
+
+	@Shadow
+	protected abstract void cullTerrain(Camera camera, Frustum frustum, boolean spectator);
+
 	private boolean warned;
 
 	@Unique
@@ -177,11 +181,17 @@ public class MixinLevelRenderer {
 	// Setup shadow terrain & render shadows before the main terrain setup. We need to do things in this order to
 	// avoid breaking other mods such as Light Overlay: https://github.com/IrisShaders/Iris/issues/1356
 
+	@WrapOperation(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;cullTerrain(Lnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/culling/Frustum;Z)V"))
+	private void iris$setShadows(LevelRenderer instance, Camera camRotX, Frustum camRotY, boolean b, Operation<Void> original) {
+		if (!Iris.isPackInUseQuick()) {
+			original.call(instance, camRotX, camRotY, b);
+		}
+	}
 	// Do this before sky rendering so it's ready before the sky render starts.
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/culling/Frustum;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;ZLnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V"))
 	private void iris$renderTerrainShadows(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4f modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, ChunkSectionsToRender chunkSectionsToRender, CallbackInfo ci) {
 		pipeline.renderShadows((LevelRendererAccessor) this, Minecraft.getInstance().gameRenderer.getMainCamera(), this.levelRenderState.cameraRenderState);
-
+		if (Iris.isPackInUseQuick()) this.cullTerrain(Minecraft.getInstance().gameRenderer.getMainCamera(), Minecraft.getInstance().gameRenderer.getMainCamera().getCullFrustum(), this.minecraft.player.isSpectator());
 	}
 
 	// TODO IMS 1.21.2
