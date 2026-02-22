@@ -49,6 +49,15 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 	private IrisUniformBuffer uniformBuffer;
 	private List<IrisSPIRVCompiler.UniformField> sharedUniforms;
 
+	// DIAGNOSTIC: When true, injects GLSL code into deferred1 fragment shader that
+	// overrides the output with aurora reconstruction diagnostics.
+	private static final boolean DIAG_GPU_MATRIX_TEST = false;
+
+	// DIAGNOSTIC: When true, overrides deferred1 output to visualize cloud/noise info.
+	// Left half: raw noisetex sampled at texCoord (R,G,B channels)
+	// Right half: cloud opacity (R) + nPlayerPos.y (G) + skyFade (B)
+	private static final boolean DIAG_CLOUD_DEBUG = false;
+
 	private ProgramBuilder(String name, int program, ImmutableSet<Integer> reservedTextureUnits) {
 		super(name, program);
 
@@ -240,6 +249,13 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 		// Fix vertex-fragment varying type mismatches
 		fshFinal = ExtendedShader.fixVaryingTypeMismatches(vshFinal, fshFinal);
 
+		// Fix viewPos reconstruction: bypass broken gbufferProjectionInverse and compute
+		// eye-space direction directly from gbufferProjection (forward matrix).
+		// The projection inverse on the GPU gives wrong results (root cause TBD), but
+		// the forward projection's m00 and m11 are correct. This computes the same
+		// result as projInverse * ndc, but using 1/m00 and -1/m11 directly.
+		fshFinal = fixViewPosReconstruction(fshFinal, name);
+
 		// Re-compile with bindings
 		ByteBuffer vSpirv = IrisSPIRVCompiler.compilePreprocessed(name + ".vsh", vshFinal, ShaderType.VERTEX);
 		ByteBuffer fSpirv = IrisSPIRVCompiler.compilePreprocessed(name + ".fsh", fshFinal, ShaderType.FRAGMENT);
@@ -259,6 +275,16 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 			this.builtManualUBO.setSrc(uniformBuffer.getPointer(), uniformBuffer.getUsedSize());
 		}
 		ubos.add(this.builtManualUBO);
+
+		// Log ManualUBO descriptor details — critical for diagnosing GPU UBO reads
+		Iris.logger.info("[DIAG_UBO] prog='{}' ManualUBO: binding={} descriptorSize={} srcPtr=0x{} srcSize={} uboSizeInBytes={} uboSizeInWords={}" +
+				" mvInvOff={} projInvOff={} viewWidthOff={}",
+			name, builtManualUBO.getBinding(), builtManualUBO.getSize(),
+			Long.toHexString(builtManualUBO.getSrcPtr()), builtManualUBO.getSrcSize(),
+			uboSizeInBytes, uboSizeInWords,
+			uniformBuffer != null ? uniformBuffer.getFieldOffset("gbufferModelViewInverse") : -1,
+			uniformBuffer != null ? uniformBuffer.getFieldOffset("gbufferProjectionInverse") : -1,
+			uniformBuffer != null ? uniformBuffer.getFieldOffset("viewWidth") : -1);
 
 		// Sampler ImageDescriptors at bindings 1, 2, 3...
 		// Use the ProgramSamplers mapping for texture unit indices
@@ -283,7 +309,162 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 		Iris.logger.info("Created Vulkan pipeline for composite '{}': {} samplers, {} UBO bytes, samplerUnitMap={}{}",
 			name, uniqueSamplers.size(), uboSizeInBytes, samplerUnitMap, samplerDiag);
 
+		// DIAGNOSTIC: Parse SPIR-V to verify UBO layout offsets match our std140 computation
+		if (uniformBuffer != null) {
+			try {
+				IrisSPIRVCompiler.SPIRVLayout spirvLayout = IrisSPIRVCompiler.parseSPIRVLayout(fSpirv, name + ".fsh");
+				if (spirvLayout != null) {
+					// Compare by MEMBER INDEX since names are stripped by optimization.
+					// Map Java field offsets by declaration order (matching GLSL UBO order).
+					var javaFields = uniformBuffer.getFields().values().stream()
+						.sorted((a, b) -> Integer.compare(a.byteOffset, b.byteOffset))
+						.toList();
+					var spirvMembers = spirvLayout.members.stream()
+						.sorted((a, b) -> Integer.compare(a.memberIndex(), b.memberIndex()))
+						.toList();
+
+					Iris.logger.info("[SPIRV_VERIFY] '{}' members: java={} spirv={}", name, javaFields.size(), spirvMembers.size());
+
+					// Compare first N members by offset
+					int compareCount = Math.min(javaFields.size(), spirvMembers.size());
+					StringBuilder mismatches = new StringBuilder();
+					for (int idx = 0; idx < compareCount; idx++) {
+						int javaOff = javaFields.get(idx).byteOffset;
+						int spirvOff = spirvMembers.get(idx).byteOffset();
+						String javaName = javaFields.get(idx).name;
+						if (javaOff != spirvOff) {
+							mismatches.append(String.format("  idx=%d '%s': java=%d spirv=%d\n", idx, javaName, javaOff, spirvOff));
+						}
+					}
+					if (mismatches.length() > 0) {
+						Iris.logger.error("[SPIRV_VERIFY] '{}' INDEX-BASED OFFSET MISMATCHES:\n{}", name, mismatches);
+					} else {
+						Iris.logger.info("[SPIRV_VERIFY] '{}' All {} compared offsets MATCH", name, compareCount);
+					}
+					// Log RowMajor status
+					if (spirvLayout.hasAnyRowMajor()) {
+						Iris.logger.warn("[SPIRV_VERIFY] '{}' WARNING: SPIR-V has RowMajor matrix decorations!", name);
+					}
+					// Log key fields with their byte offsets
+					String[] keyFields = {"gbufferModelView", "gbufferModelViewInverse",
+						"gbufferProjection", "gbufferProjectionInverse"};
+					for (String f : keyFields) {
+						Iris.logger.info("[SPIRV_VERIFY] '{}' java offset '{}' = {}", name, f, uniformBuffer.getFieldOffset(f));
+					}
+				} else {
+					Iris.logger.warn("[SPIRV_VERIFY] '{}' Failed to parse SPIR-V layout", name);
+				}
+				// Also dump the Java-computed field map (once)
+				Iris.logger.info("[UBO_FIELDMAP] '{}':\n{}", name, uniformBuffer.dumpFieldMap());
+			} catch (Exception e) {
+				Iris.logger.warn("[SPIRV_VERIFY] '{}' Exception during SPIR-V verification: {}", name, e.getMessage());
+			}
+		}
+
 		return pipeline;
+	}
+
+	/**
+	 * Fix aurora rendering by replacing the GetAuroraBorealis call with one that uses
+	 * a direct eye direction, bypassing the broken gbufferProjectionInverse.
+	 * Replaces at the SOURCE so the correct aurora flows into all downstream effects
+	 * (clouds, color mixing, etc.).
+	 */
+	private static String fixViewPosReconstruction(String fshSource, String programName) {
+		// FIX 1: Override viewPos and all derived values for SKY PIXELS.
+		// gbufferProjectionInverse is broken on GPU, so viewPos from projInverse * ndc
+		// gives wrong results. This affects ALL sky effects: aurora, clouds, atm fog.
+		// Inject a sky-pixel override right after VdotS computation that replaces
+		// viewPos, nViewPos, playerPos, lViewPos, VdotU, VdotS with values computed
+		// from the correct forward projection matrix (gbufferProjection[0][0], [1][1]).
+		String vdotSLine = "float VdotS = dot(nViewPos, sunVec);";
+		if (fshSource.contains(vdotSLine)) {
+			String skyFix =
+				vdotSLine + "\n" +
+				"\tif (z0 >= 1.0f) {\n" +
+				"\t\tvec3 skyEyeDir = vec3(\n" +
+				"\t\t\t(texCoord.x * 2.0f - 1.0f) / gbufferProjection[0][0],\n" +
+				"\t\t\t(1.0f - texCoord.y * 2.0f) / gbufferProjection[1][1],\n" +
+				"\t\t\t-1.0f\n" +
+				"\t\t) * 256.0f;\n" +
+				"\t\tviewPos = vec4(skyEyeDir, 1.0f);\n" +
+				"\t\tlViewPos = 1.0e4f;\n" +
+				"\t\tnViewPos = normalize(skyEyeDir);\n" +
+				"\t\tplayerPos = (gbufferModelViewInverse * vec4(skyEyeDir, 0.0f)).xyz;\n" +
+				"\t\tVdotU = dot(nViewPos, upVec);\n" +
+				"\t\tVdotS = dot(nViewPos, sunVec);\n" +
+				"\t\tdither = textureLod(noisetex, texCoord * vec2(viewWidth, viewHeight) / 128.0f, 0.0f).b;\n" +
+				"\t}";
+			fshSource = fshSource.replace(vdotSLine, skyFix);
+			Iris.logger.info("[FIX_SKY] Injected sky viewPos override in '{}'", programName);
+		}
+
+		// FIX 2: Replace aurora call with static dither version.
+		// Even with fixed viewPos, aurora needs spatial-only dither (no frameCounter
+		// offset) to avoid temporal jitter since TAA isn't working in the Vulkan port.
+		String auroraCall = "auroraBorealis = GetAuroraBorealis(viewPos.xyz, VdotU, dither);";
+		if (fshSource.contains(auroraCall)) {
+			String replacement =
+				"{\n" +
+				"            float fixDither = textureLod(noisetex, texCoord * vec2(viewWidth, viewHeight) / 128.0, 0.0).b;\n" +
+				"            auroraBorealis = GetAuroraBorealis(viewPos.xyz, VdotU, fixDither);\n" +
+				"        }";
+			fshSource = fshSource.replace(auroraCall, replacement);
+			Iris.logger.info("[FIX_AURORA] Replaced aurora dither in '{}'", programName);
+		}
+
+		// FIX 3: Clamp the tangent-plane projection in GetAuroraBorealis to prevent
+		// the "trailing off into a straight line" artifact near the world-horizon.
+		// The function uses wpos.xz /= wpos.y (gnomonic projection). When wpos.y is
+		// small (near horizon), coordinates explode, noise creates sharp ridges/lines.
+		// The visibility check uses VdotU (eye-space) but the singularity is in
+		// world-space (wpos.y), so the check doesn't catch it when camera has pitch.
+		// Fix: clamp wpos.y to at least 30% of the direction magnitude, preventing
+		// extreme coordinates. Also apply a smooth world-space horizon fade.
+		String wpDivOrig = "wpos.xz /= wpos.y;";
+		if (fshSource.contains(wpDivOrig)) {
+			String wpDivFix =
+				"{\n" +
+				"\t\t\tfloat _wpLen = length(wpos);\n" +
+				"\t\t\tfloat _wpYnorm = wpos.y / _wpLen;\n" +
+				"\t\t\twpos.xz /= max(wpos.y, 0.3 * _wpLen);\n" +
+				"\t\t\tvisibility *= smoothstep(0.1, 0.4, _wpYnorm);\n" +
+				"\t\t}";
+			fshSource = fshSource.replace(wpDivOrig, wpDivFix);
+			Iris.logger.info("[FIX_AURORA] Clamped aurora tangent-plane projection in '{}'", programName);
+		}
+
+		// DIAG: Cloud debug visualization
+		if (DIAG_CLOUD_DEBUG) {
+			// Replace final output to show diagnostic info.
+			// Left third: raw noisetex at texCoord (verify noise texture is proper random)
+			// Middle third: raw noisetex at scaled coords matching cloud usage (verify wrapping works)
+			// Right third: cloud opacity (R), view direction up component (G), skyFade (B)
+			String outputLine = "iris_FragData0 = vec4(color.rgb, 1.0f);";
+			if (fshSource.contains(outputLine)) {
+				String diag =
+					"{\n" +
+					"\t\tvec3 diagColor;\n" +
+					"\t\tif (texCoord.x < 0.33) {\n" +
+					"\t\t\t// Left: raw noise at screen UV — should show colorful random pattern\n" +
+					"\t\t\tdiagColor = textureLod(noisetex, texCoord * 4.0, 0.0).rgb;\n" +
+					"\t\t} else if (texCoord.x < 0.66) {\n" +
+					"\t\t\t// Middle: noise at large UV (2.5+offset) — tests REPEAT wrapping\n" +
+					"\t\t\t// If CLAMP: solid color. If REPEAT: same pattern as left.\n" +
+					"\t\t\tdiagColor = textureLod(noisetex, texCoord * 4.0 + vec2(2.5, 3.7), 0.0).rgb;\n" +
+					"\t\t} else {\n" +
+					"\t\t\t// Right: R=cloud opacity, G=nPlayerPos.y (up component), B=skyFade\n" +
+					"\t\t\tvec3 npDir = normalize((gbufferModelViewInverse * vec4(normalize(viewPos.xyz), 0.0)).xyz);\n" +
+					"\t\t\tdiagColor = vec3(clouds.a, npDir.y * 0.5 + 0.5, skyFade);\n" +
+					"\t\t}\n" +
+					"\t\tiris_FragData0 = vec4(diagColor, 1.0);\n" +
+					"\t}";
+				fshSource = fshSource.replace(outputLine, diag);
+				Iris.logger.info("[DIAG_CLOUD] Injected cloud debug visualization in '{}'", programName);
+			}
+		}
+
+		return fshSource;
 	}
 
 	private static void collectSamplerNamesToList(String source, List<String> names) {
