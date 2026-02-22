@@ -102,7 +102,23 @@ public class IrisSamplers {
 	}
 
 	public static void addNoiseSampler(SamplerHolder samplers, TextureAccess sampler) {
-		samplers.addDynamicSampler(sampler.getTextureId(), "noisetex");
+		// Wrap the texture supplier to force REPEAT wrapping on first use.
+		// The noise texture (noisetex) is used by Noise3D() with UV coordinates far
+		// outside [0,1]. DynamicTexture defaults to CLAMP_TO_EDGE, and VulkanMod
+		// creates a VkSampler with CLAMP. Setting REPEAT here — when the VulkanImage
+		// is guaranteed to exist — ensures the VkSampler uses VK_SAMPLER_ADDRESS_MODE_REPEAT.
+		java.util.function.IntSupplier original = sampler.getTextureId();
+		final boolean[] repeatSet = {false};
+		samplers.addDynamicSampler(() -> {
+			int id = original.getAsInt();
+			if (!repeatSet[0]) {
+				repeatSet[0] = true;
+				com.mojang.blaze3d.platform.GlStateManager._bindTexture(id);
+				com.mojang.blaze3d.platform.GlStateManager._texParameter(0x0DE1, 0x2802, 0x2901); // GL_TEXTURE_WRAP_S = GL_REPEAT
+				com.mojang.blaze3d.platform.GlStateManager._texParameter(0x0DE1, 0x2803, 0x2901); // GL_TEXTURE_WRAP_T = GL_REPEAT
+			}
+			return id;
+		}, "noisetex");
 	}
 
 	public static boolean hasShadowSamplers(SamplerHolder samplers) {
