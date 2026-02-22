@@ -103,7 +103,7 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 
 	// Keep iris_ProjMat in Vulkan [0,1] depth, matching VulkanMod's built-in MVP behavior.
 	// The depth patch (GL→VK conversion in vertex shader) is skipped when true.
-	private static final boolean DIAG_VK_DEPTH_BYPASS = true;
+	private static final boolean DIAG_VK_DEPTH_BYPASS = false;
 
 	// When true, apply() skips framebuffer binding, blend mode, and pipeline binding.
 	// Used by updateUniformsOnly() to populate the UBO without render pass side effects.
@@ -448,6 +448,13 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 
 		customUniforms.push(this);
 
+		// Write gbuffer uniforms AFTER uniforms.update() and customUniforms.push()
+		// so that our values (with Y-flip on projection for Vulkan OriginUpperLeft)
+		// overwrite the Iris MatrixUniforms PER_FRAME writes which don't have Y-flip.
+		if (irisUniformBuffer != null) {
+			writeGbufferUniforms();
+		}
+
 		if (!uniformsOnlyMode) {
 			images.update();
 		}
@@ -610,10 +617,9 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 			if (off >= 0) irisUniformBuffer.writeFloat(off, val);
 		}
 
-		// Write gbufferModelView, gbufferProjection, etc. from CapturedRenderingState
-		// These are the OptiFine-compatible uniforms used by shader packs for
-		// camera-space calculations in both gbuffer and composite shaders.
-		writeGbufferUniforms();
+		// gbufferModelView, gbufferProjection, etc. are written by writeGbufferUniforms()
+		// which runs AFTER uniforms.update() in apply(). This ensures our values
+		// (with Y-flip on projection) overwrite the Iris MatrixUniforms PER_FRAME writes.
 
 		// Ensure iris_ChunkOffset = (0,0,0) for entity/hand/particle rendering.
 		// In OpenGL Iris, MC sets chunkOffset via glUniform3f per draw.
@@ -670,12 +676,59 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 	 * Writes gbufferModelView, gbufferProjection, their inverses, previous-frame
 	 * matrices, shadow matrices, celestial positions, and other standard
 	 * OptiFine/Iris uniforms to the UBO.
-	 * Matches Program.writeGbufferUniforms() for consistency, except:
-	 * - Does NOT negate m11 (entity gbuffer uses viewport Y-flip, not projection negate)
+	 *
+	 * IMPORTANT: This method runs AFTER uniforms.update() in apply() so that
+	 * our values overwrite the Iris MatrixUniforms PER_FRAME writes.
+	 *
+	 * Projection Y-flip: Negates column 1 (indices 4,5,6,7 in column-major)
+	 * of gbufferProjection and gbufferProjectionInverse. This compensates for
+	 * the Y inversion caused by VulkanMod's negative viewport + Vulkan SPIR-V
+	 * OriginUpperLeft: gl_FragCoord.y=0 at top maps to NDC.y=+1, but the
+	 * fragment shader reconstruction (screenPos * 2.0 - 1.0) gives -1 at top.
+	 * Negating column 1 of projInverse cancels this Y-negation.
+	 *
+	 * CapturedRenderingState.setGbufferProjection() already applies:
+	 *   - Infinity fix for m00/m11/m22/m32
+	 *   - VK [0,1] → GL [-1,1] depth conversion
+	 * So we do NOT repeat those here.
 	 */
 	private void writeGbufferUniforms() {
-		org.joml.Matrix4fc gbufferMV = CapturedRenderingState.INSTANCE.getGbufferModelView();
 		org.joml.Matrix4fc gbufferProj = CapturedRenderingState.INSTANCE.getGbufferProjection();
+
+		// Get the view matrix directly from Camera.rotation() instead of
+		// CapturedRenderingState. The CapturedRenderingState value is captured at
+		// renderLevel HEAD, but diagnostic logs showed it may be stale/constant
+		// across frames (causing "sky follows camera" bug). Camera.rotation()
+		// always reflects the current camera orientation.
+		org.joml.Matrix4f gbufferMV = null;
+		Minecraft mcCam = Minecraft.getInstance();
+		if (mcCam.gameRenderer != null && mcCam.gameRenderer.getMainCamera() != null) {
+			net.minecraft.client.Camera camera = mcCam.gameRenderer.getMainCamera();
+			org.joml.Quaternionf camRotConj = new org.joml.Quaternionf(camera.rotation()).conjugate();
+			gbufferMV = new org.joml.Matrix4f().rotation(camRotConj);
+		}
+
+		// Diagnostic: compare CapturedRenderingState MV with Camera-based MV
+		if (esCameraDiagCount < ES_CAMERA_DIAG_MAX) {
+			esCameraDiagCount++;
+			org.joml.Matrix4fc capturedMV = CapturedRenderingState.INSTANCE.getGbufferModelView();
+			float[] capArr = capturedMV != null ? new float[16] : null;
+			float[] camArr = gbufferMV != null ? new float[16] : null;
+			if (capArr != null) capturedMV.get(capArr);
+			if (camArr != null) gbufferMV.get(camArr);
+			org.slf4j.LoggerFactory.getLogger("ExtendedShader").info(
+				"[CAM_DIAG] #{} captured=[{},{},{},{}] camera=[{},{},{},{}]",
+				esCameraDiagCount,
+				capArr != null ? String.format("%.4f", capArr[0]) : "null",
+				capArr != null ? String.format("%.4f", capArr[1]) : "null",
+				capArr != null ? String.format("%.4f", capArr[4]) : "null",
+				capArr != null ? String.format("%.4f", capArr[5]) : "null",
+				camArr != null ? String.format("%.4f", camArr[0]) : "null",
+				camArr != null ? String.format("%.4f", camArr[1]) : "null",
+				camArr != null ? String.format("%.4f", camArr[4]) : "null",
+				camArr != null ? String.format("%.4f", camArr[5]) : "null"
+			);
+		}
 
 		// Detect frame boundary for previous-frame matrix tracking
 		if (gbufferProj != null && gbufferProj != esLastSeenProj) {
@@ -705,56 +758,68 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 		}
 
 		if (gbufferProj != null) {
-			org.joml.Matrix4f proj = new org.joml.Matrix4f(gbufferProj);
-
-			// Fix infinite m00/m11 from VulkanMod's infinite far plane
-			if (proj.m23() != 0) { // perspective projection
-				Minecraft mcClient = Minecraft.getInstance();
-				float far = mcClient.gameRenderer != null ? mcClient.gameRenderer.getRenderDistance() : 256.0f;
-				float near = 0.05f;
-
-				if (!Float.isFinite(proj.m00()) || !Float.isFinite(proj.m11())) {
-					double fovDegrees = 70.0;
-					try {
-						if (mcClient.gameRenderer != null) {
-							fovDegrees = ((net.irisshaders.iris.mixin.GameRendererAccessor) mcClient.gameRenderer)
-								.invokeGetFov(mcClient.gameRenderer.getMainCamera(),
-									mcClient.getTimer().getGameTimeDeltaPartialTick(true), true);
-						}
-					} catch (Exception ignored) {}
-					if (fovDegrees < 1.0 || !Double.isFinite(fovDegrees)) fovDegrees = 70.0;
-					float fovRad = (float)(fovDegrees * Math.PI / 180.0);
-					float tanHalfFov = (float) Math.tan(fovRad / 2.0);
-					var window = mcClient.getWindow();
-					float aspect = (float) window.getWidth() / (float) window.getHeight();
-					proj.m00(1.0f / (aspect * tanHalfFov));
-					proj.m11(1.0f / tanHalfFov);
-				}
-
-				// Fix infinite-far depth elements with finite far
-				proj.m22(-far / (far - near));
-				proj.m32(-far * near / (far - near));
+			// Rebuild m00/m11 from actual game parameters (same fix as Program.java).
+			// CapturedRenderingState's stored m00 can mismatch the renderLevel projection.
+			org.joml.Matrix4f projRebuilt = new org.joml.Matrix4f(gbufferProj);
+			if (projRebuilt.m23() != 0) { // perspective projection
+				Minecraft mcES = Minecraft.getInstance();
+				double fovDeg = 70.0;
+				try {
+					if (mcES.gameRenderer != null) {
+						fovDeg = ((net.irisshaders.iris.mixin.GameRendererAccessor) mcES.gameRenderer)
+							.invokeGetFov(mcES.gameRenderer.getMainCamera(),
+								mcES.getTimer().getGameTimeDeltaPartialTick(true), true);
+					}
+				} catch (Exception ignored) {}
+				if (fovDeg < 1.0 || fovDeg > 170.0 || !Double.isFinite(fovDeg)) fovDeg = 70.0;
+				float tanHF = (float) Math.tan((float)(fovDeg * Math.PI / 180.0) / 2.0f);
+				float asp = (float) mcES.getWindow().getWidth() / (float) mcES.getWindow().getHeight();
+				projRebuilt.m00(1.0f / (asp * tanHF));
+				projRebuilt.m11(1.0f / tanHF);
+				// Rebuild depth with finite far
+				float esFar = mcES.gameRenderer != null ? mcES.gameRenderer.getRenderDistance() : 256.0f;
+				float esNear = 0.05f;
+				projRebuilt.m22(-esFar / (esFar - esNear));
+				projRebuilt.m32(-esFar * esNear / (esFar - esNear));
+				// VK→GL depth conversion
+				projRebuilt.m22(2.0f * projRebuilt.m22() - projRebuilt.m23());
+				projRebuilt.m32(2.0f * projRebuilt.m32() - projRebuilt.m33());
 			}
 
-			// Convert Vulkan [0,1] → OpenGL [-1,1] depth range
-			proj.m22(2.0f * proj.m22() - proj.m23());
-			proj.m32(2.0f * proj.m32() - proj.m33());
-			// Do NOT negate m11 — gbuffer/entity passes use viewport Y-flip.
-			// Composite passes handle Y mismatch via iris_flipProjY() in the shader.
-
 			float[] arr = new float[16];
-			proj.get(arr);
+			projRebuilt.get(arr);
+
+			// Y-flip: Negate column 1 (indices 4,5,6,7 in column-major layout).
+			// Compensates for Vulkan OriginUpperLeft + negative viewport causing
+			// gl_FragCoord.y inversion relative to NDC.y. Without this, the
+			// fragment shader's gbufferProjectionInverse * (screenPos * 2 - 1)
+			// reconstruction has inverted Y, making the sky appear upside-down.
+			arr[4] = -arr[4];
+			arr[5] = -arr[5];
+			arr[6] = -arr[6];
+			arr[7] = -arr[7];
+
 			writeUboMat("gbufferProjection", arr);
 			if (esSavedProjArr == null) esSavedProjArr = arr.clone();
-			// Inverse
-			org.joml.Matrix4f inv = new org.joml.Matrix4f(proj).invert();
+
+			// Inverse — also negate column 1 for consistent Y-flip compensation.
+			org.joml.Matrix4f inv = new org.joml.Matrix4f(projRebuilt).invert();
 			inv.get(arr);
+			arr[4] = -arr[4];
+			arr[5] = -arr[5];
+			arr[6] = -arr[6];
+			arr[7] = -arr[7];
 			writeUboMat("gbufferProjectionInverse", arr);
+
 			// Previous frame
 			if (esPrevProjArr != null) {
 				writeUboMat("gbufferPreviousProjection", esPrevProjArr);
 			} else {
-				proj.get(arr);
+				projRebuilt.get(arr);
+				arr[4] = -arr[4];
+				arr[5] = -arr[5];
+				arr[6] = -arr[6];
+				arr[7] = -arr[7];
 				writeUboMat("gbufferPreviousProjection", arr);
 			}
 		}
@@ -848,7 +913,12 @@ public class ExtendedShader extends ShaderInstance implements ShaderInstanceInte
 			preCelestial.transform(upPos);
 			writeUboVec3("upPosition", upPos.x(), upPos.y(), upPos.z());
 		}
+
 	}
+
+	// Diagnostic counter for camera vs captured MV comparison
+	private static int esCameraDiagCount = 0;
+	private static final int ES_CAMERA_DIAG_MAX = 40;
 
 	private void writeUboMat(String name, float[] arr) {
 		int off = irisUniformBuffer.getFieldOffset(name);

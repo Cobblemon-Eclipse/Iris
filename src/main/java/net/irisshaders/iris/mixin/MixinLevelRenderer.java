@@ -77,11 +77,46 @@ public class MixinLevelRenderer {
 	// At this point we've ensured that Minecraft's main framebuffer is cleared.
 	// This is important or else very odd issues will happen with shaders that have a final pass that doesn't write to
 	// all pixels.
+	@Unique
+	private static int iris$fovLogCount = 0;
+	@Unique
+	private static int iris$mvTraceCount = 0;
+
 	@Inject(method = "renderLevel", at = @At("HEAD"))
 	private void iris$setupPipeline(DeltaTracker deltaTracker, boolean renderBlockOutline,
 									Camera camera, GameRenderer gameRenderer, LightTexture lightTexture,
 									Matrix4f modelView, Matrix4f projection, CallbackInfo callback) {
 		DHCompat.checkFrame();
+
+		// DIAGNOSTIC: Log modelView parameter values + camera angles to verify rotation
+		iris$mvTraceCount++;
+		if (iris$mvTraceCount <= 10 || iris$mvTraceCount % 300 == 0) {
+			float xRot = camera.getXRot(), yRot = camera.getYRot();
+			org.slf4j.LoggerFactory.getLogger("MV_TRACE").info(
+				"[MV_AT_HEAD] frame={} mv: m00={} m01={} m10={} m11={} m20={} m21={} m22={} | camXRot={} camYRot={} | proj: m00={} m11={} m01={} m10={}",
+				iris$mvTraceCount,
+				String.format("%.4f", modelView.m00()), String.format("%.4f", modelView.m01()),
+				String.format("%.4f", modelView.m10()), String.format("%.4f", modelView.m11()),
+				String.format("%.4f", modelView.m20()), String.format("%.4f", modelView.m21()),
+				String.format("%.4f", modelView.m22()),
+				String.format("%.2f", xRot), String.format("%.2f", yRot),
+				String.format("%.4f", projection.m00()), String.format("%.4f", projection.m11()),
+				String.format("%.4f", projection.m01()), String.format("%.4f", projection.m10()));
+		}
+
+		// DIAGNOSTIC: Log FOV and projection at capture time
+		if (iris$fovLogCount < 10) {
+			iris$fovLogCount++;
+			double fov = -1;
+			try {
+				fov = ((net.irisshaders.iris.mixin.GameRendererAccessor) gameRenderer)
+					.invokeGetFov(camera, deltaTracker.getGameTimeDeltaPartialTick(true), true);
+			} catch (Exception ignored) {}
+			org.slf4j.LoggerFactory.getLogger("PROJ_TRACE").info(
+				"[FOV_AT_CAPTURE] #{} getFov={}deg proj.m00={} proj.m11={} proj.m22={} proj.m32={}",
+				iris$fovLogCount, String.format("%.4f", fov),
+				projection.m00(), projection.m11(), projection.m22(), projection.m32());
+		}
 
 		IrisTimeUniforms.updateTime();
 		CapturedRenderingState.INSTANCE.setGbufferModelView(modelView);

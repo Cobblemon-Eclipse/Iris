@@ -9,6 +9,7 @@ public class CapturedRenderingState {
 	public static final CapturedRenderingState INSTANCE = new CapturedRenderingState();
 
 	private static final Vector3d ZERO_VECTOR_3d = new Vector3d();
+	private static int projLogCount = 0;
 
 	private Matrix4fc gbufferModelView;
 	private Matrix4fc gbufferProjection;
@@ -33,14 +34,46 @@ public class CapturedRenderingState {
 	}
 
 	public void setGbufferModelView(Matrix4fc gbufferModelView) {
-		this.gbufferModelView = gbufferModelView;
+		// Defensive copy: the caller (MixinLevelRenderer) passes the renderLevel
+		// modelView parameter by reference. Minecraft may mutate that Matrix4f
+		// during the frame (PoseStack operations, etc.), so by composite/deferred
+		// time the reference could point at a modified matrix. Copy it now.
+		this.gbufferModelView = new Matrix4f(gbufferModelView);
 	}
 
+	// Diagnostic: track getter calls to catch stale/modified values
+	private static int projGetLogCount = 0;
+
 	public Matrix4fc getGbufferProjection() {
+		projGetLogCount++;
+		if (gbufferProjection != null && (projGetLogCount <= 10 || projGetLogCount % 600 == 0)) {
+			org.slf4j.LoggerFactory.getLogger("PROJ_TRACE").info(
+				"[PROJ_GET] #{} m00={} m11={} hash={}",
+				projGetLogCount,
+				String.format("%.6f", gbufferProjection.m00()),
+				String.format("%.6f", gbufferProjection.m11()),
+				System.identityHashCode(gbufferProjection));
+		}
 		return gbufferProjection;
 	}
 
 	public void setGbufferProjection(Matrix4f gbufferProjection) {
+		// DIAGNOSTIC: Log incoming projection values BEFORE any processing
+		if (projLogCount < 10) {
+			projLogCount++;
+			float im00 = gbufferProjection.m00(), im11 = gbufferProjection.m11();
+			float im22 = gbufferProjection.m22(), im23 = gbufferProjection.m23();
+			float im32 = gbufferProjection.m32(), im33 = gbufferProjection.m33();
+			boolean m00fin = Float.isFinite(im00), m11fin = Float.isFinite(im11);
+			// Compute implied FOV and aspect from m11/m00
+			float impliedFov = m11fin ? (float)(2.0 * Math.atan(1.0 / im11) * 180.0 / Math.PI) : Float.NaN;
+			float impliedAspect = (m00fin && m11fin && im00 != 0) ? im11 / im00 : Float.NaN;
+			org.slf4j.LoggerFactory.getLogger("PROJ_TRACE").info(
+				"[PROJ_IN] #{} m00={} m11={} m22={} m23={} m32={} m33={} | m00_finite={} m11_finite={} | impliedFOV={}deg impliedAspect={}",
+				projLogCount, im00, im11, im22, im23, im32, im33,
+				m00fin, m11fin, String.format("%.2f", impliedFov), String.format("%.4f", impliedAspect));
+		}
+
 		Matrix4f proj = new Matrix4f(gbufferProjection);
 		// VulkanMod uses infinite far plane, producing Infinity in m00/m11.
 		// Fix here so ALL consumers (MatrixUniforms, writeGbufferUniforms,
@@ -67,6 +100,11 @@ public class CapturedRenderingState {
 			float aspect = (float) window.getWidth() / (float) window.getHeight();
 			proj.m00(1.0f / (aspect * tanHalfFov));
 			proj.m11(1.0f / tanHalfFov);
+			if (projLogCount <= 10) {
+				org.slf4j.LoggerFactory.getLogger("PROJ_TRACE").info(
+					"[PROJ_FIXUP] m00/m11 were INF! getFov={}deg (sanity-checked) aspect={} -> m00={} m11={}",
+					fovDegrees, aspect, proj.m00(), proj.m11());
+			}
 		}
 		// Also fix infinite m22/m32 from infinite far plane
 		if (proj.m23() != 0 && (!Float.isFinite(proj.m22()) || !Float.isFinite(proj.m32()))) {
@@ -97,6 +135,18 @@ public class CapturedRenderingState {
 		}
 
 		this.gbufferProjection = proj;
+
+		// DIAGNOSTIC: Log STORED value to confirm m00 after all processing
+		if (projLogCount <= 30 || projLogCount % 600 == 0) {
+			org.slf4j.LoggerFactory.getLogger("PROJ_TRACE").info(
+				"[PROJ_STORED] #{} m00={} m11={} m22={} m32={} hash={}",
+				projLogCount,
+				String.format("%.6f", proj.m00()),
+				String.format("%.6f", proj.m11()),
+				String.format("%.6f", proj.m22()),
+				String.format("%.6f", proj.m32()),
+				System.identityHashCode(proj));
+		}
 	}
 
 	public Vector3d getFogColor() {

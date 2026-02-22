@@ -45,9 +45,9 @@ public class CompositeTransformer {
 		// TODO: Other fog things
 
 		if (parameters.type.glShaderType == ShaderType.VERTEX) {
-			// Composite/deferred passes use a standard Vulkan viewport (Y=0 at top)
-			// set by CompositeRenderer, so UV0 maps directly without Y flip:
-			// UV0(0,0) at top-left → texCoord(0,0) → samples image row 0 (top).
+			// Composite/deferred passes use setInvertedViewport which UNDOES the normal
+			// Y-flip, giving standard Vulkan viewport (positive height, no flip).
+			// UV0(0,0) at top-left, UV0(1,1) at bottom-right (Vulkan convention).
 			root.replaceReferenceExpressions(t, "gl_MultiTexCoord0",
 				"vec4(UV0, 0.0, 1.0)");
 			tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_DECLARATIONS, "in vec2 UV0;");
@@ -86,28 +86,7 @@ public class CompositeTransformer {
 
 		CommonTransformer.applyIntelHd4000Workaround(root);
 
-		// Composite/deferred fragment shaders use standard Vulkan viewport (Y=0 at top),
-		// but scene rendering uses the flipped viewport (Y=0 at bottom). This means
-		// texCoord.y in composites increases in the opposite Y direction from scene
-		// clip space. To fix position reconstruction, negate column 1 (Y) of projection
-		// matrices used for depth unprojection and reprojection.
-		if (parameters.type.glShaderType == ShaderType.FRAGMENT) {
-			boolean needsHelper = root.identifierIndex.has("gbufferProjection")
-				|| root.identifierIndex.has("gbufferProjectionInverse")
-				|| root.identifierIndex.has("gbufferPreviousProjection");
-			if (needsHelper) {
-				tree.parseAndInjectNode(t, ASTInjectionPoint.BEFORE_FUNCTIONS,
-					"mat4 iris_flipProjY(mat4 p) { p[1] = -p[1]; return p; }");
-			}
-			if (root.identifierIndex.has("gbufferProjection")) {
-				root.replaceReferenceExpressions(t, "gbufferProjection", "iris_flipProjY(gbufferProjection)");
-			}
-			if (root.identifierIndex.has("gbufferProjectionInverse")) {
-				root.replaceReferenceExpressions(t, "gbufferProjectionInverse", "iris_flipProjY(gbufferProjectionInverse)");
-			}
-			if (root.identifierIndex.has("gbufferPreviousProjection")) {
-				root.replaceReferenceExpressions(t, "gbufferPreviousProjection", "iris_flipProjY(gbufferPreviousProjection)");
-			}
-		}
+		// Projection Y-flip is now handled CPU-side in Program.writeGbufferUniforms()
+		// by pre-negating column 1 of gbufferProjection/Inverse/Previous before UBO write.
 	}
 }

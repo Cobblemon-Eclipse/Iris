@@ -12,6 +12,7 @@ import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import net.vulkanmod.vulkan.shader.descriptor.ManualUBO;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * Represents a shader program - Vulkan Port.
@@ -34,8 +35,19 @@ public final class Program extends GlResource {
 	private static float[] savedProjArr = null;  // current frame's proj (becomes prev next frame)
 	private static Matrix4fc lastSeenProj = null; // for frame boundary detection
 
-	// Diagnostic: log uniform values written to UBO for first few frames
+	// Diagnostic: log uniform values written to UBO for first N frames
 	private static int diagLogCount = 0;
+	private static int mvLogTick = 0;
+	// Separate counter for deferred1-only MV logging (so periodic logs actually fire)
+	private static int deferred1MvLogCount = 0;
+	// Periodic FOV tracking (every 120 frames) to detect if 6.9° FOV persists
+	private static int fovLogCounter = 0;
+
+	// DIAGNOSTIC FLAG: When true, writes a Y-FLIPPED IDENTITY to gbufferModelViewInverse.
+	// This should make the aurora appear BELOW the horizon (flipped upside down) if data
+	// reaches the GPU. If the aurora stays in the sky normally, data doesn't reach the GPU.
+	// Set to false for normal operation.
+	private static final boolean DIAG_FLIP_MVINV = false;
 
 	private final String name;
 	private final ProgramUniforms uniforms;
@@ -90,6 +102,24 @@ public final class Program extends GlResource {
 		// Update ManualUBO source pointer so VulkanMod copies our data at draw time
 		if (manualUBO != null && uniformBuffer != null) {
 			manualUBO.setSrc(uniformBuffer.getPointer(), uniformBuffer.getUsedSize());
+
+			// Log ManualUBO state for first few frames — confirms pointer, size, and data integrity
+			if (diagLogCount < 3) {
+				int mvInvOff = uniformBuffer.getFieldOffset("gbufferModelViewInverse");
+				int projInvOff = uniformBuffer.getFieldOffset("gbufferProjectionInverse");
+				int viewWidthOff = uniformBuffer.getFieldOffset("viewWidth");
+				float[] mvInvRB = (mvInvOff >= 0) ? uniformBuffer.readbackMat4f(mvInvOff) : null;
+				float viewWidthVal = (viewWidthOff >= 0) ? MemoryUtil.memGetFloat(uniformBuffer.getPointer() + viewWidthOff) : -1f;
+				Iris.logger.info("[DIAG_UBO_FRAME] prog='{}' manualUBO: srcPtr=0x{} srcSize={} descSize={}" +
+						" | mvInv[5]={} (GPU should read this as [1][1])" +
+						" | projInv[5]={}" +
+						" | viewWidth={} (off={})",
+					this.name,
+					Long.toHexString(manualUBO.getSrcPtr()), manualUBO.getSrcSize(), manualUBO.getSize(),
+					mvInvRB != null ? String.format("%.4f", mvInvRB[5]) : "null",
+					projInvOff >= 0 ? String.format("%.4f", MemoryUtil.memGetFloat(uniformBuffer.getPointer() + projInvOff + 5 * 4)) : "null",
+					String.format("%.1f", viewWidthVal), viewWidthOff);
+			}
 		}
 
 		// Bind the Vulkan pipeline for subsequent draw calls
@@ -114,7 +144,16 @@ public final class Program extends GlResource {
 	 * camera-space calculations in composite/deferred/final passes.
 	 */
 	private void writeGbufferUniforms() {
-		Matrix4fc gbufferMV = CapturedRenderingState.INSTANCE.getGbufferModelView();
+		// Construct model-view from camera angles. CapturedRenderingState is STALE
+		// in VulkanMod (MixinLevelRenderer capture doesn't fire on subsequent frames).
+		Matrix4f gbufferMV = null;
+		Minecraft mcCam = Minecraft.getInstance();
+		if (mcCam.gameRenderer != null && mcCam.gameRenderer.getMainCamera() != null) {
+			net.minecraft.client.Camera camera = mcCam.gameRenderer.getMainCamera();
+			gbufferMV = new Matrix4f()
+				.rotateX(camera.getXRot() * ((float) Math.PI / 180.0f))
+				.rotateY((camera.getYRot() + 180.0f) * ((float) Math.PI / 180.0f));
+		}
 		Matrix4fc gbufferProj = CapturedRenderingState.INSTANCE.getGbufferProjection();
 
 		// Detect frame boundary: setGbufferProjection() creates a new Matrix4f each frame,
@@ -131,12 +170,46 @@ public final class Program extends GlResource {
 			float[] arr = new float[16];
 			gbufferMV.get(arr);
 			writeMatIfPresent("gbufferModelView", arr);
+			// Per-frame MV check for deferred1 ONLY (reduced frequency)
+			if ("deferred1".equals(this.name)) {
+				deferred1MvLogCount++;
+				if (deferred1MvLogCount <= 5 || deferred1MvLogCount % 300 == 0) {
+					float camPitch = 0;
+					try {
+						Minecraft mcDiag = Minecraft.getInstance();
+						if (mcDiag.gameRenderer != null && mcDiag.gameRenderer.getMainCamera() != null) {
+							camPitch = mcDiag.gameRenderer.getMainCamera().getXRot();
+						}
+					} catch (Exception ignored) {}
+					float expectedCol1y = (float) Math.cos(Math.toRadians(camPitch));
+					Iris.logger.info("[MV_CHECK] frame={} pitch={} col1.y={} expected={} match={}",
+						deferred1MvLogCount,
+						String.format("%.1f", camPitch),
+						String.format("%.4f", arr[5]),
+						String.format("%.4f", expectedCol1y),
+						Math.abs(arr[5] - expectedCol1y) < 0.01 ? "YES" : "NO");
+				}
+			}
 			// Save this frame's MV for next frame (only first call per frame)
 			if (savedMvArr == null) savedMvArr = arr.clone();
 			// Inverse
 			Matrix4f inv = new Matrix4f(gbufferMV);
 			inv.invert();
 			inv.get(arr);
+			if (DIAG_FLIP_MVINV) {
+				// DIAGNOSTIC: Write Y-flipped identity to gbufferModelViewInverse.
+				// This makes mat3(M)*viewPos = (vx, -vy, vz) — aurora should flip below horizon.
+				// If aurora flips → GPU reads our data. If aurora stays same → GPU ignores our data.
+				arr = new float[] {
+					1, 0, 0, 0,   // column 0: X unchanged
+					0, -1, 0, 0,  // column 1: Y negated
+					0, 0, 1, 0,   // column 2: Z unchanged
+					0, 0, 0, 1    // column 3: translation zero
+				};
+				if (diagLogCount < 3) {
+					Iris.logger.info("[DIAG_FLIP_MVINV] Writing Y-FLIPPED IDENTITY to gbufferModelViewInverse for '{}'", this.name);
+				}
+			}
 			writeMatIfPresent("gbufferModelViewInverse", arr);
 			// Previous frame model view
 			if (prevMvArr != null) {
@@ -154,17 +227,23 @@ public final class Program extends GlResource {
 			float rawM00 = proj.m00(), rawM11 = proj.m11(), rawM22 = proj.m22();
 			float rawM23 = proj.m23(), rawM32 = proj.m32(), rawM33 = proj.m33();
 
-			// VulkanMod overrides getDepthFar() to return POSITIVE_INFINITY, creating
-			// a projection with infinite far plane. This causes m00 and m11 to be Infinity
-			// (or other non-standard values). Shader packs need finite, correct values.
-			// Rebuild the ENTIRE perspective projection from actual game parameters.
+			// ALWAYS rebuild the perspective projection from actual game parameters.
+			// CapturedRenderingState's stored m00/m11 can mismatch the renderLevel
+			// projection (observed: stored=0.5003 vs renderLevel=0.7077). This causes
+			// a 29% horizontal FOV error in depth reconstruction, producing cloud bands
+			// and aurora line artifacts. Computing from getFov() + window dimensions
+			// ensures the UBO matches the actual rendering projection.
 			if (proj.m23() != 0) { // perspective projection
 				Minecraft mcClient = Minecraft.getInstance();
 				float far = mcClient.gameRenderer != null ? mcClient.gameRenderer.getRenderDistance() : 256.0f;
 				float near = 0.05f;
 
-				// Rebuild m00/m11 from FOV and aspect ratio (matching terrain pipeline fix)
-				if (!Float.isFinite(proj.m00()) || !Float.isFinite(proj.m11())) {
+				// ALWAYS rebuild m00/m11 from actual FOV and aspect ratio.
+				// The terrain rasterizer uses the renderLevel projection (VRenderSystem.applyMVP),
+				// so depth reconstruction must match. GameRendererAccessor.invokeGetFov() returns
+				// the exact FOV used to create that projection, and window dimensions give the
+				// actual aspect ratio.
+				{
 					double fovDegrees = 70.0; // default
 					try {
 						if (mcClient.gameRenderer != null) {
@@ -173,13 +252,26 @@ public final class Program extends GlResource {
 									mcClient.getTimer().getGameTimeDeltaPartialTick(true), true);
 						}
 					} catch (Exception ignored) {}
-					if (fovDegrees < 1.0 || !Double.isFinite(fovDegrees)) fovDegrees = 70.0;
+					if (fovDegrees < 1.0 || fovDegrees > 170.0 || !Double.isFinite(fovDegrees)) fovDegrees = 70.0;
 					float fovRad = (float)(fovDegrees * Math.PI / 180.0);
 					float tanHalfFov = (float) Math.tan(fovRad / 2.0);
 					var window = mcClient.getWindow();
 					float aspect = (float) window.getWidth() / (float) window.getHeight();
-					proj.m00(1.0f / (aspect * tanHalfFov));
-					proj.m11(1.0f / tanHalfFov);
+					float newM00 = 1.0f / (aspect * tanHalfFov);
+					float newM11 = 1.0f / tanHalfFov;
+
+					// Diagnostic: log the correction
+					if (diagLogCount < 5 || (deferred1MvLogCount > 0 && deferred1MvLogCount % 300 == 0)) {
+						Iris.logger.info("[PROJ_REBUILD] prog='{}' old m00={} m11={} -> new m00={} m11={} | fov={}deg aspect={} winW={} winH={}",
+							this.name,
+							String.format("%.6f", proj.m00()), String.format("%.6f", proj.m11()),
+							String.format("%.6f", newM00), String.format("%.6f", newM11),
+							String.format("%.2f", fovDegrees), String.format("%.4f", aspect),
+							window.getWidth(), window.getHeight());
+					}
+
+					proj.m00(newM00);
+					proj.m11(newM11);
 				}
 
 				// Fix infinite-far depth elements (m22, m32) with finite far
@@ -198,10 +290,13 @@ public final class Program extends GlResource {
 			//   m32_gl = 2*m32_vk - m33_vk
 			vulkanToOpenGLDepthRange(proj);
 
-			// NOTE: m11 is NOT negated here. Scene shaders (gbuffer) use gl_FragCoord
-			// with the flipped viewport, so they need the original m11 for correct
-			// position reconstruction. Composite/deferred shaders handle the Y mismatch
-			// via iris_flipProjY() injected by CompositeTransformer.
+			// setInvertedViewport() UNDOES the normal Y-flip that setViewport() applies.
+			// setViewport(x,y,w,h) applies viewport.y=h+y, viewport.height=-h (negative).
+			// setInvertedViewport(x,y,w,h) calls setViewport(x,y+h,w,-h), which resolves
+			// to viewport.y=0, viewport.height=+h (POSITIVE = standard Vulkan, no flip).
+			// Result: texCoord.y=0 at TOP, texCoord.y=1 at BOTTOM (Vulkan convention).
+			// screenPos.y = texCoord.y*2-1 = -1 at top (should be +1 in GL convention).
+			// Column-1 negation on projInverse corrects this.
 
 			float[] arr = new float[16];
 			proj.get(arr);
@@ -209,9 +304,13 @@ public final class Program extends GlResource {
 			int projOff = uniformBuffer.getFieldOffset("gbufferProjection");
 			int projInvOff = uniformBuffer.getFieldOffset("gbufferProjectionInverse");
 
-			// Diagnostic: log first few composite UBO writes
-			if (diagLogCount < 5) {
-				diagLogCount++;
+			// Diagnostic: log projection for first few frames AND periodically for deferred1
+			boolean logProj = diagLogCount < 3;
+			if (!logProj && "deferred1".equals(this.name)) {
+				logProj = (deferred1MvLogCount <= 5 || deferred1MvLogCount % 300 == 0);
+			}
+			if (logProj) {
+				if (diagLogCount < 3) diagLogCount++;
 				Matrix4f invCheck = new Matrix4f(proj).invert();
 				Iris.logger.info("[COMP_PROJ] prog='{}' raw=[{},{},{},{},{},{}] final=[{},{},{},{},{},{}] inv11={} off=proj:{} projInv:{}",
 					this.name,
@@ -228,14 +327,20 @@ public final class Program extends GlResource {
 			writeMatIfPresent("gbufferProjection", arr);
 			// Save this frame's converted projection for next frame (only first call per frame)
 			if (savedProjArr == null) savedProjArr = arr.clone();
-			// Inverse
+			// Inverse — with column-1 negation to correct Vulkan texCoord Y.
+			// texCoord.y=0 at top → screenPos.y=-1 at top (GL expects +1).
+			// Negating column 1 flips the Y interpretation in the inverse.
 			Matrix4f inv = new Matrix4f(proj);
 			inv.invert();
+			inv.m10(-inv.m10());
+			inv.m11(-inv.m11());
+			inv.m12(-inv.m12());
+			inv.m13(-inv.m13());
 			inv.get(arr);
 			writeMatIfPresent("gbufferProjectionInverse", arr);
 
 			// Diagnostic: readback projection inverse to verify UBO data integrity
-			if (diagLogCount <= 5 && projInvOff >= 0) {
+			if (diagLogCount <= 3 && projInvOff >= 0) {
 				float[] pInvRB = uniformBuffer.readbackMat4f(projInvOff);
 				if (pInvRB != null) {
 					// Critical check: col2[3] (arr[11]) should be ~-10 (=1/m32), col3[2] (arr[14]) should be ~-1
@@ -248,13 +353,14 @@ public final class Program extends GlResource {
 						String.format("%.4f", pInvRB[14]), String.format("%.4f", pInvRB[15]));
 
 					// Simulate shader viewPos reconstruction for top-center sky pixel
-					// texCoord=(0.5, 0.0), depth=1.0 → NDC=(0, -1, 1, 1)
-					// After iris_flipProjY (negate col1): use -pInvRB[4..7] for col1
+					// setInvertedViewport gives standard VK viewport: texCoord.y=0 at top.
+					// texCoord=(0.5, 0.0) at top-center → screenPos=(0, -1, 1, 1)
+					// Column 1 of projInverse is negated to correct VK texCoord Y.
 					float ndc_x = 0.0f, ndc_y = -1.0f, ndc_z = 1.0f, ndc_w = 1.0f;
-					float vx = pInvRB[0]*ndc_x + (-pInvRB[4])*ndc_y + pInvRB[8]*ndc_z + pInvRB[12]*ndc_w;
-					float vy = pInvRB[1]*ndc_x + (-pInvRB[5])*ndc_y + pInvRB[9]*ndc_z + pInvRB[13]*ndc_w;
-					float vz = pInvRB[2]*ndc_x + (-pInvRB[6])*ndc_y + pInvRB[10]*ndc_z + pInvRB[14]*ndc_w;
-					float vw = pInvRB[3]*ndc_x + (-pInvRB[7])*ndc_y + pInvRB[11]*ndc_z + pInvRB[15]*ndc_w;
+					float vx = pInvRB[0]*ndc_x + pInvRB[4]*ndc_y + pInvRB[8]*ndc_z + pInvRB[12]*ndc_w;
+					float vy = pInvRB[1]*ndc_x + pInvRB[5]*ndc_y + pInvRB[9]*ndc_z + pInvRB[13]*ndc_w;
+					float vz = pInvRB[2]*ndc_x + pInvRB[6]*ndc_y + pInvRB[10]*ndc_z + pInvRB[14]*ndc_w;
+					float vw = pInvRB[3]*ndc_x + pInvRB[7]*ndc_y + pInvRB[11]*ndc_z + pInvRB[15]*ndc_w;
 					float viewY = vy / vw;
 					float viewZ = vz / vw;
 					float len = (float) Math.sqrt(viewY*viewY + viewZ*viewZ);
@@ -275,15 +381,44 @@ public final class Program extends GlResource {
 						String.format("%.4f", mvRB[4]), String.format("%.4f", mvRB[5]), String.format("%.4f", mvRB[6]),
 						String.format("%.4f", mvRB[0]), String.format("%.4f", mvRB[1]), String.format("%.4f", mvRB[2]));
 				}
+				// Readback MV inverse to check if it's actually written (not identity/zero)
+				int mvInvOff = uniformBuffer.getFieldOffset("gbufferModelViewInverse");
+				float[] mvInvRB = uniformBuffer.readbackMat4f(mvInvOff);
+				Iris.logger.info("[DIAG_MVINV] prog='{}' off={} data={}", this.name, mvInvOff,
+					mvInvRB != null ? String.format("col0=(%.4f,%.4f,%.4f) col1=(%.4f,%.4f,%.4f) col3=(%.4f,%.4f,%.4f)",
+						mvInvRB[0], mvInvRB[1], mvInvRB[2], mvInvRB[4], mvInvRB[5], mvInvRB[6],
+						mvInvRB[12], mvInvRB[13], mvInvRB[14]) : "null");
 			}
 
-			// Previous frame projection
+			// Previous frame projection (same convention as gbufferProjection: no Y-flip)
 			if (prevProjArr != null) {
 				writeMatIfPresent("gbufferPreviousProjection", prevProjArr);
 			} else {
+				// First frame: use current projection as-is
 				proj.get(arr);
 				writeMatIfPresent("gbufferPreviousProjection", arr);
 			}
+		}
+
+		// Periodic FOV tracking — log every 120 calls to monitor if FOV stabilizes
+		fovLogCounter++;
+		if (fovLogCounter % 120 == 1) {
+			Minecraft mcFov = Minecraft.getInstance();
+			double fovCheck = -1;
+			try {
+				if (mcFov.gameRenderer != null) {
+					fovCheck = ((net.irisshaders.iris.mixin.GameRendererAccessor) mcFov.gameRenderer)
+						.invokeGetFov(mcFov.gameRenderer.getMainCamera(),
+							mcFov.getTimer().getGameTimeDeltaPartialTick(true), true);
+				}
+			} catch (Exception ignored) {}
+			Matrix4fc currentProj = CapturedRenderingState.INSTANCE.getGbufferProjection();
+			Iris.logger.info("[FOV_TRACK] frame={} fovDeg={} projM00={} projM11={} prog='{}'",
+				fovLogCounter,
+				String.format("%.2f", fovCheck),
+				currentProj != null ? String.format("%.4f", currentProj.m00()) : "null",
+				currentProj != null ? String.format("%.4f", currentProj.m11()) : "null",
+				this.name);
 		}
 
 		// cameraPosition — from the Minecraft camera entity
