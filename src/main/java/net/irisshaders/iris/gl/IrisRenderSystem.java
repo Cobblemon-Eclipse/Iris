@@ -148,6 +148,68 @@ public class IrisRenderSystem {
 		net.vulkanmod.gl.GlTexture.texImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 	}
 
+	/**
+	 * Initialize a render target's VulkanImage: transition from UNDEFINED to
+	 * SHADER_READ_ONLY_OPTIMAL and clear to black (zero).
+	 *
+	 * In OpenGL, glTexImage2D with NULL pixels allocates storage and implicitly
+	 * zero-initializes content. In Vulkan, the image starts in UNDEFINED layout
+	 * with undefined content. This causes:
+	 * 1. Validation errors when sampling an image still in UNDEFINED layout
+	 * 2. Alpha blending with undefined data instead of zero — e.g. the translucent
+	 *    framebuffer blends water's translucentMult into colortex3; if colortex3
+	 *    starts with garbage instead of black, the blended result is wrong and
+	 *    composite1 computes incorrect VL attenuation (excessive god rays over water).
+	 */
+	private static int rtInitLogCount = 0;
+	public static void initializeRenderTargetImage(int textureId) {
+		GlTexture glTex = GlTexture.getTexture(textureId);
+		if (glTex == null || glTex.getVulkanImage() == null) return;
+
+		VulkanImage image = glTex.getVulkanImage();
+		if (image.getCurrentLayout() != VK_IMAGE_LAYOUT_UNDEFINED) return;
+
+		try {
+			CommandPool.CommandBuffer cmdBuf = DeviceManager.getGraphicsQueue().beginCommands();
+			VkCommandBuffer cmd = cmdBuf.getHandle();
+
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				// Transition UNDEFINED → TRANSFER_DST_OPTIMAL
+				VulkanImage.transitionImageLayout(stack, cmd, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+				// Clear to black {0, 0, 0, 0}
+				VkClearColorValue clearColor = VkClearColorValue.calloc(stack);
+				clearColor.float32(0, 0.0f);
+				clearColor.float32(1, 0.0f);
+				clearColor.float32(2, 0.0f);
+				clearColor.float32(3, 0.0f);
+
+				VkImageSubresourceRange.Buffer range = VkImageSubresourceRange.calloc(1, stack);
+				range.aspectMask(VK_IMAGE_ASPECT_COLOR_BIT);
+				range.baseMipLevel(0);
+				range.levelCount(1);
+				range.baseArrayLayer(0);
+				range.layerCount(1);
+
+				vkCmdClearColorImage(cmd, image.getId(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, clearColor, range);
+
+				// Transition TRANSFER_DST_OPTIMAL → SHADER_READ_ONLY_OPTIMAL
+				VulkanImage.transitionImageLayout(stack, cmd, image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			}
+
+			long fence = DeviceManager.getGraphicsQueue().submitCommands(cmdBuf);
+			vkWaitForFences(Vulkan.getVkDevice(), fence, true, Long.MAX_VALUE);
+
+			if (rtInitLogCount < 6) {
+				rtInitLogCount++;
+				Iris.logger.info("[RT_INIT] Initialized render target tex={} ({}x{}) → cleared to black, layout=SHADER_READ_ONLY",
+					textureId, image.width, image.height);
+			}
+		} catch (Exception e) {
+			Iris.logger.warn("[RT_INIT] Failed to initialize render target tex={}: {}", textureId, e.getMessage());
+		}
+	}
+
 	public static void texImage3D(int texture, int target, int level, int internalformat, int width, int height, int depth, int border, int format, int type, @Nullable ByteBuffer pixels) {
 		// 3D texture support is limited; bind and attempt 2D fallback for now
 		GlStateManager._bindTexture(texture);

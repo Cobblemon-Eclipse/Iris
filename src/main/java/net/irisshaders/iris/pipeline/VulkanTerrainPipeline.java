@@ -235,6 +235,9 @@ public class VulkanTerrainPipeline {
 	List<BufferBlendOverride> shadowBufferOverrides;
 	Optional<AlphaTest> shadowAlpha;
 	ProgramSet programSet;
+	private RenderTargets renderTargets;
+	private ImmutableSet<Integer> flippedAfterPrepare;
+	private ImmutableSet<Integer> flippedAfterTranslucent;
 
 	public VulkanTerrainPipeline(WorldRenderingPipeline parent, ProgramFallbackResolver resolver, ProgramSet programSet, IntFunction<ProgramSamplers> createTerrainSamplers,
 								 IntFunction<ProgramSamplers> createShadowSamplers, IntFunction<ProgramImages> createTerrainImages, IntFunction<ProgramImages> createShadowImages,
@@ -242,9 +245,11 @@ public class VulkanTerrainPipeline {
 								 ImmutableSet<Integer> flippedAfterPrepare,
 								 ImmutableSet<Integer> flippedAfterTranslucent, GlFramebuffer shadowFramebuffer, CustomUniforms customUniforms) {
 		this.parent = Objects.requireNonNull(parent);
+		this.renderTargets = targets;
+		this.flippedAfterPrepare = flippedAfterPrepare;
+		this.flippedAfterTranslucent = flippedAfterTranslucent;
 		this.customUniforms = customUniforms;
 		this.resolver = resolver;
-
 		Optional<ProgramSource> terrainSolidSource = resolver.resolve(ProgramId.TerrainSolid);
 		Optional<ProgramSource> terrainCutoutSource = resolver.resolve(ProgramId.TerrainCutout);
 		Optional<ProgramSource> translucentSource = resolver.resolve(ProgramId.Water);
@@ -258,8 +263,40 @@ public class VulkanTerrainPipeline {
 		terrainCutoutSource.ifPresent(sources -> terrainCutoutFramebuffer = targets.createGbufferFramebuffer(flippedAfterPrepare,
 			sources.getDirectives().getDrawBuffers()));
 
-		translucentSource.ifPresent(sources -> translucentFramebuffer = targets.createGbufferFramebuffer(flippedAfterTranslucent,
-			sources.getDirectives().getDrawBuffers()));
+		// Translucent terrain runs AFTER deferred passes, and its output is read by
+		// composite passes. Composite passes start with flippedAfterTranslucent flip state,
+		// so the translucent framebuffer must use the same flip set to write to the
+		// textures composites will read.
+		translucentSource.ifPresent(sources -> {
+			int[] drawBuffers = sources.getDirectives().getDrawBuffers();
+			translucentFramebuffer = targets.createGbufferFramebuffer(flippedAfterTranslucent, drawBuffers);
+
+			// Diagnostic: log flip state + texture IDs for translucent vs solid framebuffers
+			net.irisshaders.iris.Iris.logger.info("[VTP] flippedAfterPrepare={} flippedAfterTranslucent={}",
+				flippedAfterPrepare, flippedAfterTranslucent);
+			StringBuilder tbuf = new StringBuilder();
+			tbuf.append("[VTP] Translucent FB drawBuffers=").append(java.util.Arrays.toString(drawBuffers));
+			for (int db : drawBuffers) {
+				net.irisshaders.iris.targets.RenderTarget rt = targets.getOrCreate(db);
+				tbuf.append(" colortex").append(db).append("(main=").append(rt.getMainTexture())
+					.append(",alt=").append(rt.getAltTexture()).append(")");
+			}
+			net.irisshaders.iris.Iris.logger.info(tbuf.toString());
+			// Also log solid FB texture IDs for comparison
+			if (terrainSolidFramebuffer != null) {
+				StringBuilder sbuf = new StringBuilder("[VTP] Solid FB texIDs: ");
+				for (var entry : terrainSolidFramebuffer.getColorAttachments().int2IntEntrySet()) {
+					sbuf.append("slot").append(entry.getIntKey()).append("=tex").append(entry.getIntValue()).append(" ");
+				}
+				net.irisshaders.iris.Iris.logger.info(sbuf.toString());
+			}
+			// Log translucent FB texture IDs
+			StringBuilder tbuf2 = new StringBuilder("[VTP] Translucent FB texIDs: ");
+			for (var entry : translucentFramebuffer.getColorAttachments().int2IntEntrySet()) {
+				tbuf2.append("slot").append(entry.getIntKey()).append("=tex").append(entry.getIntValue()).append(" ");
+			}
+			net.irisshaders.iris.Iris.logger.info(tbuf2.toString());
+		});
 
 		if (terrainSolidFramebuffer == null) {
 			terrainSolidFramebuffer = targets.createGbufferFramebuffer(flippedAfterPrepare, new int[]{0});
@@ -511,6 +548,41 @@ public class VulkanTerrainPipeline {
 	public BlendModeOverride getShadowBlendOverride() { return shadowBlendOverride; }
 	public List<BufferBlendOverride> getShadowBufferOverrides() { return shadowBufferOverrides; }
 	public Optional<AlphaTest> getShadowAlpha() { return shadowAlpha; }
+
+	/**
+	 * Returns the texture ID for a gbuffer color render target (colortex0-colortex8),
+	 * accounting for the ping-pong flip state after prepare passes.
+	 * Use for solid/cutout terrain passes (which run before deferred).
+	 */
+	public int getGbufferTextureId(int index) {
+		if (renderTargets == null) return -1;
+		net.irisshaders.iris.targets.RenderTarget rt = renderTargets.get(index);
+		if (rt == null) return -1;
+		return flippedAfterPrepare.contains(index) ? rt.getAltTexture() : rt.getMainTexture();
+	}
+
+	/**
+	 * Returns the texture ID for a gbuffer color render target, using the flip state
+	 * AFTER deferred passes. Translucent terrain runs after deferred, so it must read
+	 * from the post-deferred flip state. Without this, targets flipped by deferred
+	 * (e.g. colortex5 for cloud depth) would read stale/uninitialized data.
+	 */
+	public int getGbufferTextureIdForTranslucent(int index) {
+		if (renderTargets == null) return -1;
+		net.irisshaders.iris.targets.RenderTarget rt = renderTargets.get(index);
+		if (rt == null) return -1;
+		return flippedAfterTranslucent.contains(index) ? rt.getAltTexture() : rt.getMainTexture();
+	}
+
+	public int getDepthTextureId() {
+		return renderTargets != null ? renderTargets.getDepthTexture() : -1;
+	}
+
+	public int getDepthTextureNoTranslucentsId() {
+		if (renderTargets == null) return -1;
+		net.irisshaders.iris.targets.DepthTexture dt = renderTargets.getDepthTextureNoTranslucents();
+		return dt != null ? dt.getTextureId() : -1;
+	}
 
 	public ProgramUniforms.Builder initUniforms(int programId) {
 		ProgramUniforms.Builder uniforms = ProgramUniforms.builder("<terrain shaders>", programId);

@@ -183,6 +183,35 @@ public class CompositeRenderer {
 			pass.mipmappedBuffers = directives.getMipmappedBuffers();
 			pass.flippedAtLeastOnce = flippedAtLeastOnceSnapshot;
 
+			// Diagnostic: log pass drawbuffers, flip state, and FB texture IDs
+			StringBuilder passLog = new StringBuilder();
+			passLog.append("[COMP_PASS] ").append(textureStage).append(" pass ").append(i)
+				.append(" (").append(source.getName()).append(")")
+				.append(" drawBuffers=").append(Arrays.toString(drawBuffers))
+				.append(" flipBefore=").append(flipped);
+			for (int db : drawBuffers) {
+				RenderTarget rt = renderTargets.getOrCreate(db);
+				boolean readsAlt = flipped.contains(db);
+				passLog.append("\n  colortex").append(db)
+					.append(": reads=").append(readsAlt ? "ALT" : "MAIN")
+					.append("(tex").append(readsAlt ? rt.getAltTexture() : rt.getMainTexture()).append(")")
+					.append(" writes=").append(readsAlt ? "MAIN" : "ALT")
+					.append("(tex").append(readsAlt ? rt.getMainTexture() : rt.getAltTexture()).append(")");
+			}
+			// Also log colortex3 and colortex5 sampler state even if not in drawbuffers
+			for (int ct : new int[]{3, 5}) {
+				boolean inDrawBuffers = false;
+				for (int db : drawBuffers) { if (db == ct) { inDrawBuffers = true; break; } }
+				if (!inDrawBuffers && renderTargets.getRenderTargetCount() > ct) {
+					RenderTarget rt = renderTargets.getOrCreate(ct);
+					boolean readsAlt = flipped.contains(ct);
+					passLog.append("\n  colortex").append(ct).append("(sampler-only): reads=")
+						.append(readsAlt ? "ALT" : "MAIN")
+						.append("(tex").append(readsAlt ? rt.getAltTexture() : rt.getMainTexture()).append(")");
+				}
+			}
+			Iris.logger.info(passLog.toString());
+
 			passes.add(pass);
 		}
 
@@ -313,6 +342,11 @@ public class CompositeRenderer {
 			// === DIAGNOSTIC: Log texture binding state for first 3 frames ===
 			if (passIdx == 0) {
 				logCompositeTextureDiag();
+			}
+
+			// === VL DIAGNOSTIC: Per-pass texture and FB info (first 2 frames) ===
+			if (diagFrameCount <= 2) {
+				logVLPassDiag(renderPass, passIdx);
 			}
 
 			FullScreenQuadRenderer.INSTANCE.renderQuad();
@@ -504,6 +538,50 @@ public class CompositeRenderer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * VL Diagnostic: Log per-pass framebuffer and sampler state for VL debugging.
+	 * Shows which textures are bound for colortex3 (translucentMult) and colortex5 (vlFactor),
+	 * and what the framebuffer writes to.
+	 */
+	private void logVLPassDiag(Pass pass, int passIdx) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[VL_DIAG] ").append(textureStage).append(" pass[").append(passIdx).append("]");
+		sb.append(" drawBufs=").append(Arrays.toString(pass.drawBuffers));
+		sb.append(" readsAlt=").append(pass.stageReadsFromAlt);
+
+		// Log framebuffer attachment info
+		sb.append(" fbAttachments={");
+		for (var entry : pass.framebuffer.getColorAttachments().int2IntEntrySet()) {
+			sb.append("slot").append(entry.getIntKey()).append("=tex").append(entry.getIntValue()).append(" ");
+		}
+		sb.append("}");
+
+		// Log what texture IDs are currently bound for colortex3 (unit 5) and colortex5 (unit 7)
+		// These unit assignments come from the sampler mapping: 0=ct0, 3=ct1, 4=ct2, 5=ct3, 6=ct4, 7=ct5
+		int ct3TexId = IrisRenderSystem.getBoundTextureId(5);
+		int ct5TexId = IrisRenderSystem.getBoundTextureId(7);
+		sb.append("\n  colortex3 sampler: unit5=tex").append(ct3TexId);
+		sb.append(" colortex5 sampler: unit7=tex").append(ct5TexId);
+
+		// Cross-reference with render target textures
+		if (renderTargets.getRenderTargetCount() > 3) {
+			RenderTarget rt3 = renderTargets.getOrCreate(3);
+			sb.append("\n  colortex3 RT: main=tex").append(rt3.getMainTexture())
+				.append(" alt=tex").append(rt3.getAltTexture());
+			sb.append(" → sampler reads ").append(ct3TexId == rt3.getMainTexture() ? "MAIN" :
+				ct3TexId == rt3.getAltTexture() ? "ALT" : "UNKNOWN(tex" + ct3TexId + ")");
+		}
+		if (renderTargets.getRenderTargetCount() > 5) {
+			RenderTarget rt5 = renderTargets.getOrCreate(5);
+			sb.append("\n  colortex5 RT: main=tex").append(rt5.getMainTexture())
+				.append(" alt=tex").append(rt5.getAltTexture());
+			sb.append(" → sampler reads ").append(ct5TexId == rt5.getMainTexture() ? "MAIN" :
+				ct5TexId == rt5.getAltTexture() ? "ALT" : "UNKNOWN(tex" + ct5TexId + ")");
+		}
+
+		Iris.logger.info(sb.toString());
 	}
 
 	/**

@@ -62,6 +62,11 @@ public class RenderTarget {
 	private void setupTexture(int texture, int width, int height, boolean allowsLinear) {
 		resizeTexture(texture, width, height);
 
+		// In Vulkan, the image starts in UNDEFINED layout with undefined content.
+		// Clear to black and transition to SHADER_READ_ONLY_OPTIMAL to match OpenGL
+		// behavior where textures are zero-initialized after glTexImage2D(NULL).
+		IrisRenderSystem.initializeRenderTargetImage(texture);
+
 		int filter = allowsLinear ? 0x2601 : 0x2600; // GL_LINEAR : GL_NEAREST
 		IrisRenderSystem.texParameteri(texture, GL_TEXTURE_2D, 0x2801, filter); // MIN_FILTER
 		IrisRenderSystem.texParameteri(texture, GL_TEXTURE_2D, 0x2800, filter); // MAG_FILTER
@@ -85,8 +90,10 @@ public class RenderTarget {
 		this.height = height;
 
 		resizeTexture(mainTexture, width, height);
+		IrisRenderSystem.initializeRenderTargetImage(mainTexture);
 
 		resizeTexture(altTexture, width, height);
+		IrisRenderSystem.initializeRenderTargetImage(altTexture);
 	}
 
 	public InternalTextureFormat getInternalFormat() {

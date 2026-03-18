@@ -59,9 +59,6 @@ public class GlFramebuffer extends GlResource {
 	private static final it.unimi.dsi.fastutil.ints.Int2IntMap depthTexClearFrame =
 		new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
 
-	// Track last bound Iris framebuffer for color attachment layout management
-	private static GlFramebuffer lastBoundIrisFramebuffer = null;
-
 	// Global cache: VulkanMod Framebuffer objects keyed by attachment hash.
 	// Multiple GlFramebuffer instances with identical attachments (same VulkanImages)
 	// share the SAME VulkanMod Framebuffer. This is critical because VulkanMod's
@@ -189,8 +186,6 @@ public class GlFramebuffer extends GlResource {
 
 	// Track which attachment set is cached so we know when to recreate
 	private int cachedAttachmentHash = 0;
-	private static int diagBindCount = 0;
-	private static final int DIAG_BIND_MAX = 60;
 
 	public void bind() {
 		if (!Renderer.isRecording()) {
@@ -389,73 +384,6 @@ public class GlFramebuffer extends GlResource {
 			rpBuilder.getColorAttachmentInfo()
 				.setLoadOp(VK_ATTACHMENT_LOAD_OP_LOAD)
 				.setFinalLayout(colorFinalLayout);
-		}
-	}
-
-	/**
-	 * Updates attachment layouts after a render pass ends.
-	 * Color attachments: render pass finalLayout already transitioned them to colorFinalLayout.
-	 * Depth attachment: explicitly transition from DEPTH_STENCIL_ATTACHMENT_OPTIMAL to
-	 * SHADER_READ_ONLY_OPTIMAL so composite/deferred passes can sample depthtex0.
-	 * VulkanMod's beginRenderPass() will transition depth back to ATTACHMENT_OPTIMAL
-	 * when the next render pass starts.
-	 */
-	private void updateColorLayoutAfterRenderPass() {
-		if (vulkanFramebuffer == null) return;
-		int count = vulkanFramebuffer.getColorAttachmentCount();
-		for (int i = 0; i < count; i++) {
-			VulkanImage img = vulkanFramebuffer.getColorAttachment(i);
-			if (img != null) {
-				img.setCurrentLayout(colorFinalLayout);
-			}
-		}
-		// Explicitly transition depth to SHADER_READ_ONLY_OPTIMAL for sampling.
-		// The render pass left it in DEPTH_STENCIL_ATTACHMENT_OPTIMAL (default finalLayout).
-		// VulkanMod's transitionImageLayout supports ATTACHMENT→SHADER_READ_ONLY transition.
-		VulkanImage depthImg = vulkanFramebuffer.getDepthAttachment();
-		if (hasDepthAttachment && depthImg != null) {
-			VkCommandBuffer cmd = Renderer.getCommandBuffer();
-			try (MemoryStack stack = MemoryStack.stackPush()) {
-				if (depthImg.getCurrentLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-					depthImg.transitionImageLayout(stack, cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Transitions this framebuffer's color attachments to COLOR_ATTACHMENT_OPTIMAL.
-	 * Required because VulkanMod's render pass initialLayout expects COLOR_ATTACHMENT_OPTIMAL
-	 * but doesn't perform the transition itself (unlike depth, which is explicitly
-	 * transitioned in RenderPass.beginRenderPass()).
-	 */
-	private void transitionColorAttachmentsForRendering() {
-		if (vulkanFramebuffer == null) return;
-		VkCommandBuffer cmd = Renderer.getCommandBuffer();
-		int count = vulkanFramebuffer.getColorAttachmentCount();
-		try (MemoryStack stack = MemoryStack.stackPush()) {
-			for (int i = 0; i < count; i++) {
-				VulkanImage img = vulkanFramebuffer.getColorAttachment(i);
-				if (img != null && img.getCurrentLayout() != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
-					img.transitionImageLayout(stack, cmd, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Transitions this framebuffer's depth attachment to DEPTH_STENCIL_ATTACHMENT_OPTIMAL.
-	 * After a render pass with finalLayout=SHADER_READ_ONLY_OPTIMAL (for composite sampling),
-	 * the depth image must be transitioned back before the next render pass that writes depth.
-	 */
-	private void transitionDepthAttachmentForRendering() {
-		if (vulkanFramebuffer == null) return;
-		VulkanImage depthImg = vulkanFramebuffer.getDepthAttachment();
-		if (depthImg != null && depthImg.getCurrentLayout() != VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-			VkCommandBuffer cmd = Renderer.getCommandBuffer();
-			try (MemoryStack stack = MemoryStack.stackPush()) {
-				depthImg.transitionImageLayout(stack, cmd, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-			}
 		}
 	}
 

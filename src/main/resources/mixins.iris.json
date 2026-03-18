@@ -96,6 +96,7 @@
     "texture.pbr.MixinDirectoryLister",
     "texture.pbr.MixinSpriteContents",
     "texture.pbr.MixinTextureAtlas",
+    "vulkan.MixinTerrainBufferBuilder",
     "vulkan.MixinVulkanValidation",
     "vulkan.MixinVulkanWorldRenderer"
   ],

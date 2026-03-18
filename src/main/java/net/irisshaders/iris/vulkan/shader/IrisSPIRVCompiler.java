@@ -74,10 +74,18 @@ public class IrisSPIRVCompiler {
 		shaderc_compile_options_set_optimization_level(options,
 			shaderc_optimization_level_performance);
 
+		// Preserve debug info (OpName instructions) — matches VulkanMod's SPIRVUtils.
+		// Required for fixSpirvLocations() to match vertex outputs to fragment inputs by name.
+		shaderc_compile_options_set_generate_debug_info(options);
+
 		// Auto-assign binding numbers to uniforms/samplers without explicit layout(binding=N)
 		shaderc_compile_options_set_auto_bind_uniforms(options, true);
 
 		// Auto-assign location numbers to in/out without explicit layout(location=N)
+		// Needed for shaders like colorSpaceFragment that lack explicit locations.
+		// NOTE: shaderc may override explicit locations non-deterministically when
+		// vertex/fragment are compiled independently. Use fixSpirvLocations() after
+		// compiling paired shaders to enforce matching interfaces.
 		shaderc_compile_options_set_auto_map_locations(options, true);
 
 		// Handle combined image samplers (sampler2D) for Vulkan SPIR-V
@@ -981,6 +989,189 @@ public class IrisSPIRVCompiler {
 			sb.append((char) b);
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Fixes SPIR-V interface location mismatches between vertex and fragment shaders.
+	 *
+	 * shaderc's auto_map_locations overrides explicit layout(location=N) qualifiers
+	 * non-deterministically when vertex and fragment shaders are compiled independently.
+	 * This method parses the compiled SPIR-V from both shaders, extracts the vertex
+	 * output locations by variable name, and patches the fragment input locations to match.
+	 *
+	 * @param vertSpirv  Compiled vertex shader SPIR-V bytecode
+	 * @param fragSpirv  Compiled fragment shader SPIR-V bytecode (patched in-place)
+	 * @param shaderName Name for logging
+	 */
+	public static void fixSpirvLocations(ByteBuffer vertSpirv, ByteBuffer fragSpirv, String shaderName) {
+		Map<String, Integer> vertOutputLocs = extractInterfaceLocations(vertSpirv, 3 /* Output */);
+		Map<String, Integer> fragInputLocs = extractInterfaceLocations(fragSpirv, 1 /* Input */);
+
+		if (vertOutputLocs.isEmpty() || fragInputLocs.isEmpty()) {
+			LOGGER.warn("[SPIRV_FIX] {} could not extract locations (vert={} frag={})",
+				shaderName, vertOutputLocs.size(), fragInputLocs.size());
+			return;
+		}
+
+		// Check for mismatches
+		boolean anyMismatch = false;
+		for (Map.Entry<String, Integer> entry : fragInputLocs.entrySet()) {
+			String name = entry.getKey();
+			Integer fragLoc = entry.getValue();
+			Integer vertLoc = vertOutputLocs.get(name);
+			if (vertLoc != null && !vertLoc.equals(fragLoc)) {
+				LOGGER.warn("[SPIRV_FIX] {} mismatch: '{}' vertex=loc{} fragment=loc{}",
+					shaderName, name, vertLoc, fragLoc);
+				anyMismatch = true;
+			}
+		}
+
+		if (!anyMismatch) {
+			LOGGER.info("[SPIRV_FIX] {} all {} interface locations match", shaderName, fragInputLocs.size());
+			return;
+		}
+
+		// Patch fragment SPIR-V: change input locations to match vertex outputs
+		patchSpirvLocations(fragSpirv, 1 /* Input */, vertOutputLocs, shaderName);
+	}
+
+	/**
+	 * Extracts interface variable locations from SPIR-V bytecode.
+	 *
+	 * @param spirv        SPIR-V bytecode
+	 * @param storageClass 1=Input, 3=Output
+	 * @return Map of variable name → location number
+	 */
+	private static Map<String, Integer> extractInterfaceLocations(ByteBuffer spirv, int storageClass) {
+		int savedPos = spirv.position();
+		int totalWords = spirv.remaining() / 4;
+
+		Map<Integer, Integer> varStorageClasses = new java.util.HashMap<>();
+		Map<Integer, String> varNames = new java.util.HashMap<>();
+		Map<Integer, Integer> varLocations = new java.util.HashMap<>();
+
+		int wordOffset = 5; // skip SPIR-V header
+		while (wordOffset < totalWords) {
+			int instructionWord = spirv.getInt(savedPos + wordOffset * 4);
+			int opcode = instructionWord & 0xFFFF;
+			int wordCount = (instructionWord >>> 16) & 0xFFFF;
+			if (wordCount == 0) break;
+
+			// OpVariable (59): [opcode/wc] [result_type_id] [result_id] [storage_class]
+			if (opcode == 59 && wordCount >= 4) {
+				int resultId = spirv.getInt(savedPos + (wordOffset + 2) * 4);
+				int sc = spirv.getInt(savedPos + (wordOffset + 3) * 4);
+				varStorageClasses.put(resultId, sc);
+			}
+
+			// OpName (5): [opcode/wc] [id] [name_literal...]
+			if (opcode == 5 && wordCount >= 3) {
+				int id = spirv.getInt(savedPos + (wordOffset + 1) * 4);
+				String name = readSPIRVString(spirv, savedPos + (wordOffset + 2) * 4, (wordCount - 2) * 4);
+				varNames.put(id, name);
+			}
+
+			// OpDecorate (71): [opcode/wc] [target_id] [decoration] [operands...]
+			if (opcode == 71 && wordCount >= 4) {
+				int targetId = spirv.getInt(savedPos + (wordOffset + 1) * 4);
+				int decoration = spirv.getInt(savedPos + (wordOffset + 2) * 4);
+				if (decoration == 30) { // Location
+					int location = spirv.getInt(savedPos + (wordOffset + 3) * 4);
+					varLocations.put(targetId, location);
+				}
+			}
+
+			wordOffset += wordCount;
+		}
+
+		// Build name → location for variables matching the target storage class
+		Map<String, Integer> result = new java.util.LinkedHashMap<>();
+		for (Map.Entry<Integer, Integer> entry : varStorageClasses.entrySet()) {
+			int id = entry.getKey();
+			int sc = entry.getValue();
+			if (sc == storageClass) {
+				String name = varNames.get(id);
+				Integer location = varLocations.get(id);
+				if (name != null && location != null) {
+					result.put(name, location);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Patches OpDecorate Location instructions in SPIR-V bytecode to match target locations.
+	 *
+	 * @param spirv           SPIR-V bytecode (modified in-place)
+	 * @param storageClass    Only patch variables with this storage class (1=Input, 3=Output)
+	 * @param targetLocations Variable name → desired location
+	 * @param shaderName      Name for logging
+	 */
+	private static void patchSpirvLocations(ByteBuffer spirv, int storageClass,
+			Map<String, Integer> targetLocations, String shaderName) {
+		int savedPos = spirv.position();
+		int totalWords = spirv.remaining() / 4;
+
+		// First pass: collect variable storage classes and names
+		Map<Integer, Integer> varStorageClasses = new java.util.HashMap<>();
+		Map<Integer, String> varNames = new java.util.HashMap<>();
+
+		int wordOffset = 5;
+		while (wordOffset < totalWords) {
+			int instructionWord = spirv.getInt(savedPos + wordOffset * 4);
+			int opcode = instructionWord & 0xFFFF;
+			int wordCount = (instructionWord >>> 16) & 0xFFFF;
+			if (wordCount == 0) break;
+
+			if (opcode == 59 && wordCount >= 4) {
+				int resultId = spirv.getInt(savedPos + (wordOffset + 2) * 4);
+				int sc = spirv.getInt(savedPos + (wordOffset + 3) * 4);
+				varStorageClasses.put(resultId, sc);
+			}
+			if (opcode == 5 && wordCount >= 3) {
+				int id = spirv.getInt(savedPos + (wordOffset + 1) * 4);
+				String name = readSPIRVString(spirv, savedPos + (wordOffset + 2) * 4, (wordCount - 2) * 4);
+				varNames.put(id, name);
+			}
+
+			wordOffset += wordCount;
+		}
+
+		// Second pass: find and patch OpDecorate Location instructions
+		wordOffset = 5;
+		int patchCount = 0;
+		while (wordOffset < totalWords) {
+			int instructionWord = spirv.getInt(savedPos + wordOffset * 4);
+			int opcode = instructionWord & 0xFFFF;
+			int wordCount = (instructionWord >>> 16) & 0xFFFF;
+			if (wordCount == 0) break;
+
+			if (opcode == 71 && wordCount >= 4) { // OpDecorate
+				int targetId = spirv.getInt(savedPos + (wordOffset + 1) * 4);
+				int decoration = spirv.getInt(savedPos + (wordOffset + 2) * 4);
+				if (decoration == 30) { // Location
+					Integer sc = varStorageClasses.get(targetId);
+					String name = varNames.get(targetId);
+					if (sc != null && sc == storageClass && name != null) {
+						Integer desiredLoc = targetLocations.get(name);
+						if (desiredLoc != null) {
+							int currentLoc = spirv.getInt(savedPos + (wordOffset + 3) * 4);
+							if (currentLoc != desiredLoc) {
+								spirv.putInt(savedPos + (wordOffset + 3) * 4, desiredLoc);
+								LOGGER.info("[SPIRV_FIX] {} patched '{}' location {} -> {}",
+									shaderName, name, currentLoc, desiredLoc);
+								patchCount++;
+							}
+						}
+					}
+				}
+			}
+
+			wordOffset += wordCount;
+		}
+
+		LOGGER.info("[SPIRV_FIX] {} patched {} location(s)", shaderName, patchCount);
 	}
 
 	/**

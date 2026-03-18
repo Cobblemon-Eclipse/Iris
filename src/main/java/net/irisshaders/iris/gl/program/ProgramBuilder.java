@@ -58,6 +58,16 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 	// Right half: cloud opacity (R) + nPlayerPos.y (G) + skyFade (B)
 	private static final boolean DIAG_CLOUD_DEBUG = false;
 
+	// DIAGNOSTIC: When true, overrides deferred1 output to visualize terrain viewPos.
+	// Left third:  lViewPos heat map (blue=near, red=far, scaled by renderDistance)
+	// Middle third: playerPos.y heat map (red=below y63, green=above y63)
+	// Right third:  fog amount visualization (R=skyFade, G=lViewPos/256, B=z0)
+	private static final boolean DIAG_FOG_DEBUG = false;
+
+	// DIAGNOSTIC: When true, disables volumetric light in composite1 to isolate
+	// whether the camera-following overlay is from VL or other effects (fog, bloom).
+	private static final boolean DIAG_DISABLE_VL = false;
+
 	private ProgramBuilder(String name, int program, ImmutableSet<Integer> reservedTextureUnits) {
 		super(name, program);
 
@@ -255,6 +265,7 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 		// the forward projection's m00 and m11 are correct. This computes the same
 		// result as projInverse * ndc, but using 1/m00 and -1/m11 directly.
 		fshFinal = fixViewPosReconstruction(fshFinal, name);
+		fshFinal = fixCompositeProjectionInverse(fshFinal, name);
 
 		// Re-compile with bindings
 		ByteBuffer vSpirv = IrisSPIRVCompiler.compilePreprocessed(name + ".vsh", vshFinal, ShaderType.VERTEX);
@@ -365,38 +376,230 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 	}
 
 	/**
+	 * Fix ALL uses of gbufferProjectionInverse in composite/deferred shaders.
+	 *
+	 * gbufferProjectionInverse is broken on the GPU (root cause TBD). This injects
+	 * a helper function that reconstructs eye-space position from the FORWARD
+	 * projection matrix elements (which ARE correct), then replaces all known
+	 * usage patterns with calls to that helper.
+	 *
+	 * Uses exact string matching (not regex) to avoid the nested-parenthesis bugs
+	 * that broke the previous fixProjectionInverseGlobal attempt.
+	 *
+	 * The y-component uses -ndc.y / P[1][1] to compensate for VulkanMod's negated
+	 * P[1][1] (Y-flip). This gives the same result as ndc.y / P_gl[1][1].
+	 */
+	private static String fixCompositeProjectionInverse(String fshSource, String programName) {
+		if (!fshSource.contains("gbufferProjectionInverse")) {
+			return fshSource;
+		}
+
+		// Check for actual uses (not just the uniform declaration inside UBO)
+		boolean hasActualUse = false;
+		for (String line : fshSource.split("\n")) {
+			String trimmed = line.trim();
+			if (trimmed.contains("gbufferProjectionInverse") &&
+				!trimmed.startsWith("uniform") && !trimmed.startsWith("mat4")) {
+				hasActualUse = true;
+				break;
+			}
+		}
+		if (!hasActualUse) return fshSource;
+
+		int replacements = 0;
+
+		// Helper function: reconstructs eye-space from forward projection elements
+		String helperFunc =
+			"\n// Iris Vulkan fix: reconstruct eye-space from forward projection\n" +
+			"// bypassing broken gbufferProjectionInverse on GPU.\n" +
+			"vec4 _fixedProjInv(vec4 ndc) {\n" +
+			"\tvec3 _ed = vec3(\n" +
+			"\t\tndc.x / gbufferProjection[0][0],\n" +
+			"\t\t-ndc.y / gbufferProjection[1][1],\n" +
+			"\t\t-1.0\n" +
+			"\t);\n" +
+			"\tfloat _t = gbufferProjection[3][2] / (ndc.z + gbufferProjection[2][2]);\n" +
+			"\treturn vec4(_ed * _t, 1.0);\n" +
+			"}\n";
+
+		// Inject helper at earliest safe point (before first function using projInverse)
+		boolean injected = false;
+		String[] earlyAnchors = {
+			"vec3 ScreenToView(vec3 pos) {",   // composite.fsh
+			"vec4 GetVolumetricLight(",         // composite1.fsh
+			"void DoTAA(",                      // composite6.fsh
+		};
+		for (String anchor : earlyAnchors) {
+			if (fshSource.contains(anchor)) {
+				fshSource = fshSource.replace(anchor, helperFunc + anchor);
+				injected = true;
+				break;
+			}
+		}
+		if (!injected && fshSource.contains("void main() {")) {
+			fshSource = fshSource.replace("void main() {", helperFunc + "void main() {");
+			injected = true;
+		}
+		if (!injected) {
+			Iris.logger.warn("[FIX_PROJINV] No injection point found in '{}'", programName);
+			return fshSource;
+		}
+
+		// Pattern 1: screenPos (composite1 main, composite5 main, composite main)
+		String p1old = "gbufferProjectionInverse * (screenPos * 2.0f - 1.0f)";
+		String p1new = "_fixedProjInv(screenPos * 2.0f - 1.0f)";
+		int c = countOccurrences(fshSource, p1old);
+		if (c > 0) { fshSource = fshSource.replace(p1old, p1new); replacements += c; }
+
+		// Pattern 2: screenPos1 (composite1 main, composite6 DoTAA)
+		String p2old = "gbufferProjectionInverse * (screenPos1 * 2.0f - 1.0f)";
+		String p2new = "_fixedProjInv(screenPos1 * 2.0f - 1.0f)";
+		c = countOccurrences(fshSource, p2old);
+		if (c > 0) { fshSource = fshSource.replace(p2old, p2new); replacements += c; }
+
+		// Pattern 3: reprojection vec4(pos, 1.0f) (composite Reprojection/FHalfReprojection)
+		String p3old = "gbufferProjectionInverse * vec4(pos, 1.0f)";
+		String p3new = "_fixedProjInv(vec4(pos, 1.0f))";
+		c = countOccurrences(fshSource, p3old);
+		if (c > 0) { fshSource = fshSource.replace(p3old, p3new); replacements += c; }
+
+		// Pattern 4: reflection ray tracing (composite)
+		String p4old = "gbufferProjectionInverse * vec4(rfragpos * 2.0f - 1.0f, 1.0f)";
+		String p4new = "_fixedProjInv(vec4(rfragpos * 2.0f - 1.0f, 1.0f))";
+		c = countOccurrences(fshSource, p4old);
+		if (c > 0) { fshSource = fshSource.replace(p4old, p4new); replacements += c; }
+
+		// Pattern 5: volumetric light ray-march (composite1 GetVolumetricLight)
+		// Uses inline vec4(texCoord, GetDistX(currentDist), 1.0f) instead of screenPos
+		String p5old = "gbufferProjectionInverse * (vec4(texCoord, GetDistX(currentDist), 1.0f) * 2.0f - 1.0f)";
+		String p5new = "_fixedProjInv(vec4(texCoord, GetDistX(currentDist), 1.0f) * 2.0f - 1.0f)";
+		c = countOccurrences(fshSource, p5old);
+		if (c > 0) { fshSource = fshSource.replace(p5old, p5new); replacements += c; }
+
+		// Pattern 6: ScreenToView diagonal optimization (composite)
+		String stv_old =
+			"\tvec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);\n" +
+			"\tvec3 p3 = pos * 2.0f - 1.0f;\n" +
+			"\tvec4 viewPos = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];\n" +
+			"\treturn viewPos.xyz / viewPos.w;";
+		String stv_new =
+			"\treturn _fixedProjInv(vec4(pos * 2.0f - 1.0f, 1.0f)).xyz;";
+		if (fshSource.contains(stv_old)) {
+			fshSource = fshSource.replace(stv_old, stv_new);
+			replacements++;
+		}
+
+		// Pattern 7: Reprojection Y-flip fix (composite6 TAA, composite SSR)
+		// gbufferPreviousProjection has VulkanMod's negated P[1][1], so Y in clip
+		// space is inverted. After perspective divide + remap to [0,1], UV.y is
+		// flipped. Fix by inverting Y: 1.0 - y.
+		String reprojOld = "return previousPosition.xy / previousPosition.w * 0.5f + 0.5f;";
+		String reprojNew = "vec2 _rp = previousPosition.xy / previousPosition.w * 0.5f + 0.5f;\n\treturn vec2(_rp.x, 1.0 - _rp.y);";
+		c = countOccurrences(fshSource, reprojOld);
+		if (c > 0) { fshSource = fshSource.replace(reprojOld, reprojNew); replacements += c; }
+
+		if (replacements > 0) {
+			Iris.logger.info("[FIX_PROJINV] Fixed {} gbufferProjectionInverse pattern(s) in '{}'", replacements, programName);
+		}
+
+		// Warn about any remaining unhandled uses
+		int remaining = 0;
+		for (String line : fshSource.split("\n")) {
+			String trimmed = line.trim();
+			if (trimmed.contains("gbufferProjectionInverse") &&
+				!trimmed.startsWith("uniform") && !trimmed.startsWith("mat4") &&
+				!trimmed.startsWith("//") && !trimmed.contains("_fixedProjInv")) {
+				remaining++;
+			}
+		}
+		if (remaining > 0) {
+			Iris.logger.warn("[FIX_PROJINV] {} unhandled gbufferProjectionInverse use(s) in '{}'", remaining, programName);
+		}
+
+		// DIAG: Disable volumetric light AND bloom fog to isolate the camera-following overlay
+		if (DIAG_DISABLE_VL) {
+			String vlAdd = "color += volumetricEffect.rgb;";
+			if (fshSource.contains(vlAdd)) {
+				fshSource = fshSource.replace(vlAdd, "// DIAG_DISABLE_VL: " + vlAdd);
+				Iris.logger.info("[DIAG_VL] Disabled volumetric light in '{}'", programName);
+			}
+			String bloomFog = "color *= GetBloomFog(lViewPos);";
+			if (fshSource.contains(bloomFog)) {
+				fshSource = fshSource.replace(bloomFog, "// DIAG_DISABLE_VL: " + bloomFog);
+				Iris.logger.info("[DIAG_VL] Disabled bloom fog in '{}'", programName);
+			}
+			// Also disable the inverse bloom fog in composite5
+			String invBloomFog = "color /= GetBloomFog(lViewPos);";
+			if (fshSource.contains(invBloomFog)) {
+				fshSource = fshSource.replace(invBloomFog, "// DIAG_DISABLE_VL: " + invBloomFog);
+				Iris.logger.info("[DIAG_VL] Disabled inverse bloom fog in '{}'", programName);
+			}
+			// Also disable TAA in composite6
+			String taaCall = "DoTAA(color, temp, z1);";
+			if (fshSource.contains(taaCall)) {
+				fshSource = fshSource.replace(taaCall, "// DIAG_DISABLE_VL: " + taaCall);
+				Iris.logger.info("[DIAG_VL] Disabled TAA in '{}'", programName);
+			}
+		}
+
+		return fshSource;
+	}
+
+	private static int countOccurrences(String str, String sub) {
+		int count = 0;
+		int idx = 0;
+		while ((idx = str.indexOf(sub, idx)) != -1) {
+			count++;
+			idx += sub.length();
+		}
+		return count;
+	}
+
+	/**
 	 * Fix aurora rendering by replacing the GetAuroraBorealis call with one that uses
 	 * a direct eye direction, bypassing the broken gbufferProjectionInverse.
 	 * Replaces at the SOURCE so the correct aurora flows into all downstream effects
 	 * (clouds, color mixing, etc.).
 	 */
 	private static String fixViewPosReconstruction(String fshSource, String programName) {
-		// FIX 1: Override viewPos and all derived values for SKY PIXELS.
+		// FIX 1: Override viewPos and all derived values for ALL PIXELS.
 		// gbufferProjectionInverse is broken on GPU, so viewPos from projInverse * ndc
-		// gives wrong results. This affects ALL sky effects: aurora, clouds, atm fog.
-		// Inject a sky-pixel override right after VdotS computation that replaces
-		// viewPos, nViewPos, playerPos, lViewPos, VdotU, VdotS with values computed
-		// from the correct forward projection matrix (gbufferProjection[0][0], [1][1]).
+		// gives wrong results. This affects sky effects (aurora, clouds) AND terrain
+		// effects (fog, AO, reflections, atmospheric haze).
+		// Reconstruct viewPos from the FORWARD projection matrix elements which are correct:
+		//   gbufferProjection[0][0] (m00), [1][1] (m11), [2][2] (m22), [3][2] (m32)
+		// Sky pixels (z0 >= 1.0): direction only, at large distance.
+		// Terrain pixels (z0 < 1.0): linearize depth for actual eye-space position.
 		String vdotSLine = "float VdotS = dot(nViewPos, sunVec);";
 		if (fshSource.contains(vdotSLine)) {
-			String skyFix =
+			String viewPosFix =
 				vdotSLine + "\n" +
-				"\tif (z0 >= 1.0f) {\n" +
-				"\t\tvec3 skyEyeDir = vec3(\n" +
+				"\t{\n" +
+				"\t\tvec3 _eyeDir = vec3(\n" +
 				"\t\t\t(texCoord.x * 2.0f - 1.0f) / gbufferProjection[0][0],\n" +
 				"\t\t\t(1.0f - texCoord.y * 2.0f) / gbufferProjection[1][1],\n" +
 				"\t\t\t-1.0f\n" +
-				"\t\t) * 256.0f;\n" +
-				"\t\tviewPos = vec4(skyEyeDir, 1.0f);\n" +
-				"\t\tlViewPos = 1.0e4f;\n" +
-				"\t\tnViewPos = normalize(skyEyeDir);\n" +
-				"\t\tplayerPos = (gbufferModelViewInverse * vec4(skyEyeDir, 0.0f)).xyz;\n" +
+				"\t\t);\n" +
+				"\t\tif (z0 >= 1.0f) {\n" +
+				"\t\t\tvec3 skyEyeDir = _eyeDir * 256.0f;\n" +
+				"\t\t\tviewPos = vec4(skyEyeDir, 1.0f);\n" +
+				"\t\t\tlViewPos = 1.0e4f;\n" +
+				"\t\t\tnViewPos = normalize(skyEyeDir);\n" +
+				"\t\t\tplayerPos = (gbufferModelViewInverse * vec4(skyEyeDir, 0.0f)).xyz;\n" +
+				"\t\t\tdither = textureLod(noisetex, texCoord * vec2(viewWidth, viewHeight) / 128.0f, 0.0f).b;\n" +
+				"\t\t} else {\n" +
+				"\t\t\tfloat _ndcZ = z0 * 2.0f - 1.0f;\n" +
+				"\t\t\tfloat _t = gbufferProjection[3][2] / (_ndcZ + gbufferProjection[2][2]);\n" +
+				"\t\t\tviewPos = vec4(_eyeDir * _t, 1.0f);\n" +
+				"\t\t\tlViewPos = length(viewPos.xyz);\n" +
+				"\t\t\tnViewPos = normalize(viewPos.xyz);\n" +
+				"\t\t\tplayerPos = (gbufferModelViewInverse * vec4(viewPos.xyz, 1.0f)).xyz;\n" +
+				"\t\t}\n" +
 				"\t\tVdotU = dot(nViewPos, upVec);\n" +
 				"\t\tVdotS = dot(nViewPos, sunVec);\n" +
-				"\t\tdither = textureLod(noisetex, texCoord * vec2(viewWidth, viewHeight) / 128.0f, 0.0f).b;\n" +
 				"\t}";
-			fshSource = fshSource.replace(vdotSLine, skyFix);
-			Iris.logger.info("[FIX_SKY] Injected sky viewPos override in '{}'", programName);
+			fshSource = fshSource.replace(vdotSLine, viewPosFix);
+			Iris.logger.info("[FIX_VIEWPOS] Injected viewPos override for ALL pixels in '{}'", programName);
 		}
 
 		// FIX 2: Replace aurora call with static dither version.
@@ -461,6 +664,36 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 					"\t}";
 				fshSource = fshSource.replace(outputLine, diag);
 				Iris.logger.info("[DIAG_CLOUD] Injected cloud debug visualization in '{}'", programName);
+			}
+		}
+
+		// DIAG: Fog/viewPos debug visualization
+		if (DIAG_FOG_DEBUG) {
+			String outputLine = "iris_FragData0 = vec4(color.rgb, 1.0f);";
+			if (fshSource.contains(outputLine)) {
+				String diag =
+					"{\n" +
+					"\t\tvec3 diagColor;\n" +
+					"\t\tif (texCoord.x < 0.33) {\n" +
+					"\t\t\t// Left: lViewPos heat map (blue=near 0, red=far renderDistance)\n" +
+					"\t\t\tfloat dist = clamp(lViewPos / renderDistance, 0.0, 1.0);\n" +
+					"\t\t\tdiagColor = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.0, 0.0), dist);\n" +
+					"\t\t\tif (z0 >= 1.0) diagColor = vec3(1.0); // sky = white\n" +
+					"\t\t} else if (texCoord.x < 0.66) {\n" +
+					"\t\t\t// Middle: playerPos.y + cameraPosition.y (altitude)\n" +
+					"\t\t\t// Green = high altitude, Red = low altitude, black = y=63\n" +
+					"\t\t\tfloat alt = (playerPos.y + cameraPosition.y - 63.0) / 128.0;\n" +
+					"\t\t\tdiagColor = alt > 0.0 ? vec3(0.0, alt, 0.0) : vec3(-alt, 0.0, 0.0);\n" +
+					"\t\t\tdiagColor = clamp(diagColor, 0.0, 1.0);\n" +
+					"\t\t\tif (z0 >= 1.0) diagColor = vec3(1.0); // sky = white\n" +
+					"\t\t} else {\n" +
+					"\t\t\t// Right: R=skyFade, G=lViewPos/256, B=z0\n" +
+					"\t\t\tdiagColor = vec3(skyFade, lViewPos / 256.0, z0);\n" +
+					"\t\t}\n" +
+					"\t\tiris_FragData0 = vec4(diagColor, 1.0);\n" +
+					"\t}";
+				fshSource = fshSource.replace(outputLine, diag);
+				Iris.logger.info("[DIAG_FOG] Injected fog debug visualization in '{}'", programName);
 			}
 		}
 

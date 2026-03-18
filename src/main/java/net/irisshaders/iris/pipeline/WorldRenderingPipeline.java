@@ -41,6 +41,8 @@ public interface WorldRenderingPipeline {
 
 	default int getNoiseTextureId() { return 0; }
 
+	default int getCustomGbufferTextureId(String samplerName) { return -1; }
+
 	void onSetShaderTexture(int id);
 
 	void beginHand();

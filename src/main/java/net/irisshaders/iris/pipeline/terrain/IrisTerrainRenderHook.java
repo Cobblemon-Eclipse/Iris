@@ -3,6 +3,7 @@ package net.irisshaders.iris.pipeline.terrain;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.gl.IrisRenderSystem;
+import net.irisshaders.iris.gl.blending.BlendMode;
 import net.irisshaders.iris.gl.blending.BlendModeOverride;
 import net.irisshaders.iris.gl.blending.BlendModeStorage;
 import net.irisshaders.iris.gl.blending.BufferBlendOverride;
@@ -16,34 +17,44 @@ import net.vulkanmod.render.vertex.TerrainRenderType;
 import net.vulkanmod.vulkan.shader.GraphicsPipeline;
 import org.joml.Matrix4f;
 
+import java.util.List;
+
 /**
  * Orchestrates Iris terrain shader integration with VulkanMod's terrain draw path.
  *
  * Hooks into PipelineManager.setShaderGetter() to provide Iris's compiled terrain
- * pipelines instead of VulkanMod's defaults. Also manages gbuffer framebuffer
- * binding before/after terrain draws.
- *
- * During shadow rendering, an override framebuffer can be set via setShadowFramebuffer()
- * so that terrain draws write to the shadow depth texture instead of the gbuffer.
+ * pipelines instead of VulkanMod's defaults. Manages framebuffer binding, blend state,
+ * texture binding, and uniform updates for both gbuffer and shadow passes.
  */
 public class IrisTerrainRenderHook {
 
 	private static final IrisTerrainRenderHook INSTANCE = new IrisTerrainRenderHook();
 
+	// Standard Iris texture slot assignments (matches IrisSamplers convention)
+	private static final int GL_TEXTURE_2D = 0x0DE1;
+	private static final int SLOT_COLORTEX0 = 1;
+	private static final int SLOT_NORMALS = 3;
+	private static final int SLOT_SPECULAR = 4;
+	private static final int SLOT_COLORTEX3 = 5;  // colortex3-8 occupy slots 5-10
+	private static final int SLOT_COLORTEX1 = 11;
+	private static final int SLOT_DEPTHTEX0 = 12;
+	private static final int SLOT_DEPTHTEX1 = 13;
+	private static final int SLOT_SHADOWTEX0 = 14;
+	private static final int SLOT_SHADOWTEX1 = 15;
+	private static final int SLOT_SHADOWCOLOR0 = 16;
+	private static final int SLOT_SHADOWCOLOR1 = 17;
+	private static final int SLOT_NOISETEX = 18;
+	private static final int SLOT_COLORTEX2 = 19;
+
+	// Minecraft's standard translucent blend factors
+	private static final BlendModeOverride TRANSLUCENT_BLEND =
+		new BlendModeOverride(new BlendMode(0x0302, 0x0303, 1, 0x0303));
+
 	private final IrisTerrainPipelineCompiler compiler = new IrisTerrainPipelineCompiler();
 	private VulkanTerrainPipeline terrainPipeline;
 	private boolean active = false;
-
-	// Diagnostic: log gbuffer bind state for first few terrain passes
-	private static int diagTerrainFrameCount = 0;
-	private static int lastDiagTerrainFrame = -1;
-
-	// Diagnostic: log shadow pass terrain rendering
-	private static int diagShadowPassCount = 0;
-	private static int shadowPassCallCount = 0;
-
-	// Shadow pass override: when non-null, beginTerrainPass() binds this instead of the gbuffer FB
 	private GlFramebuffer shadowFramebuffer;
+	private TerrainRenderType lastRenderType;
 
 	private IrisTerrainRenderHook() {}
 
@@ -51,63 +62,34 @@ public class IrisTerrainRenderHook {
 		return INSTANCE;
 	}
 
-	/**
-	 * Activates the terrain pipeline hook.
-	 * Compiles Iris terrain shaders and hooks PipelineManager.setShaderGetter().
-	 *
-	 * @param terrainPipeline The VulkanTerrainPipeline containing shader sources and framebuffers
-	 */
 	public void activate(VulkanTerrainPipeline terrainPipeline) {
 		this.terrainPipeline = terrainPipeline;
-
-		// Compile Iris terrain shaders into VulkanMod GraphicsPipeline objects
 		compiler.compile(terrainPipeline);
-
-		// Hook PipelineManager to use Iris terrain pipelines (which write to all gbuffer targets)
 		PipelineManager.setShaderGetter(this::getTerrainPipeline);
 		active = true;
-
-		GlFramebuffer solidFb = terrainPipeline.getTerrainSolidFramebuffer();
-		int solidAttachments = solidFb != null ? solidFb.getColorAttachments().size() : 0;
-		Iris.logger.info("[IrisTerrainRenderHook] Activated — Iris terrain pipeline hooked. " +
-			"Solid FB has {} color attachments.", solidAttachments);
+		Iris.logger.info("[IrisTerrainRenderHook] Activated");
 	}
 
-	/**
-	 * Deactivates the terrain pipeline hook.
-	 * Restores VulkanMod's default terrain shaders and cleans up compiled pipelines.
-	 */
 	public void deactivate() {
 		active = false;
 		terrainPipeline = null;
 		shadowFramebuffer = null;
-
 		PipelineManager.setDefaultShader();
-
 		compiler.destroy();
-
-		Iris.logger.info("[IrisTerrainRenderHook] Deactivated — terrain draws restored to VulkanMod defaults");
+		Iris.logger.info("[IrisTerrainRenderHook] Deactivated");
 	}
 
-	/**
-	 * Sets a shadow framebuffer override. When set, beginTerrainPass() will bind this
-	 * framebuffer instead of the normal gbuffer framebuffer. This allows terrain in
-	 * the shadow pass to write depth to the shadow depth texture (shadowtex0).
-	 *
-	 * Call with null to clear the override (after shadow rendering completes).
-	 */
 	public void setShadowFramebuffer(GlFramebuffer fb) {
 		this.shadowFramebuffer = fb;
 	}
 
-	/**
-	 * Maps TerrainRenderType to the appropriate Iris GraphicsPipeline.
-	 * During shadow rendering, uses shadow-specific pipelines that include the
-	 * shader pack's shadow distortion (matching the fragment shader's GetShadowPos lookup).
-	 * Falls back to VulkanMod's default pipelines if Iris's pipeline isn't available.
-	 */
+	public boolean isActive() {
+		return active;
+	}
+
+	// --- Pipeline selection ---
+
 	private GraphicsPipeline getTerrainPipeline(TerrainRenderType renderType) {
-		// During shadow pass, prefer shadow-specific pipelines
 		if (shadowFramebuffer != null) {
 			GraphicsPipeline pipeline = switch (renderType) {
 				case SOLID, CUTOUT_MIPPED -> compiler.getShadowSolidPipeline();
@@ -115,7 +97,6 @@ public class IrisTerrainRenderHook {
 				case TRANSLUCENT, TRIPWIRE -> compiler.getShadowSolidPipeline();
 			};
 			if (pipeline != null) return pipeline;
-			// Fall through to gbuffer pipelines if shadow not available
 		}
 
 		GraphicsPipeline pipeline = switch (renderType) {
@@ -124,170 +105,216 @@ public class IrisTerrainRenderHook {
 			case TRANSLUCENT, TRIPWIRE -> compiler.getTranslucentPipeline();
 		};
 
-		// Fall back to VulkanMod default if Iris pipeline not available
 		if (pipeline == null) {
 			pipeline = PipelineManager.getTerrainDirectShader(null);
+			Iris.logger.warn("[IrisTerrainRenderHook] {} → FALLBACK (Iris pipeline null)", renderType);
 		}
 		return pipeline;
 	}
 
-	/**
-	 * Called before terrain rendering in a given section layer.
-	 * Binds the appropriate framebuffer:
-	 * - During shadow rendering: binds the shadow framebuffer (writes depth to shadowtex0)
-	 * - During normal rendering: binds the Iris gbuffer framebuffer
-	 *
-	 * @param renderType The terrain render type being drawn
-	 */
-	public void beginTerrainPass(TerrainRenderType renderType, Matrix4f modelView, Matrix4f projection) {
-		if (!active || terrainPipeline == null) return;
+	// --- Per-type lookups (eliminates switch duplication) ---
 
-		// Force unlock Iris's depth/color/blend overrides so we can set
-		// the correct blend state for this terrain pass
-		if (DepthColorStorage.isDepthColorLocked()) {
-			DepthColorStorage.unlockDepthColor();
-		}
-		if (BlendModeStorage.isBlendLocked()) {
-			BlendModeStorage.restoreBlend();
-		}
-
-		// Apply the correct blend mode override for this render type.
-		// In Vulkan, blend state is baked into the pipeline, so this must be set
-		// BEFORE VulkanMod's draw calls create/select the pipeline variant.
-		// Without this, whatever blend state was active from a previous pass
-		// (e.g. translucent particles) carries over, causing ghostly terrain.
-		BlendModeOverride blendOverride = switch (renderType) {
+	private BlendModeOverride getBlendOverrideForType(TerrainRenderType renderType) {
+		return switch (renderType) {
 			case SOLID, CUTOUT_MIPPED -> terrainPipeline.getTerrainSolidBlendOverride();
 			case CUTOUT -> terrainPipeline.getTerrainCutoutBlendOverride();
 			case TRANSLUCENT, TRIPWIRE -> terrainPipeline.getTranslucentBlendOverride();
 		};
+	}
 
-		if (blendOverride != null) {
-			blendOverride.apply();
-		} else {
-			// No override specified — disable blending (correct for opaque terrain)
-			BlendModeOverride.OFF.apply();
-		}
-
-		// Apply per-buffer blend overrides if the shader pack specifies them
-		java.util.List<BufferBlendOverride> bufferOverrides = switch (renderType) {
+	private List<BufferBlendOverride> getBufferOverridesForType(TerrainRenderType renderType) {
+		return switch (renderType) {
 			case SOLID, CUTOUT_MIPPED -> terrainPipeline.getTerrainSolidBufferOverrides();
 			case CUTOUT -> terrainPipeline.getTerrainCutoutBufferOverrides();
 			case TRANSLUCENT, TRIPWIRE -> terrainPipeline.getTranslucentBufferOverrides();
 		};
+	}
 
-		if (bufferOverrides != null) {
-			bufferOverrides.forEach(BufferBlendOverride::apply);
-		}
+	private GlFramebuffer getFramebufferForType(TerrainRenderType renderType) {
+		return switch (renderType) {
+			case SOLID, CUTOUT_MIPPED -> terrainPipeline.getTerrainSolidFramebuffer();
+			case CUTOUT -> terrainPipeline.getTerrainCutoutFramebuffer();
+			case TRANSLUCENT, TRIPWIRE -> terrainPipeline.getTranslucentFramebuffer();
+		};
+	}
 
-		// During shadow rendering, bind the shadow framebuffer so terrain depth
-		// writes to shadowtex0 instead of the gbuffer depth.
-		if (shadowFramebuffer != null) {
-			shadowFramebuffer.bind();
-			// Shadow viewport is already set by ShadowRenderer
-			shadowPassCallCount++;
-			if (diagShadowPassCount < 1) {
-				diagShadowPassCount++;
-				Iris.logger.info("[SHADOW_DIAG] beginTerrainPass SHADOW: type={} callCount={} depthTexId={} FB={}",
-					renderType, shadowPassCallCount,
-					shadowFramebuffer.hasDepthAttachment() ? shadowFramebuffer.getDepthAttachment() : -1,
-					shadowFramebuffer.getId());
-			}
-		} else {
-			// Normal rendering: bind the appropriate gbuffer framebuffer
-			GlFramebuffer framebuffer = switch (renderType) {
-				case SOLID, CUTOUT_MIPPED -> terrainPipeline.getTerrainSolidFramebuffer();
-				case CUTOUT -> terrainPipeline.getTerrainCutoutFramebuffer();
-				case TRANSLUCENT, TRIPWIRE -> terrainPipeline.getTranslucentFramebuffer();
-			};
-
-			if (framebuffer != null) {
-				framebuffer.bind();
-
-				// === DIAGNOSTIC: Confirm gbuffer FB is bound (first 3 frames) ===
-				int frame = net.vulkanmod.vulkan.Renderer.getCurrentFrame();
-				if (frame != lastDiagTerrainFrame) {
-					lastDiagTerrainFrame = frame;
-					if (diagTerrainFrameCount++ < 1) {
-						int colorCount = framebuffer.getColorAttachments().size();
-						boolean hasDepth = framebuffer.hasDepthAttachment();
-						Iris.logger.info("[DIAG] Terrain gbuffer bind: type={} FB={} colors={} depth={} depthTexId={}",
-							renderType, framebuffer.getId(), colorCount, hasDepth,
-							hasDepth ? framebuffer.getDepthAttachment() : 0);
-					}
-				}
-			}
-
-			// Set viewport to full screen dimensions. Composite/final passes may
-			// have set a scaled viewport that wasn't restored — terrain must always
-			// render at full resolution to avoid partial/ghostly rendering.
-			com.mojang.blaze3d.pipeline.RenderTarget mainRT = Minecraft.getInstance().getMainRenderTarget();
-			RenderSystem.viewport(0, 0, mainRT.width, mainRT.height);
-
-			// Bind shadow textures so terrain fragment shaders can sample
-			// the shadow map for lighting/god rays. The shadow pass writes to
-			// these textures; during the gbuffer pass we read them.
-			GlFramebuffer shadowFB = terrainPipeline.getShadowFramebuffer();
-			if (shadowFB != null) {
-				int shadowDepthId = shadowFB.getDepthAttachment();
-				if (shadowDepthId > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 14, shadowDepthId); // shadowtex0
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 15, shadowDepthId); // shadowtex1
-				}
-				int shadowColor0 = shadowFB.getColorAttachment(0);
-				if (shadowColor0 > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 16, shadowColor0); // shadowcolor0
-				}
-				int shadowColor1 = shadowFB.getColorAttachment(1);
-				if (shadowColor1 > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 17, shadowColor1); // shadowcolor1
-				}
-				}
-
-			// Bind PBR atlas textures (normals, specular) so the terrain
-			// fragment shader can sample them for labPBR / PBR materials.
-			// VulkanMod only binds the block atlas (slot 0) and lightmap (slot 2) —
-			// the PBR textures must be bound explicitly to match
-			// IrisTerrainPipelineCompiler.mapSamplerToTextureIndex().
-			WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipeline().orElse(null);
-			if (worldPipeline != null) {
-				int normalTex = worldPipeline.getCurrentNormalTexture();
-				int specularTex = worldPipeline.getCurrentSpecularTexture();
-				if (normalTex > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 3, normalTex); // normals at VTextureSelector slot 3
-				}
-				if (specularTex > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 4, specularTex); // specular at VTextureSelector slot 4
-				}
-
-				// Bind noise texture for terrain emission/dithering effects.
-				// The terrain fragment shader samples noisetex for emission calculations.
-				int noiseTex = worldPipeline.getNoiseTextureId();
-				if (noiseTex > 0) {
-					IrisRenderSystem.bindTextureToUnit(0x0DE1, 18, noiseTex); // noisetex at VTextureSelector slot 18
-				}
-			}
-		}
-
-		// Update ManualUBO with current MVP matrix before draws
-		compiler.updateUniforms(modelView, projection, shadowFramebuffer != null);
+	private boolean isTranslucentType(TerrainRenderType renderType) {
+		return renderType == TerrainRenderType.TRANSLUCENT || renderType == TerrainRenderType.TRIPWIRE;
 	}
 
 	/**
-	 * Called after terrain rendering in a given section layer.
-	 * We intentionally do NOT end the render pass here — the Iris gbuffer
-	 * render pass stays active so that subsequent entity/block entity draws
-	 * also write into the gbuffer (which is correct Iris behavior).
-	 * The render pass will be transitioned by the next beginRendering() call.
+	 * Applies the correct blend state for a terrain render type.
+	 * Vulkan bakes blend state into the pipeline, so this must run
+	 * BEFORE VulkanMod creates/selects the pipeline variant.
 	 */
-	public void endTerrainPass() {
-		// Restore blend state so subsequent non-terrain draws get correct blending
-		BlendModeOverride.restore();
-		// Let the Iris gbuffer render pass stay active.
-		// Entity rendering between terrain layers should also target the gbuffer.
+	private void applyBlendState(TerrainRenderType renderType) {
+		BlendModeOverride blendOverride = getBlendOverrideForType(renderType);
+		if (blendOverride != null) {
+			blendOverride.apply();
+		} else if (isTranslucentType(renderType)) {
+			TRANSLUCENT_BLEND.apply();
+		} else {
+			BlendModeOverride.OFF.apply();
+		}
+
+		List<BufferBlendOverride> bufferOverrides = getBufferOverridesForType(renderType);
+		if (bufferOverrides != null) {
+			bufferOverrides.forEach(BufferBlendOverride::apply);
+		}
 	}
 
-	public boolean isActive() {
-		return active;
+	// --- Terrain pass lifecycle ---
+
+	public void beginTerrainPass(TerrainRenderType renderType, Matrix4f modelView, Matrix4f projection) {
+		if (!active || terrainPipeline == null) return;
+		this.lastRenderType = renderType;
+
+		// Unlock Iris blend/depth overrides from previous passes
+		if (DepthColorStorage.isDepthColorLocked()) DepthColorStorage.unlockDepthColor();
+		if (BlendModeStorage.isBlendLocked()) BlendModeStorage.restoreBlend();
+
+		applyBlendState(renderType);
+
+		if (shadowFramebuffer != null) {
+			shadowFramebuffer.bind();
+		} else {
+			bindGbufferFramebuffer(renderType);
+		}
+
+		compiler.updateUniforms(modelView, projection, shadowFramebuffer != null);
+	}
+
+	public void endTerrainPass() {
+		BlendModeOverride.restore();
+	}
+
+	/**
+	 * Re-binds the correct framebuffer after setupRenderState() overwrites it.
+	 * VulkanMod intercepts bindWrite() calls from OutputStateShard and starts
+	 * a new render pass with the vanilla framebuffer, discarding Iris's MRT setup.
+	 */
+	public void rebindAfterSetupRenderState() {
+		if (!active || terrainPipeline == null || lastRenderType == null) return;
+
+		// Shadow pass: setupRenderState may have switched to main FB
+		if (shadowFramebuffer != null) {
+			shadowFramebuffer.bind();
+			return;
+		}
+
+		applyBlendState(lastRenderType);
+
+		GlFramebuffer framebuffer = getFramebufferForType(lastRenderType);
+		if (framebuffer != null) {
+			framebuffer.bind();
+		}
+
+		restoreFullScreenViewport();
+	}
+
+	// --- Framebuffer binding ---
+
+	private void bindGbufferFramebuffer(TerrainRenderType renderType) {
+		GlFramebuffer framebuffer = getFramebufferForType(renderType);
+		if (framebuffer != null) {
+			framebuffer.bind();
+		} else if (isTranslucentType(renderType)) {
+			Iris.logger.warn("[IrisTerrainRenderHook] Translucent framebuffer is NULL");
+		}
+		restoreFullScreenViewport();
+	}
+
+	private void restoreFullScreenViewport() {
+		com.mojang.blaze3d.pipeline.RenderTarget mainRT = Minecraft.getInstance().getMainRenderTarget();
+		RenderSystem.viewport(0, 0, mainRT.width, mainRT.height);
+	}
+
+	// --- Texture binding ---
+
+	/**
+	 * Binds all Iris textures (shadow maps, PBR, gbuffer, depth, noise).
+	 * Runs AFTER VTextureSelector.bindShaderTextures() to prevent overwrite.
+	 */
+	public void bindTerrainTextures(TerrainRenderType renderType) {
+		if (!active || terrainPipeline == null || shadowFramebuffer != null) return;
+
+		bindShadowTextures();
+		bindPbrAndNoiseTextures();
+
+		boolean isTranslucent = isTranslucentType(renderType);
+		bindGbufferColorTextures(isTranslucent);
+		bindCustomPackTextures();
+		bindDepthTextures();
+	}
+
+	private void bindShadowTextures() {
+		GlFramebuffer shadowFB = terrainPipeline.getShadowFramebuffer();
+		if (shadowFB == null) return;
+
+		int shadowDepth = shadowFB.getDepthAttachment();
+		if (shadowDepth > 0) {
+			IrisRenderSystem.bindTextureToUnit(GL_TEXTURE_2D, SLOT_SHADOWTEX0, shadowDepth);
+			IrisRenderSystem.bindTextureToUnit(GL_TEXTURE_2D, SLOT_SHADOWTEX1, shadowDepth);
+		}
+		bindIfPositive(shadowFB.getColorAttachment(0), SLOT_SHADOWCOLOR0);
+		bindIfPositive(shadowFB.getColorAttachment(1), SLOT_SHADOWCOLOR1);
+	}
+
+	private void bindPbrAndNoiseTextures() {
+		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipeline().orElse(null);
+		if (worldPipeline == null) return;
+
+		bindIfPositive(worldPipeline.getCurrentNormalTexture(), SLOT_NORMALS);
+		bindIfPositive(worldPipeline.getCurrentSpecularTexture(), SLOT_SPECULAR);
+		bindIfPositive(worldPipeline.getNoiseTextureId(), SLOT_NOISETEX);
+	}
+
+	private void bindGbufferColorTextures(boolean isTranslucent) {
+		// colortex0/1/2 use non-contiguous slots to avoid colliding with block atlas (slot 0)
+		int[] specialSlots = {SLOT_COLORTEX0, SLOT_COLORTEX1, SLOT_COLORTEX2};
+		for (int i = 0; i < 3; i++) {
+			int texId = isTranslucent
+				? terrainPipeline.getGbufferTextureIdForTranslucent(i)
+				: terrainPipeline.getGbufferTextureId(i);
+			bindIfPositive(texId, specialSlots[i]);
+		}
+
+		// colortex3-8 → contiguous slots 5-10
+		for (int i = 3; i <= 8; i++) {
+			int texId = isTranslucent
+				? terrainPipeline.getGbufferTextureIdForTranslucent(i)
+				: terrainPipeline.getGbufferTextureId(i);
+			bindIfPositive(texId, SLOT_COLORTEX3 + (i - 3));
+		}
+	}
+
+	private void bindCustomPackTextures() {
+		WorldRenderingPipeline worldPipeline = Iris.getPipelineManager().getPipeline().orElse(null);
+		if (worldPipeline == null) return;
+
+		// gaux1-4 are aliases for colortex4-7; shader packs can override them with custom textures
+		String[][] gauxNames = {{"gaux1", "colortex4"}, {"gaux2", "colortex5"}, {"gaux3", "colortex6"}, {"gaux4", "colortex7"}};
+		int[] gauxSlots = {6, 7, 8, 9};
+
+		for (int i = 0; i < gauxNames.length; i++) {
+			for (String name : gauxNames[i]) {
+				int customTex = worldPipeline.getCustomGbufferTextureId(name);
+				if (customTex > 0) {
+					IrisRenderSystem.bindTextureToUnit(GL_TEXTURE_2D, gauxSlots[i], customTex);
+					break;
+				}
+			}
+		}
+	}
+
+	private void bindDepthTextures() {
+		bindIfPositive(terrainPipeline.getDepthTextureId(), SLOT_DEPTHTEX0);
+		bindIfPositive(terrainPipeline.getDepthTextureNoTranslucentsId(), SLOT_DEPTHTEX1);
+	}
+
+	private void bindIfPositive(int texId, int slot) {
+		if (texId > 0) {
+			IrisRenderSystem.bindTextureToUnit(GL_TEXTURE_2D, slot, texId);
+		}
 	}
 }

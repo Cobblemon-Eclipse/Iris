@@ -840,6 +840,15 @@ public class IrisRenderingPipeline implements WorldRenderingPipeline, ShaderRend
 	}
 
 	@Override
+	public int getCustomGbufferTextureId(String samplerName) {
+		if (customTextureManager == null) return -1;
+		net.irisshaders.iris.gl.texture.TextureAccess access =
+			customTextureManager.getCustomTextureIdMap(TextureStage.GBUFFERS_AND_SHADOW).get(samplerName);
+		if (access != null) return access.getTextureId().getAsInt();
+		return -1;
+	}
+
+	@Override
 	public void onSetShaderTexture(int id) {
 		if (shouldBindPBR && isRenderingWorld) {
 			PBRTextureHolder pbrHolder = PBRTextureManager.INSTANCE.getOrLoadHolder(id);
