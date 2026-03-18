@@ -290,13 +290,8 @@ public final class Program extends GlResource {
 			//   m32_gl = 2*m32_vk - m33_vk
 			vulkanToOpenGLDepthRange(proj);
 
-			// setInvertedViewport() UNDOES the normal Y-flip that setViewport() applies.
-			// setViewport(x,y,w,h) applies viewport.y=h+y, viewport.height=-h (negative).
-			// setInvertedViewport(x,y,w,h) calls setViewport(x,y+h,w,-h), which resolves
-			// to viewport.y=0, viewport.height=+h (POSITIVE = standard Vulkan, no flip).
-			// Result: texCoord.y=0 at TOP, texCoord.y=1 at BOTTOM (Vulkan convention).
-			// screenPos.y = texCoord.y*2-1 = -1 at top (should be +1 in GL convention).
-			// Column-1 negation on projInverse corrects this.
+			// setInvertedViewport gives standard Vulkan: texCoord.y=0 at top.
+			// Negate m11 so projection matches Vulkan screen Y convention.
 
 			float[] arr = new float[16];
 			proj.get(arr);
@@ -324,18 +319,17 @@ public final class Program extends GlResource {
 					projOff, projInvOff);
 			}
 
+			// Negate m11 to match Vulkan screen Y convention (same as terrain UBO).
+			// With setInvertedViewport, texCoord.y=0 at top → screenPos.y=-1 at top.
+			// Negating m11 makes projection/inverse consistent so shader packs that
+			// use both (e.g., VL raymarching) get the same coordinate system.
+			proj.m11(-proj.m11());
+			proj.get(arr);
 			writeMatIfPresent("gbufferProjection", arr);
-			// Save this frame's converted projection for next frame (only first call per frame)
 			if (savedProjArr == null) savedProjArr = arr.clone();
-			// Inverse — with column-1 negation to correct Vulkan texCoord Y.
-			// texCoord.y=0 at top → screenPos.y=-1 at top (GL expects +1).
-			// Negating column 1 flips the Y interpretation in the inverse.
-			Matrix4f inv = new Matrix4f(proj);
-			inv.invert();
-			inv.m10(-inv.m10());
-			inv.m11(-inv.m11());
-			inv.m12(-inv.m12());
-			inv.m13(-inv.m13());
+			// True mathematical inverse — no manual column negation needed since
+			// m11 is already negated in the projection itself
+			Matrix4f inv = new Matrix4f(proj).invert();
 			inv.get(arr);
 			writeMatIfPresent("gbufferProjectionInverse", arr);
 

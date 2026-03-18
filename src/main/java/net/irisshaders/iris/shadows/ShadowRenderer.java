@@ -476,16 +476,12 @@ public class ShadowRenderer {
 		// TODO: Better way of preventing light from leaking into places where it shouldn't
 		RenderSystem.disableCull();
 
-		// Set shadow framebuffer override on the terrain hook so terrain depth
-		// writes to shadowtex0 instead of the gbuffer during shadow rendering.
-		// NOTE: depthSourceFb only has drawBuffer [0], so writes to location 1
-		// (shadowcolor1) are discarded. Terrain shadow rendering only writes to
-		// shadowcolor0. This is acceptable because the shadow depth data (shadowtex0/1)
-		// is what matters most for shadow comparison.
+		// Use the terrain shadow FB which has both shadowcolor0 and shadowcolor1
+		// (drawBuffers [0,1]) so shadow shaders can write to both outputs
 		net.irisshaders.iris.pipeline.terrain.IrisTerrainRenderHook terrainHook =
 			net.irisshaders.iris.pipeline.terrain.IrisTerrainRenderHook.getInstance();
 		if (terrainHook.isActive()) {
-			terrainHook.setShadowFramebuffer(targets.getDepthSourceFb());
+			terrainHook.setShadowFramebuffer(targets.getShadowTerrainRenderFramebuffer());
 		}
 
 		// Render all opaque terrain unless pack requests not to
